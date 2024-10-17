@@ -2,6 +2,7 @@ local nn = ...
 
 --Main tables
 runner = {}
+runner.nn = nn
 runner.Rotations = {}
 runner.Engine = {}
 runner.Classes = {}
@@ -17,8 +18,13 @@ runner.lastDebug = 0
 
 --Require Files
 nn:Require('/scripts/mainrunner/class.lua', runner)
+nn:Require('/scripts/mainrunner/ScrollingTable.lua', runner)
 nn:Require('/scripts/mainrunner/Engine/ObjectManager.lua', runner)
-
+--Classes
+nn:Require('/scripts/mainrunner/Classes/GameObject.lua', runner)
+nn:Require('/scripts/mainrunner/Classes/Unit.lua', runner)
+--UI
+nn:Require('/scripts/mainrunner/UI/ObjectViewer.lua', runner)
 
 --Main Loop
 runner.frame = CreateFrame("Frame")
@@ -41,5 +47,29 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
     end
 
     runner.Engine.ObjectManager:Update()
-
+    if runner.UI.ObjectViewer then
+        runner.UI.ObjectViewer:Update()
+    end
 end)
+
+runner.frame:SetScript("OnKeyDown", function(self, key)
+    if key == "`" then
+        print("Hotkey toggling bot " .. (runner.running and "off" or "on"))
+        runner.running = not runner.running
+    end
+    runner.frame:SetPropagateKeyboardInput(true)
+end)
+
+local oldprint = print
+print = function(...)
+    if lastmessage ~= ... then
+        lastmessage = ...
+        oldprint(...)
+    end
+end
+
+function tableCount(t)
+    local count = 0
+    for _ in pairs(t) do count = count + 1 end
+    return count
+end
