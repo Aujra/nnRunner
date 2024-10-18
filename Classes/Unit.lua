@@ -1,14 +1,11 @@
-runner.Classes.Unit = class({}, "Unit")
+runner.Classes.Unit = runner.Classes.GameObject:extend()
 local Unit = runner.Classes.Unit
 runner.Classes.Unit = Unit
 
 function Unit:init(pointer)
-    self.pointer = pointer
-    self.Name = ObjectName(self.pointer)
-    self.x, self.y, self.z = ObjectPosition(self.pointer)
+    runner.Classes.GameObject.init(self, pointer)
 end
 
 function Unit:Update()
-    self.Name = ObjectName(self.pointer)
-    self.x, self.y, self.z = ObjectPosition(self.pointer)
+    runner.Classes.GameObject.Update(self)
 end

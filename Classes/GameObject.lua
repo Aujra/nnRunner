@@ -12,3 +12,7 @@ function GameObject:Update()
     self.Name = ObjectName(self.pointer)
     self.x, self.y, self.z = ObjectPosition(self.pointer)
 end
+
+function GameObject:Test()
+    print("Test")
+end

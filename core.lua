@@ -1,4 +1,5 @@
 local nn = ...
+nn:Require('/scripts/mainrunner/class.lua', runner)
 
 --Main tables
 runner = {}
@@ -17,7 +18,6 @@ runner.lastMount = 0
 runner.lastDebug = 0
 
 --Require Files
-nn:Require('/scripts/mainrunner/class.lua', runner)
 nn:Require('/scripts/mainrunner/ScrollingTable.lua', runner)
 nn:Require('/scripts/mainrunner/Engine/ObjectManager.lua', runner)
 --Classes
