@@ -11,6 +11,7 @@ local cols = {}
 local data = {}
 local searchStr = ""
 local mode = "objects"
+local rebuild = false
 
 function OV:AddColumn(name)
     local column = {
@@ -36,14 +37,27 @@ function OV:AddColumn(name)
 end
 
 function OV:SelectGroup(group)
+    cols = {}
     if group == "objects" then
         OV.mode = "objects"
+        for k,v in pairs(runner.GameObjectViewColumns) do
+            self:AddColumn(v)
+        end
+        ScrollTable:SetDisplayCols(cols)
     end
     if group == "players" then
         OV.mode = "players"
+        for k,v in pairs(runner.PlayerViewColumns) do
+            self:AddColumn(v)
+        end
+        ScrollTable:SetDisplayCols(cols)
     end
     if group == "units" then
         OV.mode = "units"
+        for k,v in pairs(runner.UnitViewColumns) do
+            self:AddColumn(v)
+        end
+        ScrollTable:SetDisplayCols(cols)
     end
     if group == "areatriggers" then
         OV.mode = "areatriggers"
@@ -96,35 +110,34 @@ function OV:Update()
         triggers:SetWidth(100)
         triggers:SetCallback("OnClick", function() self:SelectGroup("areatriggers") end)
         viewerFrame:AddChild(triggers)
-
     end
 
     self:AddColumn("Name")
     self:AddColumn("Pointer")
-
+    self:AddColumn("Distance")
     data = {}
 
     if OV.mode == "objects" then
         for k,v in pairs (runner.Engine.ObjectManager.gameobjects) do
-            local row = {
-                v.Name,
-                v.pointer
-            }
-            table.insert(data, row)
+            table.insert(data, v:ToViewerRow())
         end
     end
     if OV.mode == "units" then
         for k,v in pairs (runner.Engine.ObjectManager.units) do
-            local row = {
-                v.Name,
-                v.pointer
-            }
-            table.insert(data, row)
+            table.insert(data, v:ToViewerRow())
+        end
+    end
+    if OV.mode == "players" then
+        for k,v in pairs (runner.Engine.ObjectManager.players) do
+            table.insert(data, v:ToViewerRow())
         end
     end
 
     if not ScrollTable then
         ScrollTable = ScrollingTable:CreateST(cols, nil, nil, nil, viewerFrame.frame);
+        ScrollTable.frame:SetPoint("LEFT", viewerFrame.frame, "LEFT", 50, 100)
+        ScrollTable:SetHeight(700)
+        ScrollTable:SetWidth(900)
         ScrollTable:SetFilter(function(self, row)
             if searchStr == "" then
                 return true

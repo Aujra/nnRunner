@@ -8,6 +8,9 @@ runner.Rotations = {}
 runner.Engine = {}
 runner.Classes = {}
 runner.UI = {}
+runner.LocalPlayer = nil
+runner.rotations = {}
+runner.rotation = nil
 
 --Main Variables
 runner.localPlayer = nil
@@ -23,8 +26,13 @@ nn:Require('/scripts/mainrunner/Engine/ObjectManager.lua', runner)
 --Classes
 nn:Require('/scripts/mainrunner/Classes/GameObject.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/Unit.lua', runner)
+nn:Require('/scripts/mainrunner/Classes/Player.lua', runner)
+nn:Require('/scripts/mainrunner/Classes/LocalPlayer.lua', runner)
 --UI
 nn:Require('/scripts/mainrunner/UI/ObjectViewer.lua', runner)
+--Rotations
+nn:Require('/scripts/mainrunner/Rotations/BaseRotation.lua', runner)
+nn:Require('/scripts/mainrunner/Rotations/HunterRotation.lua', runner)
 
 --Main Loop
 runner.frame = CreateFrame("Frame")
@@ -46,10 +54,25 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
         runner.Draw:ClearCanvas()
     end
 
+    if not runner.LocalPlayer then
+        runner.LocalPlayer = runner.Classes.LocalPlayer:new("player")
+    else
+        runner.LocalPlayer:Update()
+    end
+
     runner.Engine.ObjectManager:Update()
     if runner.UI.ObjectViewer then
         runner.UI.ObjectViewer:Update()
     end
+
+    if not runner.rotation then
+        if runner.rotations[runner.LocalPlayer.Class:lower()] then
+            runner.rotation = runner.rotations[runner.LocalPlayer.Class:lower()]:new()
+        end
+    else
+        runner.rotation:Pulse()
+    end
+
 end)
 
 runner.frame:SetScript("OnKeyDown", function(self, key)
