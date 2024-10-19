@@ -48,7 +48,7 @@ end
 function GameObject:UnitsInRange(range)
     local units = 0
     for k,v in pairs(runner.Engine.ObjectManager.units) do
-        if v.Distance <= range then
+        if v.Distance <= range and not v.IsDead then
             units = units + 1
         end
     end
@@ -58,7 +58,7 @@ end
 function GameObject:PlayersInRange(range)
     local units = 0
     for k,v in pairs(runner.Engine.ObjectManager.players) do
-        if v.Distance <= range then
+        if v.Distance <= range and not v.IsDead then
             units = units + 1
         end
     end
@@ -68,7 +68,7 @@ end
 function GameObject:EnemiesInRange(range)
     local units = 0
     for k,v in pairs(runner.Engine.ObjectManager.units) do
-        if self:DistanceFrom(v) <= range and v.Reaction <= 4 then
+        if self:DistanceFrom(v) <= range and v.Reaction <= 4 and not v.IsDead then
             units = units + 1
         end
     end
@@ -78,7 +78,7 @@ end
 function GameObject:FriendsInRange(range)
     local units = 0
     for k,v in pairs(runner.Engine.ObjectManager.units) do
-        if v.Distance <= range and v.Reaction > 4 then
+        if v.Distance <= range and v.Reaction > 4 and not v.IsDead then
             units = units + 1
         end
     end

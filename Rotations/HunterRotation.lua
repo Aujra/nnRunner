@@ -14,8 +14,14 @@ function HunterRotation:Pulse(target)
     self.Pet = UnitName("pet")
     target = self.target
 
-    if Unlock(UnitAffectingCombat, "player") then
+    if Unlock(UnitAffectingCombat, "player") and target and Unlock(UnitAffectingCombat, target.pointer) then
+
+        if runner.LocalPlayer.IsCasting then
+            return
+        end
+
         if runner.LocalPlayer.specName == "Marksmanship" then
+            self:Cast("Volley")
             if self.Focus and self.Focus:DistanceFromPlayer() < 40 then
                 self:Cast("Misdirection", "focus")
             end
@@ -26,7 +32,7 @@ function HunterRotation:Pulse(target)
                 print("Tranquilizing Shot")
                 self:Cast("Tranquilizing Shot", self.DeEnrage.pointer)
             end
-            if not target:HasAura("Hunter's Mark", "HARMFUL") then
+            if not target:HasAura("Hunter's Mark", "HARMFUL") and target.HP > 85 then
                 self:Cast("Hunter's Mark")
             end
             if runner.LocalPlayer.HP < 30 then
@@ -44,6 +50,7 @@ function HunterRotation:Pulse(target)
             if IsPlayerSpell(193533) and not player:HasAura("Steady Focus", "HELPFUL") then
                 self:Cast("Steady Focus", target.pointer)
             end
+            self:Cast("Volley")
             self:Cast("Kill Shot")
             self:Cast("Rapid Fire")
             Unlock(RunMacroText, "/use 13")

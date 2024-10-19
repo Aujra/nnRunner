@@ -22,6 +22,8 @@ function Unit:init(pointer)
     self.IsFocus = false
     self.Dispellable = false
     self.DeEnrage = false
+    self.isDead = Unlock(UnitIsDeadOrGhost, self.pointer)
+    self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
 end
 
 function Unit:Update()
@@ -34,6 +36,8 @@ function Unit:Update()
     self.IsFocus = self:IsPlayerFocus()
     self.Dispellable = self:ShouldDispell()
     self.DeEnrage = self:ShouldDeEnrage()
+    self.isDead = Unlock(UnitIsDeadOrGhost, self.pointer)
+    self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
 end
 
 function Unit:ShouldDeEnrage()

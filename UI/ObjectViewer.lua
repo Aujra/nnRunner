@@ -36,6 +36,13 @@ function OV:AddColumn(name)
     table.insert(cols, column)
 end
 
+function OV:ShouldUpdate()
+    if not viewerFrame then
+        self:Update()
+    end
+    return viewerFrame:IsVisible()
+end
+
 function OV:SelectGroup(group)
     cols = {}
     if group == "objects" then

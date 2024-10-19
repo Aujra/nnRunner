@@ -19,6 +19,7 @@ runner.running = true
 runner.lastTick = 0
 runner.lastMount = 0
 runner.lastDebug = 0
+runner.lastAFK = 0
 
 --Require Files
 nn:Require('/scripts/mainrunner/ScrollingTable.lua', runner)
@@ -37,9 +38,13 @@ nn:Require('/scripts/mainrunner/Rotations/HunterRotation.lua', runner)
 --Main Loop
 runner.frame = CreateFrame("Frame")
 runner.frame:SetScript("OnUpdate", function(self, elapsed)
-
-    if GetTime() - runner.lastTick < 0.1 then
+    if GetTime() - runner.lastTick < .2 then
         return
+    end
+
+    if GetTime() - runner.lastAFK > 60 then
+        LastHardwareAction(GetTime()*1000)
+        runner.lastAFK = GetTime()
     end
 
     runner.lastTick = GetTime()
@@ -61,9 +66,11 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
     end
 
     runner.Engine.ObjectManager:Update()
-    if runner.UI.ObjectViewer then
+    if runner.UI.ObjectViewer and runner.UI.ObjectViewer:ShouldUpdate() then
         runner.UI.ObjectViewer:Update()
     end
+
+    runner:DrawNearestDisturbedEarth()
 
     if not runner.rotation then
         if runner.rotations[runner.LocalPlayer.Class:lower()] then
@@ -72,7 +79,6 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
     else
         runner.rotation:Pulse()
     end
-
 end)
 
 runner.frame:SetScript("OnKeyDown", function(self, key)
@@ -82,6 +88,26 @@ runner.frame:SetScript("OnKeyDown", function(self, key)
     end
     runner.frame:SetPropagateKeyboardInput(true)
 end)
+
+function runner:DrawNearestDisturbedEarth()
+    local nearest = nil
+    local nearestDistance = 9999
+    for k,v in pairs(runner.Engine.ObjectManager.gameobjects) do
+        if v.Name == "Disturbed Earth" then
+            local distance = v:DistanceFromPlayer()
+            if distance < nearestDistance then
+                nearest = v
+                nearestDistance = distance
+            end
+        end
+    end
+    if nearest then
+        local x,y,z = ObjectPosition(nearest.pointer)
+        local px,py,pz = ObjectPosition("player")
+        runner.Draw:SetColor(255,0,0,255)
+        runner.Draw:Line(px, py, pz, x, y, z, 1, 0, 0, 1)
+    end
+end
 
 local oldprint = print
 print = function(...)

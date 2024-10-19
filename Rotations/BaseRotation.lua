@@ -14,6 +14,9 @@ end
 
 function BaseRotation:Pulse(target)
     target = target or UnitTarget("player")
+    if not target then
+        return
+    end
     if type(target) ~= "table" then
         target = runner.Engine.ObjectManager:GetByPointer(target)
     end
@@ -25,6 +28,15 @@ function BaseRotation:Pulse(target)
     self.target = target
     self.Focus = self:GetFocus()
     self.DeEnrage = self:GetDeEnrage()
+
+    if runner.LocalPlayer.IsCasting then
+        return
+    end
+
+    if SpellIsTargeting() then
+        local x,y,z = runner.nn.ObjectPosition('target')
+        runner.nn.ClickPosition(x,y,z)
+    end
 end
 
 function BaseRotation:GetDeEnrage()
@@ -45,14 +57,12 @@ function BaseRotation:GetFocus()
     local focus = nil
     for k,v in pairs(runner.Engine.ObjectManager.players) do
         if v.IsFocus then
-            print("Found focus")
             focus = v
             break
         end
     end
     for k,v in pairs(runner.Engine.ObjectManager.units) do
         if v.IsFocus then
-            print("Found focus")
             focus = v
             break
         end
@@ -96,6 +106,14 @@ function BaseRotation:GetTank()
         end
     end
     return tank
+end
+
+function BaseRotation:IsGCD()
+    local spellInfo = C_Spell.GetSpellCooldown(61304)
+    if spellInfo.enabled == 1 then
+        return false
+    end
+    return true
 end
 
 function BaseRotation:Cast(spell, target)
