@@ -14,7 +14,8 @@ function HunterRotation:Pulse(target)
     self.Pet = UnitName("pet")
     target = self.target
 
-    if Unlock(UnitAffectingCombat, "player") and target and Unlock(UnitAffectingCombat, target.pointer) then
+    if Unlock(UnitAffectingCombat, "player") and target and (
+            Unlock(UnitAffectingCombat, target.pointer) or string.find(target.Name, "Training")) then
 
         if runner.LocalPlayer.IsCasting then
             return

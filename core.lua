@@ -34,6 +34,7 @@ nn:Require('/scripts/mainrunner/UI/ObjectViewer.lua', runner)
 --Rotations
 nn:Require('/scripts/mainrunner/Rotations/BaseRotation.lua', runner)
 nn:Require('/scripts/mainrunner/Rotations/HunterRotation.lua', runner)
+nn:Require('/scripts/mainrunner/Rotations/DemonHunterRotation.lua', runner)
 
 --Main Loop
 runner.frame = CreateFrame("Frame")
@@ -74,6 +75,7 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
 
     if not runner.rotation then
         if runner.rotations[runner.LocalPlayer.Class:lower()] then
+            print("Setting rotation to " .. runner.LocalPlayer.Class)
             runner.rotation = runner.rotations[runner.LocalPlayer.Class:lower()]:new()
         end
     else
@@ -109,13 +111,7 @@ function runner:DrawNearestDisturbedEarth()
     end
 end
 
-local oldprint = print
-print = function(...)
-    if lastmessage ~= ... then
-        lastmessage = ...
-        oldprint(...)
-    end
-end
+
 
 function tableCount(t)
     local count = 0

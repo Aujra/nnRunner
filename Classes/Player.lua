@@ -27,6 +27,7 @@ function Player:init(pointer)
     self.LunarPower = Unlock(UnitPower, self.pointer, 8)
     self.Maelstrom = Unlock(UnitPower, self.pointer, 11)
     self.Insanity = Unlock(UnitPower, self.pointer, 13)
+    self.Fury = Unlock(UnitPower, self.pointer, 17)
 end
 
 function Player:Update()
@@ -41,6 +42,7 @@ function Player:Update()
     self.LunarPower = Unlock(UnitPower, self.pointer, 8)
     self.Maelstrom = Unlock(UnitPower, self.pointer, 11)
     self.Insanity = Unlock(UnitPower, self.pointer, 13)
+    self.Fury = Unlock(UnitPower, self.pointer, 17)
 end
 
 function Player:ToViewerRow()

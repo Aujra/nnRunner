@@ -24,6 +24,7 @@ function Unit:init(pointer)
     self.DeEnrage = false
     self.isDead = Unlock(UnitIsDeadOrGhost, self.pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
+    self.SoulFragments = 0
 end
 
 function Unit:Update()
@@ -38,6 +39,16 @@ function Unit:Update()
     self.DeEnrage = self:ShouldDeEnrage()
     self.isDead = Unlock(UnitIsDeadOrGhost, self.pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
+    self.SoulFragments = self:GetAuraCount("Soul Fragments", "HELPFUL")
+end
+
+function Unit:GetAuraCount(name, filter)
+    local auraName, icon, auraCount, dispelType, duration, expirationTime, source, isStealable, nameplateShowPersonal,
+    spellId, canApplyAura, isBossDebuff, castByPlayer, nameplateShowAll, timeMod = AuraUtil.FindAuraByName(name, self.pointer, filter)
+    if not auraName then
+        return 0
+    end
+    return auraCount
 end
 
 function Unit:ShouldDeEnrage()

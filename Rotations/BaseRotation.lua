@@ -10,6 +10,7 @@ function BaseRotation:init()
     self.Tank = nil
     self.Focus = nil
     self.DeEnrage = nil
+    self.Target = nil
 end
 
 function BaseRotation:Pulse(target)
@@ -23,6 +24,7 @@ function BaseRotation:Pulse(target)
     if not target then
         return
     end
+    self.Target = target
     self.ClosestCaster = self:GetClosestCastingEnemy()
     self.Tank = self:GetTank()
     self.target = target
@@ -37,6 +39,52 @@ function BaseRotation:Pulse(target)
         local x,y,z = runner.nn.ObjectPosition('target')
         runner.nn.ClickPosition(x,y,z)
     end
+end
+
+function BaseRotation:CanCast(spell, target)
+    target = target or "target"
+    if not spell then
+        return false
+    end
+    if type(target) ~= "table" then
+        target = runner.Engine.ObjectManager:GetByPointer(target)
+    end
+
+    if not target then
+        return false
+    end
+
+    local spellInfo = C_Spell.GetSpellInfo(spell)
+    if not spellInfo then
+        return false
+    end
+    local isKnown = IsPlayerSpell(spellInfo.spellID)
+    if not isKnown then
+        return false
+    end
+    local cdInfo = C_Spell.GetSpellCooldown(spell)
+    local onCD = cdInfo.duration > 0
+
+    local canAttack = UnitCanAttack("player", target.pointer)
+    local inRange = target:DistanceFromPlayer() < spellInfo.maxRange or spellInfo.maxRange == 0
+    local canCast = C_Spell.IsSpellUsable(spell)
+
+    return not onCD and inRange and isKnown and canAttack and canCast
+end
+
+function BaseRotation:IsSpellOnCD(spell)
+    local spellInfo = C_Spell.GetSpellCooldown(spell)
+    return spellInfo.duration > 0
+end
+
+function BaseRotation:EnemyCountWithDebuff(debuff)
+    local count = 0
+    for k,v in pairs(runner.Engine.ObjectManager.units) do
+        if v:HasAura(debuff, "HARMFUL") then
+            count = count + 1
+        end
+    end
+    return count
 end
 
 function BaseRotation:GetDeEnrage()
