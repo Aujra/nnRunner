@@ -21,15 +21,20 @@
             if spec == "Vengeance" then
                 local fieryBrandCount = self:EnemyCountWithDebuff("Fiery Brand")
                 local soulFragments = runner.LocalPlayer.SoulFragments
+                local enemiesAround = runner.LocalPlayer:EnemiesInRange(8)
 
                 if runner.LocalPlayer.HP < 50 then
                     self:Cast("Demon Spikes")
                 end
-                if runner.LocalPlayer.HP < 30 then
-                    self:Cast("Fiery Brand")
+
+                if self:CanCast("Consume Magic", self.Target) and self.SpellSteal and self.SpellSteal:DistanceFromPlayer() < 30 then
+                    self:Cast("Consume Magic", self.SpellSteal.pointer)
+                    return
                 end
-                if runner.LocalPlayer.HP < 20 then
-                    self:Cast("Metamorphosis")
+
+                if self:CanCast("Chaos Nova", self.Target) and enemiesAround > 3 then
+                    self:Cast("Chaos Nova")
+                    return
                 end
 
                 if self.ClosestCaster and self:CanCast("Sigil of Silence", self.ClosestCaster) then
@@ -46,8 +51,16 @@
                     self:Cast("Infernal Strike")
                     return
                 end
+                if (self:CanCast("Sigil of Chains", self.Target) and enemiesAround > 3) then
+                    self:Cast("Sigil of Chains")
+                    return
+                end
                 if (self:CanCast("The Hunt", self.Target)) then
                     self:Cast("The Hunt")
+                    return
+                end
+                if (self:CanCast("Sigil of Spite", self.Target)) then
+                    self:Cast("Sigil of Spite")
                     return
                 end
                 if (self:CanCast("Fiery Brand", self.Target) and fieryBrandCount < 1) then
@@ -74,7 +87,7 @@
                     self:Cast("Spirit Bomb")
                     return
                 end
-                if (self:CanCast("Fracture", self.Target)) then
+                if (self:CanCast("Fracture", self.Target) and runner.LocalPlayer.Fury < 80) then
                     self:Cast("Fracture")
                     return
                 end
@@ -82,7 +95,11 @@
                     self:Cast("Felblade")
                     return
                 end
-                if (self:CanCast("Soul Cleave", self.Target)) then
+                if (self:CanCast("Soul Cleave", self.Target) and runner.LocalPlayer:HasAura("Metamorphosis", "HELPFUL")) then
+                    self:Cast("Soul Sunder")
+                    return
+                end
+                if (self:CanCast("Soul Cleave", self.Target) and not runner.LocalPlayer:HasAura("Metamorphosis", "HELPFUL")) then
                     self:Cast("Soul Cleave")
                     return
                 end
@@ -105,6 +122,11 @@
 
                 if runner.LocalPlayer.HP < 50 then
                     self:Cast("Blur")
+                end
+
+                if self:CanCast("Consume Magic", self.Target) and self.SpellSteal and self.SpellSteal:DistanceFromPlayer() < 30 then
+                    self:Cast("Consume Magic")
+                    return
                 end
 
                 --if self:CanCast("Blade Dance", self.Target) and runner.LocalPlayer:HasAura("Metamorphosis", "HELPFUL") and target:HasAura("Essence Break", "HARMFUL") then
@@ -144,7 +166,7 @@
                     self:Cast("Essence Break")
                     return
                 end
-                if self:CanCast("Blade Dance", self.Target) and runner.LocalPlayer:HasAura("Metamorphosis", "HELPFUL") then
+                if self:CanCast("Blade Dance", self.Target, true) and runner.LocalPlayer:HasAura("Metamorphosis", "HELPFUL") then
                     self:Cast("Death Sweep")
                     return
                 end
@@ -152,7 +174,7 @@
                     self:Cast("Sigil of Flame")
                     return
                 end
-                if self:CanCast("Eye Beam", self.Target) then
+                if self:CanCast("Eye Beam", self.Target, true) then
                     self:Cast("Eye Beam")
                     return
                 end
@@ -160,7 +182,7 @@
                     self:Cast("Metamorphosis")
                     return
                 end
-                if self:CanCast("Blade Dance", self.Target) then
+                if self:CanCast("Blade Dance", self.Target, true) then
                     self:Cast("Blade Dance")
                     return
                 end

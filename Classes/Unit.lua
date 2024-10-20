@@ -83,6 +83,20 @@ function Unit:ShouldDispell()
     return dispellable
 end
 
+function Unit:HasStealable()
+    for i = 1, 40 do
+        local name, _, _, _, _, _, _, _, _, spellId = Unlock(UnitBuff, self.pointer, i)
+        if not name then
+            break
+        end
+        local dispelType = select(5, GetSpellInfo(spellId))
+        if dispelType == "Magic" then
+            return true
+        end
+    end
+    return false
+end
+
 function Unit:IsPlayerFocus()
     return self.pointer == runner.nn:GetFocus()
 end

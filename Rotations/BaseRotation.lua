@@ -30,6 +30,7 @@ function BaseRotation:Pulse(target)
     self.target = target
     self.Focus = self:GetFocus()
     self.DeEnrage = self:GetDeEnrage()
+    self.SpellSteal = self:ClosestSpellSteal()
 
     if runner.LocalPlayer.IsCasting then
         return
@@ -41,7 +42,8 @@ function BaseRotation:Pulse(target)
     end
 end
 
-function BaseRotation:CanCast(spell, target)
+function BaseRotation:CanCast(spell, target, forceMelee)
+    forceMelee = forceMelee or false
     target = target or "target"
     if not spell then
         return false
@@ -66,10 +68,33 @@ function BaseRotation:CanCast(spell, target)
     local onCD = cdInfo.duration > 0
 
     local canAttack = UnitCanAttack("player", target.pointer)
-    local inRange = target:DistanceFromPlayer() < spellInfo.maxRange or spellInfo.maxRange == 0
+    local inRange = false
+    if not forceMelee then
+        inRange = target:DistanceFromPlayer() < spellInfo.maxRange or spellInfo.maxRange == 0
+    else
+        inRange = target:DistanceFromPlayer() < 10
+    end
     local canCast = C_Spell.IsSpellUsable(spell)
 
     return not onCD and inRange and isKnown and canAttack and canCast
+end
+
+function BaseRotation:ClosestSpellSteal()
+    local closestSteal = nil
+    local closestDistance = 9999
+    for k,v in pairs(runner.Engine.ObjectManager.units) do
+        if v:HasStealable() and v:DistanceFromPlayer() < closestDistance then
+            closestSteal = v
+            closestDistance = v:DistanceFromPlayer()
+        end
+    end
+    for k,v in pairs(runner.Engine.ObjectManager.players) do
+        if v:HasStealable() and v:DistanceFromPlayer() < closestDistance then
+            closestSteal = v
+            closestDistance = v:DistanceFromPlayer()
+        end
+    end
+    return closestSteal
 end
 
 function BaseRotation:IsSpellOnCD(spell)
