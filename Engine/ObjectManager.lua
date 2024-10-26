@@ -10,6 +10,7 @@ function OM:Update()
     local gameObjects = nn.ObjectManager("GameObject" or 8)
     local Units = nn.ObjectManager("Unit" or 5)
     local Players = nn.ObjectManager("Player" or 6)
+    local AreaTriggers = nn.ObjectManager("AreaTrigger" or 11)
 
     for k,v in pairs(self.gameobjects) do
         if not runner.nn.ObjectExists(v.pointer) then
@@ -24,6 +25,11 @@ function OM:Update()
     for k,v in pairs(self.players) do
         if not runner.nn.ObjectExists(v.pointer) then
             self.players[k] = nil
+        end
+    end
+    for k,v in pairs(self.areatrigger) do
+        if not runner.nn.ObjectExists(v.pointer) then
+            self.areatrigger[k] = nil
         end
     end
 
@@ -46,6 +52,13 @@ function OM:Update()
             self.players[pointer] = runner.Classes.Player:new(pointer)
         else
             self.players[pointer]:Update()
+        end
+    end
+    for index,pointer in pairs(AreaTriggers) do
+        if not self.areatrigger[pointer] then
+            self.areatrigger[pointer] = runner.Classes.AreaTrigger:new(pointer)
+        else
+            self.areatrigger[pointer]:Update()
         end
     end
 end

@@ -28,6 +28,7 @@ function Player:init(pointer)
     self.Maelstrom = Unlock(UnitPower, self.pointer, 11)
     self.Insanity = Unlock(UnitPower, self.pointer, 13)
     self.Fury = Unlock(UnitPower, self.pointer, 17)
+    self.Role = UnitGroupRolesAssigned(self.pointer)
 end
 
 function Player:Update()
@@ -43,6 +44,7 @@ function Player:Update()
     self.Maelstrom = Unlock(UnitPower, self.pointer, 11)
     self.Insanity = Unlock(UnitPower, self.pointer, 13)
     self.Fury = Unlock(UnitPower, self.pointer, 17)
+    self.Role = UnitGroupRolesAssigned(self.pointer)
 end
 
 function Player:ToViewerRow()

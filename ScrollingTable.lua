@@ -14,7 +14,7 @@
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 local MAJOR, MINOR = "ScrollingTable", tonumber("@project-timestamp@") or 40300;
-local lib, oldminor = LibStub:NewLibrary(MAJOR, MINOR);
+local lib, oldminor = runner.nn.Utils.LibStub:NewLibrary(MAJOR, MINOR);
 if not lib then
     return; -- Already loaded and no upgrade necessary.
 end

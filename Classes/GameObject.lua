@@ -6,17 +6,21 @@ runner.GameObjectViewColumns = {
     "Name",
     "Pointer",
     "Distance",
+    "Type",
 }
 
 function GameObject:init(pointer)
     self.pointer = pointer
     self.Name = ObjectName(self.pointer)
+    self.Type = runner.nn.GameObjectType(self.pointer)
     self.x, self.y, self.z = ObjectPosition(self.pointer)
     self.Distance = 99999
+    self.PathDistance = 0
 end
 
 function GameObject:Update()
     self.Name = ObjectName(self.pointer)
+    self.Type = runner.nn.GameObjectType(self.pointer)
     self.x, self.y, self.z = ObjectPosition(self.pointer)
     self.Distance = self:DistanceFromPlayer()
 end
@@ -26,7 +30,12 @@ function GameObject:ToViewerRow()
         self.Name,
         self.pointer,
         string.format("%.2f", self.Distance),
+        self.Type
     }
+end
+
+function GameObject:NavigationDistance()
+    return runner.Engine.Navigation:PathDistance(self.pointer)
 end
 
 function GameObject:DistanceFromPlayer()
@@ -68,7 +77,7 @@ end
 function GameObject:EnemiesInRange(range)
     local units = 0
     for k,v in pairs(runner.Engine.ObjectManager.units) do
-        if self:DistanceFrom(v) <= range and v.Reaction <= 4 and not v.IsDead then
+        if self:DistanceFrom(v) <= range and v.Reaction and v.Reaction <= 4 and not v.IsDead then
             units = units + 1
         end
     end

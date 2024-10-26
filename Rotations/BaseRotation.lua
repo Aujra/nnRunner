@@ -11,6 +11,7 @@ function BaseRotation:init()
     self.Focus = nil
     self.DeEnrage = nil
     self.Target = nil
+    self.PullRange = 30
 end
 
 function BaseRotation:Pulse(target)
@@ -148,7 +149,7 @@ function BaseRotation:GetClosestCastingEnemy(range)
     local closestCaster = nil
     local closestDistance = 9999
     for k,v in pairs(runner.Engine.ObjectManager.units) do
-        if v.Reaction <= 4 and v.InCombat and
+        if v.Reaction and v.Reaction <= 4 and v.InCombat and
         v:ShouldInterruptCasting() and v:DistanceFromPlayer() < range then
             local distance = v:DistanceFromPlayer()
             if distance < closestDistance then
@@ -158,7 +159,7 @@ function BaseRotation:GetClosestCastingEnemy(range)
         end
     end
     for k,v in pairs(runner.Engine.ObjectManager.players) do
-        if v.Reaction <= 4 and v.InCombat and
+        if v.Reaction and v.Reaction <= 4 and v.InCombat and
         v:ShouldInterruptCasting() and v:DistanceFromPlayer() < range then
             local distance = v:DistanceFromPlayer()
             if distance < closestDistance then
@@ -190,5 +191,7 @@ function BaseRotation:IsGCD()
 end
 
 function BaseRotation:Cast(spell, target)
+    target = target or "target"
+    --print("Casting: " .. spell .. " on " .. target)
     Unlock(CastSpellByName, spell, target)
 end

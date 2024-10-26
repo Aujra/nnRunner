@@ -68,6 +68,9 @@ function OV:SelectGroup(group)
     end
     if group == "areatriggers" then
         OV.mode = "areatriggers"
+        for k,v in pairs(runner.AreaTriggerViewColumns) do
+            self:AddColumn(v)
+        end
     end
     local str = string.gsub(" "..OV.mode, "%W%l", string.upper):sub(2)
     viewerFrame:SetTitle("Object Manager - " .. str)
@@ -119,9 +122,6 @@ function OV:Update()
         viewerFrame:AddChild(triggers)
     end
 
-    self:AddColumn("Name")
-    self:AddColumn("Pointer")
-    self:AddColumn("Distance")
     data = {}
 
     if OV.mode == "objects" then
@@ -136,6 +136,11 @@ function OV:Update()
     end
     if OV.mode == "players" then
         for k,v in pairs (runner.Engine.ObjectManager.players) do
+            table.insert(data, v:ToViewerRow())
+        end
+    end
+    if OV.mode == "areatriggers" then
+        for k,v in pairs (runner.Engine.ObjectManager.areatrigger) do
             table.insert(data, v:ToViewerRow())
         end
     end

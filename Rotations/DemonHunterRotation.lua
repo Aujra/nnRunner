@@ -212,4 +212,4 @@
 
     end
 
-    runner.rotations["demonhunter"] = DemonHunterRotation
+    registerRotation(DemonHunterRotation)

@@ -7,10 +7,14 @@ runner.nn = nn
 runner.Rotations = {}
 runner.Engine = {}
 runner.Classes = {}
+runner.Routines = {}
 runner.UI = {}
+runner.UI.menuFrame = {}
 runner.LocalPlayer = nil
 runner.rotations = {}
 runner.rotation = nil
+runner.routines = {}
+runner.routine = nil
 
 --Main Variables
 runner.localPlayer = nil
@@ -21,20 +25,37 @@ runner.lastMount = 0
 runner.lastDebug = 0
 runner.lastAFK = 0
 
+function registerRotation(rotation)
+    local rot = rotation()
+    runner.rotations[rot.Name:lower()] = rot
+end
+
+function registerRoutine(routine)
+    local rot = routine()
+    runner.routines[rot.Name:lower()] = rot
+end
+
 --Require Files
 nn:Require('/scripts/mainrunner/ScrollingTable.lua', runner)
 nn:Require('/scripts/mainrunner/Engine/ObjectManager.lua', runner)
+nn:Require('/scripts/mainrunner/Engine/Navigation.lua', runner)
 --Classes
 nn:Require('/scripts/mainrunner/Classes/GameObject.lua', runner)
+nn:Require('/scripts/mainrunner/Classes/AreaTrigger.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/Unit.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/Player.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/LocalPlayer.lua', runner)
 --UI
 nn:Require('/scripts/mainrunner/UI/ObjectViewer.lua', runner)
+nn:Require('/scripts/mainrunner/UI/Menu.lua', runner)
 --Rotations
 nn:Require('/scripts/mainrunner/Rotations/BaseRotation.lua', runner)
 nn:Require('/scripts/mainrunner/Rotations/HunterRotation.lua', runner)
 nn:Require('/scripts/mainrunner/Rotations/DemonHunterRotation.lua', runner)
+--Routines
+nn:Require('/scripts/mainrunner/Routine/BaseRoutine.lua', runner)
+nn:Require('/scripts/mainrunner/Routine/RotationRoutine.lua', runner)
+nn:Require('/scripts/mainrunner/Routine/DungeonRoutine.lua', runner)
 
 --Main Loop
 runner.frame = CreateFrame("Frame")
@@ -52,6 +73,16 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
     if not runner.running then
         return
     end
+
+    if not runner.routine then
+        runner.routine = runner.routines["rotationroutine"]
+    end
+    if not runner.rotation then
+        runner.rotation = runner.rotations[select(2, UnitClass("player")):lower()]
+    end
+
+    runner.UI.menuFrame:UpdateMenu()
+
     if not runner.Draw then
         runner.Draw = nn.Utils.Draw:New()
     end
@@ -73,13 +104,8 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
 
     runner:DrawNearestDisturbedEarth()
 
-    if not runner.rotation then
-        if runner.rotations[runner.LocalPlayer.Class:lower()] then
-            print("Setting rotation to " .. runner.LocalPlayer.Class)
-            runner.rotation = runner.rotations[runner.LocalPlayer.Class:lower()]:new()
-        end
-    else
-        runner.rotation:Pulse()
+    if runner.routine then
+        runner.routine:Run()
     end
 end)
 
@@ -110,8 +136,6 @@ function runner:DrawNearestDisturbedEarth()
         runner.Draw:Line(px, py, pz, x, y, z, 1, 0, 0, 1)
     end
 end
-
-
 
 function tableCount(t)
     local count = 0

@@ -40,6 +40,11 @@ function Unit:Update()
     self.isDead = Unlock(UnitIsDeadOrGhost, self.pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = self:GetAuraCount("Soul Fragments", "HELPFUL")
+    self:Debug()
+end
+
+function Unit:GetScore()
+
 end
 
 function Unit:GetAuraCount(name, filter)
@@ -128,4 +133,9 @@ function Unit:ShouldInterruptCasting()
     end
     local elapsed = GetTime() - (startTimeMS / 1000)
     return name and not notInterruptible and elapsed > 0.2
+end
+
+function Unit:Debug()
+    --local draw = runner.Draw
+    --draw:Text(self:NavigationDistance(), "GameFontNormal", self.x, self.y, self.z)
 end
