@@ -65,10 +65,10 @@ function BaseRotation:CanCast(spell, target, forceMelee)
     if not isKnown then
         return false
     end
+
     local cdInfo = C_Spell.GetSpellCooldown(spell)
     local onCD = cdInfo.duration > 0
 
-    local canAttack = UnitCanAttack("player", target.pointer)
     local inRange = false
     if not forceMelee then
         inRange = target:DistanceFromPlayer() < spellInfo.maxRange or spellInfo.maxRange == 0
@@ -77,7 +77,7 @@ function BaseRotation:CanCast(spell, target, forceMelee)
     end
     local canCast = C_Spell.IsSpellUsable(spell)
 
-    return not onCD and inRange and isKnown and canAttack and canCast
+    return not onCD and inRange and isKnown and canCast
 end
 
 function BaseRotation:ClosestSpellSteal()

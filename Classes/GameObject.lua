@@ -54,6 +54,11 @@ function GameObject:DistanceFrom(unit)
     return math.sqrt((x2 - x1)^2 + (y2 - y1)^2 + (z2 - z1)^2)
 end
 
+function GameObject:DistanceFromPoint(x, y, z)
+    local x1, y1, z1 = self.x, self.y, self.z
+    return math.sqrt((x - x1)^2 + (y - y1)^2 + (z - z1)^2) or 99999
+end
+
 function GameObject:UnitsInRange(range)
     local units = 0
     for k,v in pairs(runner.Engine.ObjectManager.units) do

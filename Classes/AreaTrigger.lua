@@ -11,10 +11,12 @@ runner.AreaTriggerViewColumns = {
 
 function AreaTrigger:init(pointer)
     runner.Classes.GameObject.init(self, pointer)
+    self.SpellID = runner.nn.ObjectField(pointer, CGAreaTriggerData__SpellID, 3)
 end
 
 function AreaTrigger:Update()
     runner.Classes.GameObject.Update(self)
+    self.SpellID = runner.nn.ObjectField(self.pointer, CGAreaTriggerData__SpellID, 3)
 end
 
 function AreaTrigger:ToViewerRow()

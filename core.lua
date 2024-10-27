@@ -25,6 +25,10 @@ runner.lastMount = 0
 runner.lastDebug = 0
 runner.lastAFK = 0
 
+runner.profiles = {}
+
+runner.waypoints = {}
+
 function registerRotation(rotation)
     local rot = rotation()
     runner.rotations[rot.Name:lower()] = rot
@@ -33,6 +37,11 @@ end
 function registerRoutine(routine)
     local rot = routine()
     runner.routines[rot.Name:lower()] = rot
+end
+
+function registerProfile(profile)
+    print("Registering profile: " .. profile.Name)
+    table.insert(runner.profiles, profile)
 end
 
 --Require Files
@@ -56,6 +65,12 @@ nn:Require('/scripts/mainrunner/Rotations/DemonHunterRotation.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/BaseRoutine.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/RotationRoutine.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/DungeonRoutine.lua', runner)
+--Profiles
+local path = "/scripts/mainrunner/Profiles/Dungeons/*.lua"
+local files = nn.ListFiles(path)
+for k,v in pairs(files) do
+    nn:Require("/scripts/mainrunner/Profiles/Dungeons/" .. v, runner)
+end
 
 --Main Loop
 runner.frame = CreateFrame("Frame")
@@ -78,7 +93,7 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
         runner.routine = runner.routines["rotationroutine"]
     end
     if not runner.rotation then
-        runner.rotation = runner.rotations[select(2, UnitClass("player")):lower()]
+        runner.rotation = runner.rotations[select(1, UnitClass("player")):lower()]
     end
 
     runner.UI.menuFrame:UpdateMenu()

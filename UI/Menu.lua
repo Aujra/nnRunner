@@ -58,6 +58,26 @@ function menuFrame:UpdateMenu()
             runner.running = not runner.running
         end)
 
+        local markWaypoint = CreateFrame("Button", nil, mainFrame, "UIPanelButtonTemplate")
+        markWaypoint:SetSize(30, 30)
+        markWaypoint:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 500, 0)
+        markWaypoint:SetNormalTexture("Interface/ICONS/INV_Misc_PocketWatch_01")
+        markWaypoint:SetScript("OnClick", function()
+            table.insert(runner.waypoints, {x = runner.LocalPlayer.x, y = runner.LocalPlayer.y, z = runner.LocalPlayer.z})
+        end)
+
+        local showWaypoints = CreateFrame("Button", nil, mainFrame, "UIPanelButtonTemplate")
+        showWaypoints:SetSize(30, 30)
+        showWaypoints:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 550, 0)
+        showWaypoints:SetNormalTexture("Interface/ICONS/INV_Misc_PocketWatch_01")
+        showWaypoints:SetScript("OnClick", function()
+            local waypoint_string = ""
+            for k,v in pairs(runner.waypoints) do
+                waypoint_string = waypoint_string .. '["X"] = ' .. v.x .. ', ["Y"] = ' .. v.y .. ', ["Z"] = ' .. v.z .. ',\n'
+            end
+            runner.nn.WriteFile("/scripts/mainrunner/waypoints.json", waypoint_string)
+        end)
+
         local dropDown = CreateFrame("Frame", "rotationMenu", mainFrame, "UIDropDownMenuTemplate")
         dropDown:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 40, 0)
         UIDropDownMenu_SetWidth(dropDown, 100)
@@ -70,9 +90,37 @@ function menuFrame:UpdateMenu()
         UIDropDownMenu_Initialize(dropDownRoutine, routineMenu_Initialize)
         UIDropDownMenu_SetText(dropDownRoutine, "Select Routine")
 
+        local OMToggle = CreateFrame("Button", nil, mainFrame, "UIPanelButtonTemplate")
+        OMToggle:SetSize(30, 30)
+        OMToggle:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 800, 0)
+        OMToggle:SetNormalTexture("Interface/ICONS/INV_Misc_PocketWatch_01")
+        OMToggle:SetScript("OnClick", function()
+            runner.UI.ObjectViewer:Toggle()
+        end)
+
         mainFrame.pauseButton = pauseButton
         mainFrame.dropDown = dropDown
         mainFrame.dropDownRoutine = dropDownRoutine
+
+        local statusFrame = CreateFrame("Frame", "StatusFrame", UIParent, "BackdropTemplate")
+        statusFrame:SetMovable(true)
+        statusFrame:EnableMouse(true)
+        statusFrame:SetResizable(true)
+        statusFrame:SetWidth(UIParent:GetWidth()/2)
+        statusFrame:SetHeight(30)
+        statusFrame:SetPoint("TOP", UIParent, "TOP", 0, -50)
+        statusFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+                               edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+                               tile = true, tileSize = 16, edgeSize = 16,
+                               insets = { left = 4, right = 4, top = 4, bottom = 4 }});
+        statusFrame:SetBackdropColor(0,0,0,1);
+        statusFrame:Show()
+        local statusText = statusFrame:CreateFontString("StatusText", "OVERLAY", "GameFontNormal")
+        statusText:SetPoint("CENTER", statusFrame, "CENTER", 0, 0)
+        statusText:SetText("Status: Running")
+        statusFrame.text = statusText
+        mainFrame.statusFrame = statusFrame
+
     end
     if runner.rotation then
         menuFrame:SetDropdownText(runner.rotation.Name)
@@ -80,6 +128,10 @@ function menuFrame:UpdateMenu()
     if runner.routine then
         menuFrame:SetRoutineDropdownText(runner.routine.Name)
     end
+end
+
+function menuFrame:UpdateStatusText(text)
+    mainFrame.statusFrame.text:SetText("Status: " .. text)
 end
 
 function rotationMenu_Initialize(self, level)

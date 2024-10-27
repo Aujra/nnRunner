@@ -7,6 +7,7 @@
         self.Class = "Demon Hunter"
         self.Name = "Demon Hunter"
         self.Description = "Demon Hunter Rotation"
+        self.PullRange = 6
     end
 
     function DemonHunterRotation:Pulse(target)
@@ -15,6 +16,10 @@
 
         if runner.LocalPlayer.IsCasting then
             return
+        end
+
+        if not C_Spell.IsCurrentSpell(6603) then
+            self:Cast("Auto Attack")
         end
 
         if UnitAffectingCombat("player") then

@@ -9,7 +9,9 @@ runner.UnitViewColumns = {
     "Reaction",
     "Level",
     "IsCasting",
-    "HP"
+    "HP",
+    "Lootable",
+    "Dead"
 }
 
 function Unit:init(pointer)
@@ -25,6 +27,7 @@ function Unit:init(pointer)
     self.isDead = Unlock(UnitIsDeadOrGhost, self.pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = 0
+    self.CanLoot = false
 end
 
 function Unit:Update()
@@ -40,11 +43,20 @@ function Unit:Update()
     self.isDead = Unlock(UnitIsDeadOrGhost, self.pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = self:GetAuraCount("Soul Fragments", "HELPFUL")
+    self.CanLoot = runner.nn.ObjectLootable(self.pointer)
     self:Debug()
 end
 
 function Unit:GetScore()
 
+end
+
+function Unit:CastingSpellByName(name)
+    local spellName, _, _, _, _, _, _, _, _, spellId = Unlock(UnitCastingInfo, self.pointer)
+    if not spellName then
+        spellName, _, _, _, _, _, _, _, _, spellId = Unlock(UnitChannelInfo, self.pointer)
+    end
+    return spellName == name
 end
 
 function Unit:GetAuraCount(name, filter)
@@ -115,6 +127,8 @@ function Unit:ToViewerRow()
         self.Level,
         self.IsCasting and "Yes" or "No",
         string.format("%.2f", self.HP),
+        self.CanLoot and "Yes" or "No",
+        self.isDead and "Yes" or "No"
     }
 end
 

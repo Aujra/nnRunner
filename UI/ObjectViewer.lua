@@ -165,3 +165,11 @@ function OV:Update()
     end
     ScrollTable:SetData(data, true)
 end
+
+function OV:Toggle()
+    if viewerFrame:IsVisible() then
+        viewerFrame:Hide()
+    else
+        viewerFrame:Show()
+    end
+end

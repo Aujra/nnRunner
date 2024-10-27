@@ -75,3 +75,55 @@ function OM:GetByPointer(pointer)
     end
     return nil
 end
+
+function OM:GetByName(name)
+    for k,v in pairs(self.gameobjects) do
+        if v.Name == name then
+            return v
+        end
+    end
+    for k,v in pairs(self.units) do
+        if v.Name == name then
+            return v
+        end
+    end
+    for k,v in pairs(self.players) do
+        if v.Name == name then
+            return v
+        end
+    end
+    return nil
+end
+
+function OM:GetClosestByName(name)
+    local closest = nil
+    local closestDistance = 9999
+    for k,v in pairs(self.gameobjects) do
+        if v.Name == name then
+            local distance = v:DistanceFromPlayer()
+            if distance < closestDistance then
+                closest = v
+                closestDistance = distance
+            end
+        end
+    end
+    for k,v in pairs(self.units) do
+        if v.Name == name then
+            local distance = v:DistanceFromPlayer()
+            if distance < closestDistance then
+                closest = v
+                closestDistance = distance
+            end
+        end
+    end
+    for k,v in pairs(self.players) do
+        if v.Name == name then
+            local distance = v:DistanceFromPlayer()
+            if distance < closestDistance then
+                closest = v
+                closestDistance = distance
+            end
+        end
+    end
+    return closest
+end
