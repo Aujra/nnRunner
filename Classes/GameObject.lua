@@ -86,7 +86,7 @@ end
 function GameObject:EnemiesInRange(range)
     local units = 0
     for k,v in pairs(runner.Engine.ObjectManager.units) do
-        if self:DistanceFrom(v) <= range and v.Reaction and v.Reaction <= 4 and not v.IsDead then
+        if self:DistanceFrom(v) <= range and v.Reaction and v.Reaction <= 4 and not v.isDead then
             units = units + 1
         end
     end

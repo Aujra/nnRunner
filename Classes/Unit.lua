@@ -53,6 +53,13 @@ function Unit:GetScore()
 
 end
 
+function Unit:LOS()
+    local x1, y1, z1 = runner.nn.ObjectPosition('player')
+    local x2, y2, z2 = runner.nn.ObjectPosition(self.pointer)
+    local x, y, z = TraceLine(x1, y1, z1+2, x2, y2, z2+2, 0x100111)
+    return x == false
+end
+
 function Unit:CastingSpellByName(name)
     local spellName, _, _, _, _, _, _, _, _, spellId = Unlock(UnitCastingInfo, self.pointer)
     if not spellName then
