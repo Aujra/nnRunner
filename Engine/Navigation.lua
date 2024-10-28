@@ -2,6 +2,9 @@ runner.Engine.Navigation = {}
 local Navigation = runner.Engine.Navigation
 runner.Engine.Navigation = Navigation
 
+local lastPOSCheck = 0
+local lastPOSX, lastPOSY, lastPOSZ = 0, 0, 0
+
 function Navigation:MoveTo(unit)
     if unit then
         local x, y, z = ObjectPosition(unit)
@@ -36,6 +39,15 @@ function Navigation:MoveTo(unit)
             if radians < 0 then radians = radians + math.pi * 2 end
             runner.nn.SetPlayerFacing(radians)
             Unlock(MoveForwardStart)
+            if GetTime() - lastPOSCheck > .5 then
+                local playerX, playerY, playerZ = ObjectPosition("player")
+                if playerX == lastPOSX and playerY == lastPOSY then
+                    print("Stuck, jumping")
+                    Unlock(JumpOrAscendStart)
+                end
+                lastPOSCheck = GetTime()
+                lastPOSX, lastPOSY, lastPOSZ = ObjectPosition("player")
+            end
         end
     end
 end

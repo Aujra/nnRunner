@@ -7,187 +7,228 @@ function DungeonRoutine:init()
     self.Name = "DungeonRoutine"
     self.Description = "DungeonRoutine"
     self.Steps = {}
+    self.StatusFrame = nil
+    self.SettingsFrame = nil
+    self:BuildGUI()
 end
 
 function DungeonRoutine:Run()
     if not IsInInstance() then
-        return
-    end
 
-    local player = runner.LocalPlayer
-    local role = player.Role
-
-    local dungeon_profile = self:FindProfile()
-    if dungeon_profile then
-        if tableCount(self.Steps) == 0 then
-            self.Steps = dungeon_profile.Steps
+        if not IsIndoors() and not IsMounted() then
+            C_MountJournal.SummonByID(284)
         end
-        local step = self.Steps[1]
-        local lootable = self:GetClosestLootableEnemy()
-
-        if runner.LocalPlayer.IsDead then
-            RePopMe()
-            self.Steps = dungeon_profile.Steps
-            return
-        end
-
-        if lootable and not UnitAffectingCombat("player") then
-            if lootable:DistanceFromPlayer() < 4 then
-                runner.UI.menuFrame:UpdateStatusText("Moving to loot " .. lootable.Name)
-                Unlock(MoveForwardStop)
-                runner.nn.ObjectInteract(lootable.pointer)
+        local repair = runner.Engine.ObjectManager:GetClosestByName("Drix Blackwrench")
+        if repair then
+            if repair:DistanceFromPlayer() < 10 then
+                runner.nn.ObjectInteract(repair.pointer)
             else
-                runner.UI.menuFrame:UpdateStatusText("Looting " .. lootable.Name)
-                runner.Engine.Navigation:MoveTo(lootable.pointer)
+                runner.Engine.Navigation:MoveTo(repair.pointer)
             end
-            return
+            if MerchantRepairAllButton:IsVisible() then
+                MerchantRepairAllButton:Click()
+            end
+            if MerchantSellAllJunkButton:IsVisible() then
+                MerchantSellAllJunkButton:Click()
+            end
         end
 
-        if UnitAffectingCombat("player") then
-            if step.Task == "kill" then
-                if step.Mechanics and self:NeedToDoMechanic(step.Mechanics) then
-                    for k, mechanic in pairs(step.Mechanics) do
-                        if self:MechanicConditionMet(mechanic.Condition) then
-                            if mechanic.Task == "interact_without_aura" then
-                                local interactable = runner.Engine.ObjectManager:GetClosestByName(mechanic.Object)
-                                if interactable then
-                                    if interactable:DistanceFromPlayer() < 4 then
-                                        runner.UI.menuFrame:UpdateStatusText("Interacting with " .. mechanic.Object)
-                                        Unlock(MoveForwardStop)
-                                        runner.nn.ObjectInteract(interactable.pointer)
-                                    else
-                                        runner.UI.menuFrame:UpdateStatusText("Move to " .. mechanic.Object)
-                                        runner.Engine.Navigation:MoveTo(interactable.pointer)
-                                    end
-                                end
-                            end
-                            if mechanic.Task == "move_to_with_aura" then
-                                local mob = self:FindMobWithNameAndAura(mechanic.Mob, mechanic.Aura)
-                                if mob then
-                                    if mob:DistanceFromPlayer() > 8 then
-                                        runner.UI.menuFrame:UpdateStatusText("Moving to " .. mechanic.Mob)
-                                        runner.Engine.Navigation:MoveTo(mob.pointer)
-                                    else
-                                        Unlock(MoveForwardStop)
-                                    end
-                                end
-                            end
-                        end
-                    end
-                    return
-                else
-                    runner.UI.menuFrame:UpdateStatusText("No mechanics to do")
-                end
+        if (select(1,GetLFGQueueStats(LE_LFG_CATEGORY_LFD))) == nil then
+            if not LFDQueueFrame:IsVisible() then
+                ToggleLFDParentFrame()
+            else
+                print("Need to queue")
+                Unlock(RunMacroText, "/click LFDQueueFrameFindGroupButton")
             end
-
-            local closestEnemy = self:GetClosestEnemy()
-            if closestEnemy then
-                if closestEnemy:DistanceFromPlayer() > runner.rotation.PullRange then
-                    runner.UI.menuFrame:UpdateStatusText("Moving to fight " .. closestEnemy.Name)
-                    runner.Engine.Navigation:MoveTo(closestEnemy.pointer)
-                else
-                    Unlock("MoveForwardStop")
-                    runner.UI.menuFrame:UpdateStatusText("Fighting " .. closestEnemy.Name)
-                    Unlock(TargetUnit, closestEnemy.pointer)
-                    runner.Engine.Navigation:FaceUnit(closestEnemy.pointer)
-                    runner.rotation:Pulse(closestEnemy)
-                end
-            end
-            return
         end
+        if LFGDungeonReadyDialogEnterDungeonButton and LFGDungeonReadyDialogEnterDungeonButton:IsVisible() then
+            print("Time to enter")
+            Unlock(RunMacroText, "/click LFGDungeonReadyDialogEnterDungeonButton")
+        end
+    else
+        local player = runner.LocalPlayer
+        local role = player.Role
 
-        if step then
-            if self:NeedStep(step) then
-                if step.Task == "move_to" then
-                    local location = step.Locations[1]
-                    local x = location.X
-                    local y = location.Y
-                    local z = location.Z
-                    local radius = location.Radius
+        local dungeon_profile = self:FindProfile()
+        if dungeon_profile then
+            if tableCount(self.Steps) == 0 then
+                print("Setting steps")
+                self.Steps = dungeon_profile.Steps
+            end
 
-                    runner.Draw:Circle(x, y, z, radius)
-                    runner.Draw:Text(step.Name, "GAMEFONTNORMAL", x, y, z)
+            self:UpdateStepText(self.Steps)
 
-                    if player:DistanceFromPoint(x, y, z) > radius then
-                        runner.Engine.Navigation:MoveToPoint(x, y, z)
-                    else
-                        Unlock(MoveForwardStop)
-                        DungeonRoutine:MarkStepComplete(step, self.Steps)
-                    end
+            local step = self.Steps[1]
+            local lootable = self:GetClosestLootableEnemy()
+
+            if runner.LocalPlayer.isDead then
+                RepopMe()
+                self.Steps = dungeon_profile.Steps
+                return
+            end
+
+            if lootable and not UnitAffectingCombat("player") then
+                if lootable:DistanceFromPlayer() < 4 then
+                    runner.UI.menuFrame:UpdateStatusText("Moving to loot " .. lootable.Name)
+                    Unlock(MoveForwardStop)
+                    runner.nn.ObjectInteract(lootable.pointer)
+                else
+                    runner.UI.menuFrame:UpdateStatusText("Looting " .. lootable.Name)
+                    runner.Engine.Navigation:MoveTo(lootable.pointer)
                 end
+                return
+            end
+
+            if UnitAffectingCombat("player") then
                 if step.Task == "kill" then
-                    local mob = self:FindMobWithName(step.Mobs[1])
-                    local deadmob = self:FindMobWithNameDead(step.Mobs[1])
-                    if deadmob then
-                        DungeonRoutine:MarkStepComplete(step, self.Steps)
+                    if step.Mechanics and self:NeedToDoMechanic(step.Mechanics) then
+                        for k, mechanic in pairs(step.Mechanics) do
+                            if self:MechanicConditionMet(mechanic.Condition) then
+                                if mechanic.Task == "interact_without_aura" then
+                                    local interactable = runner.Engine.ObjectManager:GetClosestByName(mechanic.Object)
+                                    if interactable then
+                                        if interactable:DistanceFromPlayer() < 4 then
+                                            runner.UI.menuFrame:UpdateStatusText("Interacting with " .. mechanic.Object)
+                                            Unlock(MoveForwardStop)
+                                            runner.nn.ObjectInteract(interactable.pointer)
+                                        else
+                                            runner.UI.menuFrame:UpdateStatusText("Move to " .. mechanic.Object)
+                                            runner.Engine.Navigation:MoveTo(interactable.pointer)
+                                        end
+                                    end
+                                end
+                                if mechanic.Task == "move_to_with_aura" then
+                                    local mob = self:FindMobWithNameAndAura(mechanic.Mob, mechanic.Aura)
+                                    if mob then
+                                        if mob:DistanceFromPlayer() > 5 then
+                                            runner.UI.menuFrame:UpdateStatusText("Moving to " .. mechanic.Mob)
+                                            runner.Engine.Navigation:MoveTo(mob.pointer)
+                                        else
+                                            Unlock(MoveForwardStop)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                        return
+                    else
+                        runner.UI.menuFrame:UpdateStatusText("No mechanics to do")
                     end
-                    if mob and (mob.isDead or mob.CanLoot) then
-                        DungeonRoutine:MarkStepComplete(step, self.Steps)
-                    end
-                    if mob then
-                        if mob:DistanceFromPlayer() > 8 then
-                            runner.Engine.Navigation:MoveTo(mob.pointer)
+                end
+
+                local closestEnemy = self:GetClosestEnemy()
+                if closestEnemy then
+                    if closestEnemy:DistanceFromPlayer() > runner.rotation.PullRange or not closestEnemy:LOS() then
+                        runner.UI.menuFrame:UpdateStatusText("Moving to fight " .. closestEnemy.Name)
+                        runner.Engine.Navigation:MoveTo(closestEnemy.pointer)
+                    else
+                        Unlock("MoveForwardStop")
+                        runner.UI.menuFrame:UpdateStatusText("Fighting " .. closestEnemy.Name)
+                        Unlock(TargetUnit, closestEnemy.pointer)
+                        runner.Engine.Navigation:FaceUnit(closestEnemy.pointer)
+                        if not Unlock(UnitAffectingCombat, closestEnemy.pointer) then
+                            runner.rotation:Pull(closestEnemy)
+                        else
+                            runner.rotation:Pulse(closestEnemy)
                         end
                     end
                 end
-                if step.Task == "interact_with" then
-                    local interactable = runner.Engine.ObjectManager:GetClosestByName(step.Object)
-                    print("We found an interactable: " .. interactable.Name)
-                    if interactable then
-                        if interactable:DistanceFromPlayer() < 4 then
-                            print("Interacting with " .. step.Object)
-                            runner.UI.menuFrame:UpdateStatusText("Interacting with " .. step.Object)
-                            Unlock(MoveForwardStop)
-                            runner.nn.ObjectInteract(interactable.pointer)
-                            DungeonRoutine:MarkStepComplete(step, self.Steps)
+                return
+            end
+
+            if step then
+                if self:NeedStep(step) then
+                    if step.Task == "move_to" then
+                        local location = step.Locations[1]
+                        local x = location.X
+                        local y = location.Y
+                        local z = location.Z
+                        local radius = location.Radius
+
+                        runner.Draw:Circle(x, y, z, radius)
+                        runner.Draw:Text(step.Name, "GAMEFONTNORMAL", x, y, z)
+
+                        if player:DistanceFromPoint(x, y, z) > radius then
+                            runner.Engine.Navigation:MoveToPoint(x, y, z)
                         else
-                            print("Moving to " .. step.Object)
-                            runner.UI.menuFrame:UpdateStatusText("Move to " .. step.Object)
-                            runner.Engine.Navigation:MoveTo(interactable.pointer)
+                            Unlock(MoveForwardStop)
+                            DungeonRoutine:MarkStepComplete(step, self.Steps)
                         end
                     end
+                    if step.Task == "kill" then
+                        local mob = self:FindMobWithName(step.Mobs[1])
+                        local deadmob = self:FindMobWithNameDead(step.Mobs[1])
+                        if deadmob then
+                            DungeonRoutine:MarkStepComplete(step, self.Steps)
+                        end
+                        if mob and (mob.isDead or mob.CanLoot) then
+                            DungeonRoutine:MarkStepComplete(step, self.Steps)
+                        end
+                        if mob then
+                            if mob:DistanceFromPlayer() > 8 then
+                                runner.Engine.Navigation:MoveTo(mob.pointer)
+                            end
+                        end
+                    end
+                    if step.Task == "interact_with" then
+                        local interactable = runner.Engine.ObjectManager:GetClosestByName(step.Object)
+                        print("We found an interactable: " .. interactable.Name)
+                        if interactable then
+                            if interactable:DistanceFromPlayer() < step.Range then
+                                print("Interacting with " .. step.Object)
+                                runner.UI.menuFrame:UpdateStatusText("Interacting with " .. step.Object)
+                                Unlock(MoveForwardStop)
+                                runner.nn.ObjectInteract(interactable.pointer)
+                                DungeonRoutine:MarkStepComplete(step, self.Steps)
+                            else
+                                print("Moving to " .. step.Object)
+                                runner.UI.menuFrame:UpdateStatusText("Move to " .. step.Object)
+                                runner.Engine.Navigation:MoveTo(interactable.pointer)
+                            end
+                        end
+                    end
+                else
+                    DungeonRoutine:MarkStepComplete(step, self.Steps)
                 end
             else
-                DungeonRoutine:MarkStepComplete(step, self.Steps)
+                C_PartyInfo.LeaveParty()
             end
-        else
-            print("We are fucking done")
         end
-    end
 
-    --if role == "TANK" then
-    --    local closestEnemy = self:GetClosestEnemy()
-    --    if closestEnemy then
-    --        if closestEnemy:DistanceFromPlayer() > 30 then
-    --            print("Moving to enemy")
-    --            runner.Engine.Navigation:MoveTo(closestEnemy.pointer)
-    --        else
-    --            print("Fight stuff")
-    --            Unlock(TargetUnit, closestEnemy.pointer)
-    --            if not UnitAffectingCombat("player") then
-    --                Unlock(CastSpellByName, "Throw Glaive", closestEnemy.pointer)
-    --            end
-    --            runner.Engine.Navigation:FaceUnit(closestEnemy.pointer)
-    --            if closestEnemy:DistanceFromPlayer() > 6 then
-    --                Unlock(MoveForwardStart)
-    --            else
-    --                Unlock(MoveForwardStop)
-    --            end
-    --            runner.rotation:Pulse(closestEnemy)
-    --        end
-    --    end
-    --else
-    --    local tank = self:GetTank()
-    --    if tank then
-    --        if tank:DistanceFromPlayer() > 20 then
-    --            runner.Engine.Navigation:MoveTo(tank)
-    --        else
-    --            local target = Unlock(AssistUnit, tank.pointer)
-    --            Unlock(CastSpellByName, "Throw Glaive", target)
-    --            runner.rotation:Pulse(target)
-    --        end
-    --    end
-    --end
+        --if role == "TANK" then
+        --    local closestEnemy = self:GetClosestEnemy()
+        --    if closestEnemy then
+        --        if closestEnemy:DistanceFromPlayer() > 30 then
+        --            print("Moving to enemy")
+        --            runner.Engine.Navigation:MoveTo(closestEnemy.pointer)
+        --        else
+        --            print("Fight stuff")
+        --            Unlock(TargetUnit, closestEnemy.pointer)
+        --            if not UnitAffectingCombat("player") then
+        --                Unlock(CastSpellByName, "Throw Glaive", closestEnemy.pointer)
+        --            end
+        --            runner.Engine.Navigation:FaceUnit(closestEnemy.pointer)
+        --            if closestEnemy:DistanceFromPlayer() > 6 then
+        --                Unlock(MoveForwardStart)
+        --            else
+        --                Unlock(MoveForwardStop)
+        --            end
+        --            runner.rotation:Pulse(closestEnemy)
+        --        end
+        --    end
+        --else
+        --    local tank = self:GetTank()
+        --    if tank then
+        --        if tank:DistanceFromPlayer() > 20 then
+        --            runner.Engine.Navigation:MoveTo(tank)
+        --        else
+        --            local target = Unlock(AssistUnit, tank.pointer)
+        --            Unlock(CastSpellByName, "Throw Glaive", target)
+        --            runner.rotation:Pulse(target)
+        --        end
+        --    end
+        --end
+    end
 end
 
 function DungeonRoutine:NeedStep(step)
@@ -365,6 +406,63 @@ function DungeonRoutine:GetClosestEnemy()
         end
     end
     return closestEnemy
+end
+
+function DungeonRoutine:BuildGUI()
+    if not self.StatusFrame then
+        self.StatusFrame = CreateFrame("Frame", "DungeonRoutineself.StatusFrame", UIParent, "BasicFrameTemplateWithInset")
+        self.StatusFrame:SetSize(200, 150)
+        self.StatusFrame:SetMovable(true)
+        self.StatusFrame:EnableMouse(true)
+        self.StatusFrame:RegisterForDrag("LeftButton")
+        self.StatusFrame:SetScript("OnDragStart", self.StatusFrame.StartMoving)
+        self.StatusFrame:SetScript("OnDragStop", self.StatusFrame.StopMovingOrSizing)
+        self.StatusFrame:SetPoint("CENTER", UIParent, "CENTER")
+        self.StatusFrame.title = self.StatusFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        self.StatusFrame.title:SetPoint("LEFT", self.StatusFrame.TitleBg, "LEFT", 10, -5)
+        self.StatusFrame.title:SetText("Dungeon Routine")
+        self.StatusFrame.title:SetWidth(200)
+        self.StatusFrame.title:SetHeight(20)
+        self.StatusFrame.title:SetJustifyH("LEFT")
+        self.StatusFrame.title:SetJustifyV("TOP")
+        self.StatusFrame:Show()
+
+        local statusText = self.StatusFrame:CreateFontString("StatusText", "OVERLAY", "GameFontNormal")
+        statusText:SetPoint("TOPLEFT", self.StatusFrame, "TOPLEFT", 5, -30)
+        statusText:SetText("Status: Running")
+        self.StatusFrame.text = statusText
+
+        local stepText = self.StatusFrame:CreateFontString("StepText", "OVERLAY", "GameFontNormal")
+        stepText:SetPoint("TOPLEFT", self.StatusFrame, "TOPLEFT", 5, -50)
+        stepText:SetText("Step: None")
+        self.StatusFrame.step = stepText
+    end
+end
+
+function DungeonRoutine:HideGUI()
+    if self.StatusFrame then
+        self.StatusFrame:Hide()
+    end
+end
+function DungeonRoutine:ShowGUI()
+    if self.StatusFrame then
+        self.StatusFrame:Show()
+    end
+end
+function DungeonRoutine:UpdateStatusText(text)
+    if self.StatusFrame then
+        self.StatusFrame.text:SetText("Status: " .. text)
+    end
+end
+function DungeonRoutine:UpdateStepText(steps)
+    if self.StatusFrame then
+        self.StatusFrame.step:SetText("Steps\n ------\n")
+        for k, step in pairs(steps) do
+            self.StatusFrame.step:SetText(self.StatusFrame.step:GetText() .. step.Name .. "\n")
+        end
+    end
+    local stepsCount = tableCount(self.Steps)
+    self.StatusFrame:SetHeight(100 + (stepsCount * 12))
 end
 
 registerRoutine(DungeonRoutine)

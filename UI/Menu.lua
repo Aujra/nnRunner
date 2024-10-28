@@ -73,7 +73,10 @@ function menuFrame:UpdateMenu()
         showWaypoints:SetScript("OnClick", function()
             local waypoint_string = ""
             for k,v in pairs(runner.waypoints) do
-                waypoint_string = waypoint_string .. '["X"] = ' .. v.x .. ', ["Y"] = ' .. v.y .. ', ["Z"] = ' .. v.z .. ',\n'
+                waypoint_string = waypoint_string .. '{ ["Name"] = "Move to main room",\n'
+                waypoint_string = waypoint_string .. '["Task"] = "move_to",\n'
+                waypoint_string = waypoint_string .. '["Locations"] = {{'
+                waypoint_string = waypoint_string .. '["X"] = ' .. v.x .. ', ["Y"] = ' .. v.y .. ', ["Z"] = ' .. v.z .. ', ["Radius"] = 3, }}\n}, \n\n'
             end
             runner.nn.WriteFile("/scripts/mainrunner/waypoints.json", waypoint_string)
         end)
@@ -150,7 +153,16 @@ function routineMenu_Initialize(self, level)
     local info = UIDropDownMenu_CreateInfo()
     for k,v in pairs(runner.routines) do
         info.text = v.Name
-        info.func = function() runner.routine = v end
+        info.func = function()
+            runner.routine = v
+            for k,v in pairs(runner.routines) do
+                if v.Name == runner.routine.Name then
+                    v:ShowGUI()
+                else
+                    v:HideGUI()
+                end
+            end
+        end
         UIDropDownMenu_AddButton(info)
     end
 end

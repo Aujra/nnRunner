@@ -11,6 +11,7 @@ function BaseRotation:init()
     self.Focus = nil
     self.DeEnrage = nil
     self.Target = nil
+    self.LowestPlayer = nil
     self.PullRange = 30
 end
 
@@ -32,6 +33,7 @@ function BaseRotation:Pulse(target)
     self.Focus = self:GetFocus()
     self.DeEnrage = self:GetDeEnrage()
     self.SpellSteal = self:ClosestSpellSteal()
+    self.LowestPlayer = self:GetLowestPlayer()
 
     if runner.LocalPlayer.IsCasting then
         return
@@ -41,6 +43,22 @@ function BaseRotation:Pulse(target)
         local x,y,z = runner.nn.ObjectPosition('target')
         runner.nn.ClickPosition(x,y,z)
     end
+end
+
+function BaseRotation:GetLowestPlayer(range)
+    range = range or 40
+    local lowestPlayer = nil
+    local lowestHP = 100
+    for k,v in pairs(runner.Engine.ObjectManager.players) do
+        if v.HP < lowestHP and v:DistanceFromPlayer() < range then
+            lowestPlayer = v
+            lowestHP = v.HP
+        end
+    end
+    if runner.LocalPlayer.HP < lowestHP then
+        lowestPlayer = runner.LocalPlayer
+    end
+    return lowestPlayer
 end
 
 function BaseRotation:CanCast(spell, target, forceMelee)
@@ -76,6 +94,8 @@ function BaseRotation:CanCast(spell, target, forceMelee)
         inRange = target:DistanceFromPlayer() < 10
     end
     local canCast = C_Spell.IsSpellUsable(spell)
+
+    --print("Spell: " .. spell .. " Known: " .. tostring(isKnown) .. " CD: " .. tostring(onCD) .. " Range: " .. tostring(inRange) .. " Castable: " .. tostring(canCast))
 
     return not onCD and inRange and isKnown and canCast
 end

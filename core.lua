@@ -24,6 +24,7 @@ runner.lastTick = 0
 runner.lastMount = 0
 runner.lastDebug = 0
 runner.lastAFK = 0
+runner.lastEnter = 0
 
 runner.profiles = {}
 
@@ -58,9 +59,11 @@ nn:Require('/scripts/mainrunner/Classes/LocalPlayer.lua', runner)
 nn:Require('/scripts/mainrunner/UI/ObjectViewer.lua', runner)
 nn:Require('/scripts/mainrunner/UI/Menu.lua', runner)
 --Rotations
-nn:Require('/scripts/mainrunner/Rotations/BaseRotation.lua', runner)
-nn:Require('/scripts/mainrunner/Rotations/HunterRotation.lua', runner)
-nn:Require('/scripts/mainrunner/Rotations/DemonHunterRotation.lua', runner)
+local path = "/scripts/mainrunner/Rotations/*.lua"
+local files = nn.ListFiles(path)
+for k,v in pairs(files) do
+    nn:Require("/scripts/mainrunner/Rotations/" .. v, runner)
+end
 --Routines
 nn:Require('/scripts/mainrunner/Routine/BaseRoutine.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/RotationRoutine.lua', runner)

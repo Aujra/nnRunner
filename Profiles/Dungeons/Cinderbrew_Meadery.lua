@@ -414,7 +414,8 @@ profile["Steps"] = {
     {
         ["Name"] = "Taking the bee up",
         ["Task"] = "interact_with",
-        ["Object"] = "Bee Line"
+        ["Object"] = "Bee Line",
+        ["Range"] = 4
     },
     {
         ["Name"] = "Moving to final boss",
