@@ -14,6 +14,9 @@ function GameObject:init(pointer)
     self.Name = ObjectName(self.pointer)
     self.Type = runner.nn.GameObjectType(self.pointer)
     self.x, self.y, self.z = ObjectPosition(self.pointer)
+    self.Facing = ObjectFacing(self.pointer)
+    self.BoundingRadius = ObjectBoundingRadius(self.pointer)
+    self.Height = ObjectHeight(self.pointer)
     self.Distance = 99999
     self.PathDistance = 0
 end
@@ -23,6 +26,7 @@ function GameObject:Update()
     self.Type = runner.nn.GameObjectType(self.pointer)
     self.x, self.y, self.z = ObjectPosition(self.pointer)
     self.Distance = self:DistanceFromPlayer()
+    self.Facing = ObjectFacing(self.pointer)
 end
 
 function GameObject:ToViewerRow()

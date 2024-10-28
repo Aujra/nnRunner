@@ -10,6 +10,8 @@ runner.UnitViewColumns = {
     "Level",
     "IsCasting",
     "HP",
+    "Height",
+    "BoundingRadius",
     "Lootable",
     "Dead"
 }
@@ -127,6 +129,8 @@ function Unit:ToViewerRow()
         self.Level,
         self.IsCasting and "Yes" or "No",
         string.format("%.2f", self.HP),
+        string.format("%.2f", self.Height),
+        string.format("%.2f", self.BoundingRadius),
         self.CanLoot and "Yes" or "No",
         self.isDead and "Yes" or "No"
     }
