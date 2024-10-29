@@ -17,6 +17,14 @@ end
 function BaseRoutine:BuildGUI()
 end
 
+function BaseRoutine:ShowGUI()
+    
+end
+
+function BaseRoutine:HideGUI()
+    
+end
+
 registerRoutine(BaseRoutine)
 
 function tableCount(t)

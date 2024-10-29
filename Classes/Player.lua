@@ -58,7 +58,7 @@ function Player:ToViewerRow()
         self.Level,
         self.IsCasting and "Yes" or "No",
         string.format("%.2f", self.HP),
-        self.IsFocus and "yes" or "no"
+        self.IsFocus and "yes" or "no",
         string.format("%.2f", self.Height),
         string.format("%.2f", self.BoundingRadius)
     }
