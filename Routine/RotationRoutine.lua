@@ -17,4 +17,7 @@ end
 function RotationRoutine:BuildGUI()
 end
 
+function RotationRoutine:HideGUI()
+end
+
 registerRoutine(RotationRoutine)

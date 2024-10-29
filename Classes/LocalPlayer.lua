@@ -29,7 +29,6 @@ function LocalPlayer:EquipUpgrades()
                 local itemInfo = C_Item.GetItemInfo(item.itemID)
                 local isUpgrade = PawnIsItemDefinitivelyAnUpgrade(itemLink, true)
                 if isUpgrade then
-                    print("Equipping upgrade " .. itemInfo)
                     C_Item.EquipItemByName(itemInfo)
                     if StaticPopup1Button1 ~= nil and StaticPopup1Button1:IsVisible() then
                         print("Accepting upgrade")

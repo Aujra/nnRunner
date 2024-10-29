@@ -27,6 +27,21 @@ function ShamanRotation:Pulse(target)
         if runner.LocalPlayer.specName == "Elemental" then
             local enemiesAround = self.target:EnemiesInRange(8)
 
+            if self:CanCast("Stone Bulwark Totem", runner.LocalPlayer) and runner.LocalPlayer.HP < 50 then
+                self:Cast("Stone Bulwark Totem")
+                return
+            end
+
+            if self:CanCast("Healing Stream Totem", runner.LocalPlayer) and runner.LocalPlayer.HP < 70 then
+                self:Cast("Healing Stream Totem")
+                return
+            end
+
+            if self:CanCast("Earth Shield", runner.LocalPlayer) and not runner.LocalPlayer:HasAura("Earth Shield", HELPFUL) then
+                self:Cast("Earth Shield")
+                return
+            end
+
             if self.ClosestCaster and self.ClosestCaster:DistanceFromPlayer() < 25 and self:CanCast("Wind Shear", self.ClosestCaster.pointer) then
                 self:Cast("Wind Shear", self.ClosestCaster.pointer)
                 return
@@ -68,19 +83,23 @@ function ShamanRotation:Pulse(target)
                 self:Cast("Earth Shock", self.Target.pointer)
                 return
             end
+            if runner.LocalPlayer:HasAura("Icefury", "HELPFUL") then
+                self:Cast("Icefury", self.Target.pointer)
+                return
+            end
             if self:CanCast("Lava Burst", self.Target) then
                 self:Cast("Lava Burst", self.Target.pointer)
+                return
+            end
+            if runner.LocalPlayer:HasAura("Tempest", "HELPFUL") then
+                self:Cast("Tempest", self.Target.pointer)
                 return
             end
             if self:CanCast("Chain Lightning", self.Target) and enemiesAround > 2 then
                 self:Cast("Chain Lightning", self.Target.pointer)
                 return
             end
-            if self:CanCast("Lightning Bolt", self.Target) or self:CanCast("Tempest", self.Target) and enemiesAround <= 2 then
-                self:Cast("Lightning Bolt", self.Target.pointer)
-                self:Cast("Tempest", self.Target.pointer)
-                return
-            end
+            self:Cast("Lightning Bolt", self.Target.pointer)
         end
 
         if runner.LocalPlayer.specName == "Restoration" then
