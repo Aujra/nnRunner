@@ -10,11 +10,13 @@ function DungeonRoutine:init()
     self.StatusFrame = nil
     self.SettingsFrame = nil
     self:BuildGUI()
+    self.leaveAfter = 0
 end
 
 function DungeonRoutine:Run()
     if not IsInInstance() then
-
+        print("Resetting steps")
+        self.Steps = {}
         if not IsIndoors() and not IsMounted() then
             C_MountJournal.SummonByID(284)
         end
@@ -51,9 +53,11 @@ function DungeonRoutine:Run()
 
         local dungeon_profile = self:FindProfile()
         if dungeon_profile then
+            local copy = deep_copy(dungeon_profile.Steps)
             if tableCount(self.Steps) == 0 then
                 print("Setting steps")
-                self.Steps = dungeon_profile.Steps
+                self.Steps = copy
+                table.insert(self.Steps, {Task = "end_dungeon", Name = "End dungeon" })
             end
 
             self:UpdateStepText(self.Steps)
@@ -106,6 +110,23 @@ function DungeonRoutine:Run()
                                         else
                                             Unlock(MoveForwardStop)
                                         end
+                                    end
+                                end
+                                if mechanic.Task == "move_to" then
+                                    local location = mechanic.Locations[1]
+                                    local x = location.X
+                                    local y = location.Y
+                                    local z = location.Z
+                                    local radius = location.Radius
+
+                                    runner.Draw:Circle(x, y, z, radius)
+                                    runner.Draw:Text(mechanic.Name, "GAMEFONTNORMAL", x, y, z)
+
+                                    if player:DistanceFromPoint(x, y, z) > radius then
+                                        runner.UI.menuFrame:UpdateStatusText("Moving to " .. mechanic.Name)
+                                        runner.Engine.Navigation:MoveToPoint(x, y, z)
+                                    else
+                                        Unlock(MoveForwardStop)
                                     end
                                 end
                             end
@@ -187,11 +208,12 @@ function DungeonRoutine:Run()
                             end
                         end
                     end
+                    if step.Task == "end_dungeon" then
+                        C_PartyInfo.LeaveParty()
+                    end
                 else
                     DungeonRoutine:MarkStepComplete(step, self.Steps)
                 end
-            else
-                C_PartyInfo.LeaveParty()
             end
         end
 
@@ -297,6 +319,19 @@ function DungeonRoutine:MechanicConditionMet(condition)
     if condition.PlayerAura then
         passed = runner.LocalPlayer:HasAura(condition.PlayerAura)
         if not passed then
+            return false
+        end
+    end
+
+    if condition.DistanceLocation then
+        local location = condition.Locations[1]
+        local x = location.X
+        local y = location.Y
+        local z = location.Z
+        local radius = location.Radius
+
+        local distance = runner.LocalPlayer:DistanceFromPoint(x, y, z)
+        if distance > radius then
             return false
         end
     end

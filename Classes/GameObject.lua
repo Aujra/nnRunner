@@ -56,6 +56,9 @@ end
 
 function GameObject:DistanceFromPoint(x, y, z)
     local x1, y1, z1 = self.x, self.y, self.z
+    if not x1 then
+        return 99999
+    end
     return math.sqrt((x - x1)^2 + (y - y1)^2 + (z - z1)^2) or 99999
 end
 

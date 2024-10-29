@@ -1,5 +1,6 @@
 local nn = ...
 nn:Require('/scripts/mainrunner/class.lua', runner)
+nn:Require('/scripts/mainrunner/LibStub.lua', runner)
 
 --Main tables
 runner = {}
@@ -43,6 +44,26 @@ end
 function registerProfile(profile)
     print("Registering profile: " .. profile.Name)
     table.insert(runner.profiles, profile)
+end
+
+function deep_copy( original, copies )
+    if type( original ) ~= 'table' then return original end
+
+    -- original is a table.
+    copies = copies or {} -- this is a cache of already copied tables.
+
+    -- This table has been copied previously.
+    if copies[original] then return copies[original] end
+
+    -- We need to deep copy the table not deep copied previously.
+    local copy = {}
+    copies[original] = copy -- store a reference to copied table in the cache.
+    for key, value in pairs( original ) do
+        local dc_key, dc_value = deep_copy( key, copies ), deep_copy( value, copies )
+        copy[dc_key] = dc_value
+    end
+    setmetatable(copy, deep_copy( getmetatable( original ), copies) )
+    return copy
 end
 
 --Require Files
