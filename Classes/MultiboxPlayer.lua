@@ -4,6 +4,8 @@ runner.Classes.MultiboxPlayer = MultiboxPlayer
 
 function MultiboxPlayer:init(pointer)
     runner.Classes.Player.init(self, pointer)
+    
+    -- Initialize multibox properties with defaults
     self.isMultiboxEnabled = false
     self.isMaster = false
     self.forcedFollow = false
@@ -16,26 +18,30 @@ function MultiboxPlayer:init(pointer)
     self.FOLLOW_MAX_DISTANCE = 5
     self.MELEE_RANGE = 5
     self.RANGED_COMBAT_RANGE = 25
+    
+    -- Follow position tracking
+    self.followPosition = nil
+    self.followAngle = nil
+    self.lastMasterFacing = nil
+    self.lastMasterMoving = nil
+    self.lastPositionUpdate = 0
+    self.POSITION_UPDATE_COOLDOWN = 0.2  -- Seconds before forced position update
+    self.DIRECTION_CHANGE_THRESHOLD = math.rad(45)  -- 45 degrees in radians
 end
 
 function MultiboxPlayer:Update()
+    -- Call parent update
     runner.Classes.Player.Update(self)
-    -- Update master reference if we're a slave
-    if not self.isMaster and self.masterGUID then
-        self:UpdateMasterReference()
-    end
-end
-
-function MultiboxPlayer:UpdateMasterReference()
-    if not self.masterGUID then return end
     
-    for _, player in pairs(runner.Engine.ObjectManager.players) do
-        if UnitGUID(player.pointer) == self.masterGUID then
-            self.masterObject = player
-            return
+    -- Update master object reference if needed
+    if self.masterGUID and not self.masterObject then
+        for _, player in pairs(runner.Engine.ObjectManager.players) do
+            if UnitGUID(player.pointer) == self.masterGUID then
+                self.masterObject = player
+                break
+            end
         end
     end
-    self.masterObject = nil
 end
 
 function MultiboxPlayer:GetMasterTarget()
@@ -201,6 +207,207 @@ function MultiboxPlayer:ShouldFollowMaster()
     return self.forcedFollow or not UnitAffectingCombat(self.masterObject.pointer)
 end
 
+function MultiboxPlayer:NeedsNewFollowPosition()
+    if not self.followPosition then return true end
+    if not self.masterObject then return false end
+    
+    local currentTime = GetTime()
+    
+    -- Check time-based update
+    if currentTime - self.lastPositionUpdate > self.POSITION_UPDATE_COOLDOWN then
+        return true
+    end
+    
+    -- Check distance
+    local distance = self:GetDistanceFromMaster()
+    if distance > self.FOLLOW_MAX_DISTANCE * 1.5 then
+        return true
+    end
+    
+    -- Check if master has stopped moving
+    local masterMoving = GetUnitSpeed(self.masterObject.pointer) > 0
+    if self.lastMasterMoving ~= masterMoving then
+        self.lastMasterMoving = masterMoving
+        return true
+    end
+    
+    -- Only check facing changes if master is moving
+    if masterMoving then
+        local masterFacing = ObjectFacing(self.masterObject.pointer)
+        if self.lastMasterFacing then
+            local facingDiff = math.abs(masterFacing - self.lastMasterFacing)
+            if facingDiff > self.DIRECTION_CHANGE_THRESHOLD then
+                return true
+            end
+        end
+    end
+    
+    return false
+end
+
+-- function MultiboxPlayer:CalculateFollowPosition()
+--     if not self.masterObject then return nil end
+    
+--     local mx, my, mz = ObjectPosition(self.masterObject.pointer)
+--     if not mx then return nil end
+    
+--     local masterFacing = ObjectFacing(self.masterObject.pointer)
+--     local masterMoving = GetUnitSpeed(self.masterObject.pointer) > 0
+    
+--     -- Calculate base angle (directly behind)
+--     local baseAngle = (masterFacing + math.pi) % (2 * math.pi)
+    
+--     -- If master is stopped, stay directly behind
+--     -- If master is moving, use stored angle or calculate new one with offset
+--     if not masterMoving then
+--         self.followAngle = baseAngle
+--     elseif not self.followAngle then
+--         local offset = (math.random() - 0.5) * math.pi  -- -90 to +90 degrees
+--         self.followAngle = (baseAngle + offset) % (2 * math.pi)
+--     end
+    
+--     -- Use shorter follow distance when master is stopped
+--     local distance = masterMoving and 
+--         (self.FOLLOW_MIN_DISTANCE + (self.FOLLOW_MAX_DISTANCE - self.FOLLOW_MIN_DISTANCE) * 0.5) or
+--         self.FOLLOW_MIN_DISTANCE
+    
+--     local x = mx + math.cos(self.followAngle) * distance
+--     local y = my + math.sin(self.followAngle) * distance
+    
+--     -- Update tracking variables
+--     self.followPosition = {x = x, y = y, z = mz}
+--     self.lastMasterFacing = masterFacing
+--     self.lastMasterMoving = masterMoving
+--     self.lastPositionUpdate = GetTime()
+    
+--     -- Visual debugging
+--     if runner.Draw then
+--         -- Draw circle at calculated position
+--         runner.Draw:Circle(x, y, mz, 0.5)
+        
+--         -- Draw text showing position info
+--         local status = masterMoving and "Moving" or "Stopped"
+--         local angle = math.floor(self.followAngle * 180 / math.pi)
+--         runner.Draw:Text(string.format("%s (Angle: %d°)", status, angle), "GAMEFONTNORMAL", x, y, mz + 2)
+        
+--         -- Draw line from master to follow position
+--         runner.Draw:Line(mx, my, mz, x, y, mz, 0, 1, 0, 1)
+        
+--         -- Draw master's facing direction
+--         local facingX = mx + math.cos(masterFacing) * 3
+--         local facingY = my + math.sin(masterFacing) * 3
+--         runner.Draw:Line(mx, my, mz, facingX, facingY, mz, 1, 0, 0, 1)
+        
+--         -- Draw circle around master
+--         runner.Draw:Circle(mx, my, mz, distance)
+--     end
+    
+--     return self.followPosition
+-- end
+
+-- function MultiboxPlayer:GetFormationPosition()
+--     print("Starting GetFormationPosition")
+    
+--     local numFollowers = (IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()) - 1
+--     print("Number of followers:", numFollowers)
+--     if numFollowers <= 0 then 
+--         print("No followers found")
+--         return nil 
+--     end
+    
+--     local myIndex = 0
+--     for i = 1, numFollowers do
+--         local unit = IsInRaid() and ("raid"..i) or ("party"..i)
+--         if UnitIsUnit(unit, "player") then
+--             myIndex = i
+--             break
+--         end
+--     end
+--     print("My index in formation:", myIndex)
+--     if myIndex == 0 then 
+--         print("Failed to find player index")
+--         return nil 
+--     end
+    
+--     local mx, my, mz = ObjectPosition(self.masterObject.pointer)
+--     print("Master position:", mx, my, mz)
+--     if not mx then 
+--         print("Failed to get master position")
+--         return nil 
+--     end
+    
+--     local masterFacing = ObjectFacing(self.masterObject.pointer)
+--     local baseAngle = masterFacing + math.pi
+--     print("Master facing:", masterFacing, "Base angle:", baseAngle)
+    
+--     local arcWidth = math.pi * 2/3
+--     local angleStep = arcWidth / (numFollowers + 1)
+--     local myAngle = baseAngle - (arcWidth/2) + (myIndex * angleStep)
+--     print("Arc width:", arcWidth, "Angle step:", angleStep, "My angle:", myAngle)
+    
+--     local baseDistance = self.FOLLOW_MIN_DISTANCE
+--     local distanceVar = (self.FOLLOW_MAX_DISTANCE - self.FOLLOW_MIN_DISTANCE) * ((myIndex - 1) / numFollowers)
+--     local distance = baseDistance + distanceVar
+--     print("Base distance:", baseDistance, "Distance variation:", distanceVar, "Final distance:", distance)
+    
+--     local x = mx + math.cos(myAngle) * distance
+--     local y = my + math.sin(myAngle) * distance
+--     local z = mz
+--     print("Calculated position:", x, y, z)
+    
+--     -- Visual debugging
+--     if runner.Draw then
+--         runner.Draw:Circle(x, y, z, 0.5)
+        
+--         local masterMoving = GetUnitSpeed(self.masterObject.pointer) > 0
+--         local status = masterMoving and "Moving" or "Stopped"
+--         local angleDegrees = math.floor(myAngle * 180 / math.pi)
+--         runner.Draw:Text(string.format("%s (Angle: %d°)", status, angleDegrees), "GAMEFONTNORMAL", x, y, z + 2)
+        
+--         runner.Draw:Line(mx, my, mz, x, y, z, 0, 1, 0, 1)
+        
+--         local facingX = mx + math.cos(masterFacing) * 3
+--         local facingY = my + math.sin(masterFacing) * 3
+--         runner.Draw:Line(mx, my, mz, facingX, facingY, mz, 1, 0, 0, 1)
+        
+--         runner.Draw:Circle(mx, my, mz, distance)
+        
+--         -- Additional debug visuals
+--         runner.Draw:Text(string.format("Index: %d/%d", myIndex, numFollowers), "GAMEFONTNORMAL", x, y, z + 3)
+--         runner.Draw:Text(string.format("Dist: %.1f", distance), "GAMEFONTNORMAL", x, y, z + 4)
+--     end
+    
+--     return {x = x, y = y, z = z}
+-- end
+
+-- function MultiboxPlayer:GetFollowPosition()
+--     if self:NeedsNewFollowPosition() then
+--         return self:CalculateFollowPosition()
+--     end
+--     return self.followPosition
+-- end
+
+function MultiboxPlayer:IsAtFollowPosition()
+    if not self.followPosition then return false end
+    
+    local px, py, pz = ObjectPosition(self.pointer)
+    if not px then return false end
+    
+    local distance = math.sqrt(
+        (px - self.followPosition.x)^2 + 
+        (py - self.followPosition.y)^2
+    )
+    
+    -- Visual debugging
+    if runner.Draw then
+        -- Draw circle at current position
+        runner.Draw:Circle(px, py, pz, 0.5)
+        runner.Draw:Text(string.format("Distance to target: %.1f", distance), "GAMEFONTNORMAL", px, py, pz + 2)
+    end
+    
+    return distance <= 2  -- Within half a yard of target position
+end
+
 function MultiboxPlayer:GetDistanceFromMaster()
     if not self.masterObject then return 999999 end
     return self:DistanceFrom(self.masterObject)
@@ -216,49 +423,33 @@ function MultiboxPlayer:IsSafeToAttack(targetObject)
     return UnitAffectingCombat(targetObject.pointer)
 end
 
-function MultiboxPlayer:GetClosestLootableEnemy()
-    local closestEnemy = nil
+function MultiboxPlayer:GetClosestLootable()
+    local closestLootable = nil
     local closestDistance = 9999
     
-    for _, enemy in pairs(runner.Engine.ObjectManager.units) do
-        if enemy.CanLoot then
-            local distance = enemy:DistanceFromPlayer()
+    -- Check all game objects (includes units and chests since they inherit from GameObject)
+    -- for _, obj in pairs(runner.Engine.ObjectManager.gameobjects) do
+    --     if obj.CanLoot then
+    --         local distance = obj:DistanceFromPlayer()
+    --         if distance < closestDistance then
+    --             closestLootable = obj
+    --             closestDistance = distanceShouldFollowMaster
+    --         end
+    --     end
+    -- end
+    
+    -- Also check units specifically since they're in a separate collection
+    for _, unit in pairs(runner.Engine.ObjectManager.units) do
+        if unit.Reaction and unit.Reaction < 4 and unit.CanLoot then
+            local distance = unit:DistanceFromPlayer()
             if distance < closestDistance then
-                closestEnemy = enemy
+                closestLootable = unit
                 closestDistance = distance
             end
         end
     end
-    return closestEnemy
-end
-
-function MultiboxPlayer:GetClosestChest()
-    local closestChest = nil
-    local closestDistance = 9999
     
-    for _, obj in pairs(runner.Engine.ObjectManager.gameobjects) do
-        -- Filter for common chest names in dungeons
-        if obj.Name and (obj.Name:lower():find("chest") or 
-                        obj.Name:lower():find("cache") or 
-                        obj.Name:lower():find("coffer") or 
-                        obj.Name:lower():find("strongbox")) then
-            local distance = obj:DistanceFromPlayer()
-            if distance < closestDistance then
-                closestChest = obj
-                closestDistance = distance
-            end
-        end
-    end
-    return closestChest
-end
-
-function MultiboxPlayer:GetClosestInteractable()
-    -- First check for chests as they're higher priority
-    local chest = self:GetClosestChest()
-    if chest then return chest end
-    
-    -- Then check for lootable enemies
-    return self:GetClosestLootableEnemy()
+    return closestLootable
 end
 
 function MultiboxPlayer:ShouldLoot()

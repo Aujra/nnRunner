@@ -1,0 +1,305 @@
+local FormationManager = {}
+runner.Engine.FormationManager = FormationManager
+
+-- Formation constants
+FormationManager.MIN_DISTANCE = 2  -- Minimum follow distance
+FormationManager.MAX_DISTANCE = 8  -- Maximum follow distance
+FormationManager.MIN_SPACING = 1   -- Minimum space between followers
+FormationManager.ARC_WIDTH = math.pi * 0.80  -- .55 is 100 degrees centered behind master
+
+-- Track active followers and their positions
+FormationManager.followers = {}
+FormationManager.positions = {}
+FormationManager.lastMasterMoving = false
+FormationManager.moveDelays = {}
+FormationManager.selectionOrder = {}  -- Current order for position selection
+
+function FormationManager:AddFollower(player)
+    local guid = UnitGUID(player.pointer)
+    
+    -- Only add if not already in formation
+    for _, follower in ipairs(self.followers) do
+        if follower.guid == guid then 
+            runner.Engine.DebugManager:Debug("FormationManager", string.format(
+                "Follower already exists: %s", UnitName(player.pointer)
+            ))
+            return 
+        end
+    end
+    
+    -- Add new follower
+    runner.Engine.DebugManager:Debug("FormationManager", string.format(
+        "Adding follower: GUID=%s, Name=%s",
+        guid,
+        UnitName(player.pointer)
+    ))
+    
+    table.insert(self.followers, {
+        guid = guid,
+        name = UnitName(player.pointer),
+        player = player,
+        moveDelay = math.random()  -- 0-1 second delay
+    })
+    
+    -- Assign random selection order
+    self:RandomizeSelectionOrder()
+end
+
+function FormationManager:RemoveFollower(guid)
+    for i, follower in ipairs(self.followers) do
+        if follower.guid == guid then
+            runner.Engine.DebugManager:Debug("FormationManager", string.format(
+                "Removing follower: %s", follower.name
+            ))
+            table.remove(self.followers, i)
+            self.positions[guid] = nil
+            break
+        end
+    end
+    self:RandomizeSelectionOrder()
+end
+
+function FormationManager:RandomizeSelectionOrder()
+    self.selectionOrder = {}
+    for i, follower in ipairs(self.followers) do
+        self.selectionOrder[i] = follower.guid
+    end
+    
+    -- Fisher-Yates shuffle
+    for i = #self.selectionOrder, 2, -1 do
+        local j = math.random(i)
+        self.selectionOrder[i], self.selectionOrder[j] = self.selectionOrder[j], self.selectionOrder[i]
+    end
+    
+    -- Debug selection order
+    local orderStr = ""
+    for i, guid in ipairs(self.selectionOrder) do
+        for _, follower in ipairs(self.followers) do
+            if follower.guid == guid then
+                orderStr = orderStr .. follower.name
+                if i < #self.selectionOrder then
+                    orderStr = orderStr .. " -> "
+                end
+                break
+            end
+        end
+    end
+    runner.Engine.DebugManager:Debug("FormationManager", "Selection order: " .. orderStr)
+end
+
+function FormationManager:CheckPosition(x, y, masterX, masterY)
+    -- Check distance from master
+    local masterDist = math.sqrt((x - masterX)^2 + (y - masterY)^2)
+    if masterDist < self.MIN_DISTANCE or masterDist > self.MAX_DISTANCE then
+        runner.Engine.DebugManager:Debug("FormationManager", string.format(
+            "Position invalid - Master distance: %.2f (min: %d, max: %d)",
+            masterDist, self.MIN_DISTANCE, self.MAX_DISTANCE
+        ))
+        return false
+    end
+    
+    -- Check distance from other followers
+    for guid, pos in pairs(self.positions) do
+        local dist = math.sqrt((x - pos.x)^2 + (y - pos.y)^2)
+        if dist < self.MIN_SPACING then
+            runner.Engine.DebugManager:Debug("FormationManager", string.format(
+                "Position invalid - Too close to %s (%.2f < %d)",
+                self:GetFollowerName(guid), dist, self.MIN_SPACING
+            ))
+            return false
+        end
+    end
+    
+    return true
+end
+
+function FormationManager:GetFollowerName(guid)
+    for _, follower in ipairs(self.followers) do
+        if follower.guid == guid then
+            return follower.name
+        end
+    end
+    return "Unknown"
+end
+
+function FormationManager:SelectPosition(masterX, masterY, masterFacing)
+    local attempts = 20
+    
+    for i = 1, attempts do
+        -- Random distance within range
+        local distance = self.MIN_DISTANCE + math.random() * (self.MAX_DISTANCE - self.MIN_DISTANCE)
+        
+        -- Random angle within arc behind master
+        local halfArc = self.ARC_WIDTH / 2
+        local angle = masterFacing + math.pi + (math.random() * self.ARC_WIDTH - halfArc)
+        
+        -- Calculate position
+        local x = masterX + math.cos(angle) * distance
+        local y = masterY + math.sin(angle) * distance
+        
+        runner.Engine.DebugManager:Debug("FormationManager", string.format(
+            "Trying position - Attempt %d: angle=%.2f, distance=%.2f",
+            i, angle, distance
+        ))
+        
+        if self:CheckPosition(x, y, masterX, masterY) then
+            runner.Engine.DebugManager:Debug("FormationManager", "Position valid")
+            return {
+                x = x,
+                y = y,
+                angle = angle - masterFacing - math.pi,  -- Store relative angle
+                distance = distance
+            }
+        end
+    end
+    
+    runner.Engine.DebugManager:Debug("FormationManager", "Failed to find valid position")
+    return nil
+end
+
+function FormationManager:UpdatePositions()
+    runner.Engine.DebugManager:Debug("FormationManager", "Updating positions")
+    
+    -- Clear current positions
+    self.positions = {}
+    
+    -- Get master position
+    local master
+    for _, follower in ipairs(self.followers) do
+        if follower.player.masterObject then
+            master = follower.player.masterObject
+            break
+        end
+    end
+    if not master then 
+        runner.Engine.DebugManager:Debug("FormationManager", "No master found")
+        return 
+    end
+    
+    local mx, my, mz = ObjectPosition(master.pointer)
+    local mf = ObjectFacing(master.pointer)
+    if not mx then 
+        runner.Engine.DebugManager:Debug("FormationManager", "Could not get master position")
+        return 
+    end
+    
+    -- Let each follower select position in order
+    for i, guid in ipairs(self.selectionOrder) do
+        runner.Engine.DebugManager:Debug("FormationManager", string.format(
+            "Selecting position for %s (%d/%d)",
+            self:GetFollowerName(guid), i, #self.selectionOrder
+        ))
+        
+        local pos = self:SelectPosition(mx, my, mf)
+        if pos then
+            pos.z = mz
+            self.positions[guid] = pos
+            self.moveDelays[guid] = GetTime() + math.random()
+            
+            runner.Engine.DebugManager:Debug("FormationManager", string.format(
+                "Position set - angle=%.2f, distance=%.2f",
+                pos.angle, pos.distance
+            ))
+        end
+    end
+end
+
+function FormationManager:GetFollowerPosition(guid, masterX, masterY, masterZ, masterFacing)
+    if not self.positions[guid] then return nil end
+    
+    local pos = self.positions[guid]
+    local currentTime = GetTime()
+    
+    -- Check if master is moving
+    local masterMoving = GetUnitSpeed("player") > 0
+    
+    -- Only update positions when master starts moving
+    if masterMoving ~= self.lastMasterMoving then
+        self.lastMasterMoving = masterMoving
+        if masterMoving then
+            self:RandomizeSelectionOrder()
+            self:UpdatePositions()
+        end
+    end
+    
+    -- Check move delay
+    if currentTime < (self.moveDelays[guid] or 0) then
+        return nil
+    end
+    
+    -- Return target position
+    local finalAngle = masterFacing + math.pi + pos.angle
+    return {
+        x = masterX + math.cos(finalAngle) * pos.distance,
+        y = masterY + math.sin(finalAngle) * pos.distance,
+        z = masterZ
+    }
+end
+
+function FormationManager:DrawDebug()
+    if not runner.Draw then return end
+    
+    -- Find master
+    local master
+    for _, follower in ipairs(self.followers) do
+        if follower.player.masterObject then
+            master = follower.player.masterObject
+            break
+        end
+    end
+    
+    if master then
+        local mx, my, mz = ObjectPosition(master.pointer)
+        local mf = ObjectFacing(master.pointer)
+        if mx then
+            -- Draw master position and facing
+            runner.Draw:Circle(mx, my, mz, 1, 1, 0, 0, 1)  -- Red circle
+            local fx = mx + math.cos(mf) * 3
+            local fy = my + math.sin(mf) * 3
+            runner.Draw:Line(mx, my, mz, fx, fy, mz, 1, 0, 0, 1)  -- Red line
+            
+            -- Draw formation boundaries
+            local leftAngle = mf + math.pi - self.ARC_WIDTH/2
+            local rightAngle = mf + math.pi + self.ARC_WIDTH/2
+            local lx = mx + math.cos(leftAngle) * self.MAX_DISTANCE
+            local ly = my + math.sin(leftAngle) * self.MAX_DISTANCE
+            local rx = mx + math.cos(rightAngle) * self.MAX_DISTANCE
+            local ry = my + math.sin(rightAngle) * self.MAX_DISTANCE
+            runner.Draw:Line(mx, my, mz, lx, ly, mz, 0, 1, 1, 0.5)  -- Cyan lines
+            runner.Draw:Line(mx, my, mz, rx, ry, mz, 0, 1, 1, 0.5)
+            
+            -- Draw distance rings
+            for dist = self.MIN_DISTANCE, self.MAX_DISTANCE, 1 do
+                runner.Draw:Circle(mx, my, mz, dist, 0, 1, 1, 0.2)
+            end
+        end
+    end
+    
+    -- Draw followers
+    for _, follower in ipairs(self.followers) do
+        local pos = self.positions[follower.guid]
+        if pos then
+            local px, py, pz = ObjectPosition(follower.player.pointer)
+            if px then
+                runner.Draw:Circle(px, py, pz, 0.5)
+                runner.Draw:Text(follower.name, "GAMEFONTNORMAL", px, py, pz + 2)
+                
+                if follower.player.masterObject then
+                    local mx, my, mz = ObjectPosition(follower.player.masterObject.pointer)
+                    local mf = ObjectFacing(follower.player.masterObject.pointer)
+                    if mx then
+                        local targetPos = self:GetFollowerPosition(follower.guid, mx, my, mz, mf)
+                        if targetPos then
+                            runner.Draw:Circle(targetPos.x, targetPos.y, targetPos.z, 0.5)
+                            runner.Draw:Line(px, py, pz, targetPos.x, targetPos.y, targetPos.z, 0, 1, 0, 1)
+                            runner.Draw:Text(string.format("Dist: %.1f", pos.distance), 
+                                          "GAMEFONTNORMAL", targetPos.x, targetPos.y, targetPos.z + 3)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+return FormationManager

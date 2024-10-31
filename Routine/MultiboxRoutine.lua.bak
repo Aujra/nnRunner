@@ -93,66 +93,6 @@ function MultiboxRoutine:OnEvent(event, ...)
     end
 end
 
-function MultiboxRoutine:OnEvent(event, ...)
-    if event == "CHAT_MSG_ADDON" then
-        local prefix, message, channel, sender = ...
-        
-        if prefix == self.addonPrefix then
-            if message:sub(1, 10) == "FORMATION:" then
-                if not runner.LocalPlayer.isMaster then
-                    self:HandleFormationUpdate(message:sub(11))
-                end
-            elseif message:sub(1, 7) == "MASTER:" then
-                local masterGUID, masterName = message:match("MASTER:([^:]+):(.+)")
-                if masterGUID and masterName then
-                    self:HandleMasterBroadcast(masterGUID, masterName, sender)
-                end
-            elseif message:sub(1, 13) == "MASTERTARGET:" then
-                local targetGUID = message:match("MASTERTARGET:(.+)")
-                if targetGUID then
-                    self:HandleMasterTarget(targetGUID, sender)
-                end
-            elseif message:sub(1, 6) == "STATE:" then
-                local guid, enabled = message:match("STATE:([^:]+):(%d)")
-                if guid and enabled then
-                    self:HandleStateSync(guid, enabled == "1")
-                end
-            end
-        end
-    end
-end
-
-function MultiboxRoutine:HandleFormationUpdate(positionData)
-    runner.Engine.DebugManager:Debug("MultiboxRoutine", "Received formation update from master")
-    
-    local positions = {}
-    local posCount = 0
-    
-    for posStr in positionData:gmatch("[^|]+") do
-        local guid, x, y, z = posStr:match("([^:]+):([^:]+):([^:]+):([^:]+)")
-        if guid and x and y and z then
-            positions[guid] = {
-                x = tonumber(x),
-                y = tonumber(y),
-                z = tonumber(z)
-            }
-            posCount = posCount + 1
-            
-            runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
-                "Parsed position - GUID=%s, x=%.2f, y=%.2f, z=%.2f",
-                guid, positions[guid].x, positions[guid].y, positions[guid].z
-            ))
-        end
-    end
-    
-    runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
-        "Updated formation with %d positions", posCount
-    ))
-    
-    runner.Engine.FormationManager.positions = positions
-    runner.Engine.FormationManager:DumpDebugState()
-end
-
 function MultiboxRoutine:HandleStateSync(guid, enabled)
     runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
         "Received state sync: GUID=%s, Enabled=%s",
@@ -217,7 +157,7 @@ function MultiboxRoutine:HandleMasterBroadcast(masterGUID, masterName, sender)
             end
         end
         
-        -- Update formation and request position data
+        -- Update formation when master is set
         self:UpdateFormation()
         
         runner.UI.menuFrame:UpdateStatusText("Multibox: Following " .. masterName)
@@ -227,9 +167,10 @@ end
 function MultiboxRoutine:UpdateFormation()
     runner.Engine.DebugManager:Debug("MultiboxRoutine", "Starting formation update")
     
-    -- Clear existing followers (but keep positions)
-    local oldPositions = runner.Engine.FormationManager.positions
-    runner.Engine.FormationManager.followers = {}
+    -- Clear existing formation
+    for guid, _ in pairs(runner.Engine.FormationManager.positions) do
+        runner.Engine.FormationManager:RemoveFollower(guid)
+    end
     
     -- Add current multibox followers
     if IsInGroup() then
@@ -255,6 +196,14 @@ function MultiboxRoutine:UpdateFormation()
                 -- Check if this unit is a multibox follower
                 for _, player in pairs(runner.Engine.ObjectManager.players) do
                     if UnitGUID(player.pointer) == guid then
+                        runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
+                            "Checking player for formation: GUID=%s, Name=%s, Enabled=%s, IsMaster=%s",
+                            guid,
+                            UnitName(player.pointer),
+                            tostring(player.isMultiboxEnabled),
+                            tostring(player.isMaster)
+                        ))
+                        
                         if player.isMultiboxEnabled and not player.isMaster then
                             runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
                                 "Adding player to formation: %s", UnitName(player.pointer)
@@ -268,20 +217,22 @@ function MultiboxRoutine:UpdateFormation()
         end
     end
     
-    -- If we're the master, immediately assign positions
-    if runner.LocalPlayer.isMaster then
-        local mx, my, mz = ObjectPosition("player")
-        local mf = ObjectFacing("player")
-        if mx then
-            runner.Engine.FormationManager:AssignPositions(mx, my, mz, mf)
-            runner.Engine.FormationManager:BroadcastPositions()
-        end
-    else
-        -- If we're a follower, restore our old position if we had one
-        runner.Engine.FormationManager.positions = oldPositions
+    -- Force position update
+    runner.Engine.FormationManager:UpdatePositions()
+    
+    -- Debug current formation state
+    local followerCount = #runner.Engine.FormationManager.followers
+    local positionCount = 0
+    for _ in pairs(runner.Engine.FormationManager.positions) do
+        positionCount = positionCount + 1
     end
     
-    runner.Engine.FormationManager:DumpDebugState()
+    runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
+        "Formation update complete: %d followers, %d positions (Group size: %d)",
+        followerCount,
+        positionCount,
+        IsInGroup() and (IsInRaid() and GetNumGroupMembers() or GetNumSubgroupMembers()) or 1
+    ))
 end
 
 function MultiboxRoutine:HandleMasterTarget(targetGUID, sender)
@@ -309,14 +260,12 @@ function MultiboxRoutine:HandleSlashCommands(msg)
         self:BroadcastState()  -- Broadcast state change
         self:UpdateFormation()
         runner.UI.menuFrame:UpdateStatusText("Multibox: Enabled")
-        print("Multibox enabled")
     elseif command == "off" then
         player.isMultiboxEnabled = false
         player.forcedFollow = false
         self:BroadcastState()  -- Broadcast state change
         self:UpdateFormation()
         runner.UI.menuFrame:UpdateStatusText("Multibox: Disabled")
-        print("Multibox disabled")
     elseif command == "master" then
         player.isMaster = true
         player.masterGUID = UnitGUID("player")
@@ -335,7 +284,6 @@ function MultiboxRoutine:HandleSlashCommands(msg)
         
         self:UpdateFormation()
         runner.UI.menuFrame:UpdateStatusText("Multibox: Master")
-        print("You are now the master")
     elseif command == "follow" then
         if not player.isMultiboxEnabled then return end
         player.forcedFollow = not player.forcedFollow
@@ -369,7 +317,7 @@ end
 function MultiboxRoutine:HandleInteraction(interactable)
     if not interactable then return false end
     
-    if interactable:DistanceFromPlayer() < 2 then
+    if interactable:DistanceFromPlayer() < 4 then
         runner.UI.menuFrame:UpdateStatusText("Interacting with " .. interactable.Name)
         Unlock(MoveForwardStop)
         runner.nn.ObjectInteract(interactable.pointer)
@@ -392,8 +340,17 @@ function MultiboxRoutine:HandleFollowing(player)
         return false 
     end
     
-    -- Get current position
-    local followPos = runner.Engine.FormationManager:GetFollowerPosition(UnitGUID(player.pointer))
+    local mx, my, mz = ObjectPosition(player.masterObject.pointer)
+    local mf = ObjectFacing(player.masterObject.pointer)
+    if not mx then 
+        runner.Engine.DebugManager:Debug("MultiboxRoutine", "Not following: Could not get master position")
+        return false 
+    end
+    
+    -- Get formation position
+    local followPos = runner.Engine.FormationManager:GetFollowerPosition(
+        UnitGUID(player.pointer), mx, my, mz, mf
+    )
     if not followPos then 
         runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
             "Not following: No formation position for %s", UnitName(player.pointer)
@@ -410,8 +367,9 @@ function MultiboxRoutine:HandleFollowing(player)
     
     local distance = math.sqrt((px - followPos.x)^2 + (py - followPos.y)^2)
     runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
-        "Follow check: Distance to target = %.2f", 
-        distance
+        "Follow check: Distance to target = %.2f, Master moving = %s", 
+        distance,
+        tostring(GetUnitSpeed(player.masterObject.pointer) > 0)
     ))
     
     if distance > .95 then  -- Within a yard of target position
@@ -436,18 +394,8 @@ function MultiboxRoutine:Run()
     -- Draw formation debug visualization
     runner.Engine.FormationManager:DrawDebug()
     
-    -- If we're the master, manage formation
+    -- If we're the master, just update target broadcasts
     if player.isMaster then
-        local mx, my, mz = ObjectPosition(player.pointer)
-        local mf = ObjectFacing(player.pointer)
-        
-        if mx and runner.Engine.FormationManager:ShouldUpdatePositions(mx, my, mf) then
-            runner.Engine.DebugManager:Debug("MultiboxRoutine", "Master updating formation positions")
-            runner.Engine.FormationManager:AssignPositions(mx, my, mz, mf)
-            runner.Engine.FormationManager:BroadcastPositions()
-        end
-        
-        -- Handle target broadcasts
         if UnitExists("target") then
             local message = "MASTERTARGET:" .. UnitGUID("target")
             if IsInRaid() then

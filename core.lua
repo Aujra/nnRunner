@@ -70,7 +70,8 @@ end
 nn:Require('/scripts/mainrunner/ScrollingTable.lua', runner)
 nn:Require('/scripts/mainrunner/Engine/ObjectManager.lua', runner)
 nn:Require('/scripts/mainrunner/Engine/Navigation.lua', runner)
-nn:Require('/scripts/mainrunner/Engine/MultiboxManager.lua', runner)
+nn:Require('/scripts/mainrunner/Engine/FormationManager.lua', runner)
+nn:Require('/scripts/mainrunner/Engine/DebugManager.lua', runner)
 --Classes
 nn:Require('/scripts/mainrunner/Classes/GameObject.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/AreaTrigger.lua', runner)

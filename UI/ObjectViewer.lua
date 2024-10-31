@@ -1,4 +1,4 @@
-local ScrollingTable = LibStub("ScrollingTable");
+local ScrollingTable = runner.nn.Utils.LibStub("ScrollingTable");
 
 runner.UI.ObjectViewer = {}
 local OV = runner.UI.ObjectViewer

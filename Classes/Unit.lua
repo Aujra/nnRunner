@@ -29,7 +29,6 @@ function Unit:init(pointer)
     self.isDead = Unlock(UnitIsDeadOrGhost, self.pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = 0
-    self.CanLoot = false
 end
 
 function Unit:Update()
@@ -45,7 +44,6 @@ function Unit:Update()
     self.isDead = Unlock(UnitIsDeadOrGhost, self.pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = self:GetAuraCount("Soul Fragments", "HELPFUL")
-    self.CanLoot = runner.nn.ObjectLootable(self.pointer)
     self:Debug()
 end
 
@@ -53,11 +51,33 @@ function Unit:GetScore()
 
 end
 
+-- function Unit:LOS()
+--     local x1, y1, z1 = runner.nn.ObjectPosition('player')
+--     local x2, y2, z2 = runner.nn.ObjectPosition(self.pointer)
+--     local x, y, z = TraceLine(x1, y1, z1+2, x2, y2, z2+2, 0x100111)
+--     return x == false
+-- end
+
 function Unit:LOS()
     local x1, y1, z1 = runner.nn.ObjectPosition('player')
     local x2, y2, z2 = runner.nn.ObjectPosition(self.pointer)
-    local x, y, z = TraceLine(x1, y1, z1+2, x2, y2, z2+2, 0x100111)
-    return x == false
+    
+    local playerHeight = runner.nn.ObjectHeight('player')
+    local unitHeight = self.Height
+    
+    local checkHeights = {
+        {playerHeight, unitHeight},      
+        {playerHeight / 2, unitHeight / 2}  
+    }    
+    
+    for _, heights in ipairs(checkHeights) do
+        local hitX, hitY, hitZ = TraceLine(x1, y1, z1 + heights[1], x2, y2, z2 + heights[2], 0x100111)        
+        if not hitX then
+            return true
+        end
+    end    
+    
+    return false
 end
 
 function Unit:CastingSpellByName(name)
