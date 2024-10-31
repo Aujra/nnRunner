@@ -14,10 +14,15 @@ function RotationRoutine:Run()
     end
 end
 
-function RotationRoutine:BuildGUI()
-end
-
 function RotationRoutine:HideGUI()
+    if self.StatusFrame then
+        self.StatusFrame:Hide()
+    end
+end
+function RotationRoutine:ShowGUI()
+    if self.StatusFrame then
+        self.StatusFrame:Show()
+    end
 end
 
 registerRoutine(RotationRoutine)

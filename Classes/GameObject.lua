@@ -25,6 +25,13 @@ function GameObject:Update()
     self.Distance = self:DistanceFromPlayer()
 end
 
+function GameObject:Debug()
+    local px, py, pz = ObjectPosition("player")
+    local x, y, z = ObjectPosition(self.pointer)
+    runner.Draw:Line(px, py, pz, x, y, z, 1, 0, 0, 1)
+    runner.Draw:Circle(x, y, z, 3)
+end
+
 function GameObject:ToViewerRow()
     return {
         self.Name,

@@ -11,6 +11,9 @@ function DungeonRoutine:init()
     self.SettingsFrame = nil
     self:BuildGUI()
     self.leaveAfter = 0
+    self.BlackList = {
+        "Vent Stalker", "Speaker Mechhand", "Reinforce Stalker", "Eternal Flame", "Dummy Stalker", "Mini-Boss Stalker"
+    }
 end
 
 function DungeonRoutine:Run()
@@ -137,9 +140,9 @@ function DungeonRoutine:Run()
                     end
                 end
 
-                local closestEnemy = self:GetClosestEnemy()
+                local closestEnemy = self:getBestTarget()
                 if closestEnemy then
-                    if closestEnemy:DistanceFromPlayer() > runner.rotation.PullRange or not closestEnemy:LOS() then
+                    if closestEnemy:DistanceFromPlayer() > runner.rotation.combatRange or not closestEnemy:LOS() then
                         runner.UI.menuFrame:UpdateStatusText("Moving to fight " .. closestEnemy.Name)
                         runner.Engine.Navigation:MoveTo(closestEnemy.pointer)
                     else
@@ -193,10 +196,8 @@ function DungeonRoutine:Run()
                     end
                     if step.Task == "interact_with" then
                         local interactable = runner.Engine.ObjectManager:GetClosestByName(step.Object)
-                        print("We found an interactable: " .. interactable.Name)
                         if interactable then
                             if interactable:DistanceFromPlayer() < step.Range then
-                                print("Interacting with " .. step.Object)
                                 runner.UI.menuFrame:UpdateStatusText("Interacting with " .. step.Object)
                                 Unlock(MoveForwardStop)
                                 runner.nn.ObjectInteract(interactable.pointer)
@@ -216,41 +217,16 @@ function DungeonRoutine:Run()
                 end
             end
         end
-
-        --if role == "TANK" then
-        --    local closestEnemy = self:GetClosestEnemy()
-        --    if closestEnemy then
-        --        if closestEnemy:DistanceFromPlayer() > 30 then
-        --            print("Moving to enemy")
-        --            runner.Engine.Navigation:MoveTo(closestEnemy.pointer)
-        --        else
-        --            print("Fight stuff")
-        --            Unlock(TargetUnit, closestEnemy.pointer)
-        --            if not UnitAffectingCombat("player") then
-        --                Unlock(CastSpellByName, "Throw Glaive", closestEnemy.pointer)
-        --            end
-        --            runner.Engine.Navigation:FaceUnit(closestEnemy.pointer)
-        --            if closestEnemy:DistanceFromPlayer() > 6 then
-        --                Unlock(MoveForwardStart)
-        --            else
-        --                Unlock(MoveForwardStop)
-        --            end
-        --            runner.rotation:Pulse(closestEnemy)
-        --        end
-        --    end
-        --else
-        --    local tank = self:GetTank()
-        --    if tank then
-        --        if tank:DistanceFromPlayer() > 20 then
-        --            runner.Engine.Navigation:MoveTo(tank)
-        --        else
-        --            local target = Unlock(AssistUnit, tank.pointer)
-        --            Unlock(CastSpellByName, "Throw Glaive", target)
-        --            runner.rotation:Pulse(target)
-        --        end
-        --    end
-        --end
     end
+end
+
+function DungeonRoutine:BlackListed(name)
+    for k,v in pairs(self.BlackList) do
+        if name == v then
+            return true
+        end
+    end
+    return false
 end
 
 function DungeonRoutine:NeedStep(step)
@@ -324,6 +300,7 @@ function DungeonRoutine:MechanicConditionMet(condition)
     end
 
     if condition.DistanceLocation then
+        print("We have a distance location")
         local location = condition.Locations[1]
         local x = location.X
         local y = location.Y
@@ -331,7 +308,7 @@ function DungeonRoutine:MechanicConditionMet(condition)
         local radius = location.Radius
 
         local distance = runner.LocalPlayer:DistanceFromPoint(x, y, z)
-        if distance > radius then
+        if distance < radius then
             return false
         end
     end
@@ -340,10 +317,8 @@ function DungeonRoutine:MechanicConditionMet(condition)
 end
 
 function DungeonRoutine:FindMobWithNameAndAura(name, aura)
-    print("Looking for mob with name " .. name .. " and aura " .. aura)
     for k, mob in pairs(runner.Engine.ObjectManager.units) do
         if mob.Name == name then
-            print("We found a mob with the name " .. name .. " needs aura " .. aura)
             if mob:HasAura(aura, "HELPFUL") then
                 return mob
             end
@@ -426,13 +401,30 @@ function DungeonRoutine:GetTank()
     return nil
 end
 
-function DungeonRoutine:GetClosestEnemy()
+function DungeonRoutine:getBestTarget()
+    local bestTarget = nil
+    local bestScore = -999999
+    for k,v in pairs(runner.Engine.ObjectManager.units) do
+        if v.Reaction and v.Reaction <= 4 and not v.isDead and not self:BlackListed(v.Name) then
+            local score = v:GetScore()
+            if score > bestScore then
+                bestScore = score
+                bestTarget = v
+            end
+        end
+    end
+    return bestTarget
+end
+
+function DungeonRoutine:GetClosestEnemy(range)
+    range = range or 150
     local player = runner.LocalPlayer
     local closestEnemy = nil
     local closestDistance = 9999
 
     for k, enemy in pairs(runner.Engine.ObjectManager.units) do
-        if enemy.Reaction and enemy.Reaction < 4 and not enemy.isDead and enemy.CanAttack then
+        if enemy.Reaction and enemy.Reaction < 4 and not enemy.isDead and enemy.CanAttack and
+        enemy:DistanceFromPlayer() < range and enemy:LOS() then
             local distance = enemy:DistanceFromPlayer()
             if distance < closestDistance then
                 closestEnemy = enemy

@@ -42,7 +42,6 @@ function registerRoutine(routine)
 end
 
 function registerProfile(profile)
-    print("Registering profile: " .. profile.Name)
     table.insert(runner.profiles, profile)
 end
 
@@ -78,6 +77,7 @@ nn:Require('/scripts/mainrunner/Classes/Player.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/LocalPlayer.lua', runner)
 --UI
 nn:Require('/scripts/mainrunner/UI/ObjectViewer.lua', runner)
+nn:Require('/scripts/mainrunner/UI/ObjectViewer2.lua', runner)
 nn:Require('/scripts/mainrunner/UI/Menu.lua', runner)
 --Rotations
 local path = "/scripts/mainrunner/Rotations/*.lua"
@@ -89,6 +89,7 @@ end
 nn:Require('/scripts/mainrunner/Routine/BaseRoutine.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/RotationRoutine.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/DungeonRoutine.lua', runner)
+nn:Require('/scripts/mainrunner/Routine/DungeonRoutine2.lua', runner)
 --Profiles
 local path = "/scripts/mainrunner/Profiles/Dungeons/*.lua"
 local files = nn.ListFiles(path)
@@ -99,52 +100,50 @@ end
 --Main Loop
 runner.frame = CreateFrame("Frame")
 runner.frame:SetScript("OnUpdate", function(self, elapsed)
-    if GetTime() - runner.lastTick < .2 then
-        return
-    end
+    if GetTime() - runner.lastTick > .2 then
+        if GetTime() - runner.lastAFK > 60 then
+            LastHardwareAction(GetTime()*1000)
+            runner.lastAFK = GetTime()
+        end
 
-    if GetTime() - runner.lastAFK > 60 then
-        LastHardwareAction(GetTime()*1000)
-        runner.lastAFK = GetTime()
-    end
+        runner.lastTick = GetTime()
+        if not runner.running then
+            return
+        end
 
-    runner.lastTick = GetTime()
-    if not runner.running then
-        return
-    end
+        if not runner.routine then
+            runner.routine = runner.routines["rotationroutine"]
+        end
+        if not runner.rotation then
+            runner.rotation = runner.rotations[select(1, UnitClass("player")):lower()]
+        end
 
-    if not runner.routine then
-        runner.routine = runner.routines["rotationroutine"]
-    end
-    if not runner.rotation then
-        runner.rotation = runner.rotations[select(1, UnitClass("player")):lower()]
-    end
+        runner.UI.menuFrame:UpdateMenu()
 
-    runner.UI.menuFrame:UpdateMenu()
+        if not runner.Draw then
+            runner.Draw = nn.Utils.Draw:New()
+        end
 
-    if not runner.Draw then
-        runner.Draw = nn.Utils.Draw:New()
-    end
+        if runner.Draw then
+            runner.Draw:ClearCanvas()
+        end
 
-    if runner.Draw then
-        runner.Draw:ClearCanvas()
-    end
+        if not runner.LocalPlayer then
+            runner.LocalPlayer = runner.Classes.LocalPlayer:new("player")
+        else
+            runner.LocalPlayer:Update()
+        end
 
-    if not runner.LocalPlayer then
-        runner.LocalPlayer = runner.Classes.LocalPlayer:new("player")
-    else
-        runner.LocalPlayer:Update()
-    end
+        runner.Engine.ObjectManager:Update()
+        if runner.UI.ObjectViewer2 then
+            runner.UI.ObjectViewer2:Update()
+        end
 
-    runner.Engine.ObjectManager:Update()
-    if runner.UI.ObjectViewer and runner.UI.ObjectViewer:ShouldUpdate() then
-        runner.UI.ObjectViewer:Update()
-    end
+        runner:DrawNearestDisturbedEarth()
 
-    runner:DrawNearestDisturbedEarth()
-
-    if runner.routine then
-        runner.routine:Run()
+        if runner.routine then
+            runner.routine:Run()
+        end
     end
 end)
 
@@ -180,4 +179,15 @@ function tableCount(t)
     local count = 0
     for _ in pairs(t) do count = count + 1 end
     return count
+end
+
+function mysplit(inputstr, sep)
+    if sep == nil then
+        sep = "%s"
+    end
+    local t = {}
+    for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+        table.insert(t, str)
+    end
+    return t
 end

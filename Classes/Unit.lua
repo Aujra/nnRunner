@@ -28,6 +28,7 @@ function Unit:init(pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = 0
     self.CanLoot = false
+    self.Threat = 0
 end
 
 function Unit:Update()
@@ -44,11 +45,28 @@ function Unit:Update()
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = self:GetAuraCount("Soul Fragments", "HELPFUL")
     self.CanLoot = runner.nn.ObjectLootable(self.pointer)
-    self:Debug()
+    self.Threat = Unlock(UnitThreatSituation, "player", self.pointer)
 end
 
 function Unit:GetScore()
-
+    local score = 0
+    local distance = self:DistanceFromPlayer()
+    local HP = self.HP
+    score = score + (800 - (distance * 5))
+    score = score + ((100 - HP) * 3)
+    if self.InCombat then
+        score = score + 300
+    end
+    if self.Threat and runner.LocalPlayer.Role == "TANK" then
+        score = score + ((4-self.Threat) * 30)
+    end
+    if not self:LOS() then
+        score = score - 400
+    end
+    if self.isDead then
+        score = score - 10000
+    end
+    return score
 end
 
 function Unit:LOS()
@@ -154,9 +172,4 @@ function Unit:ShouldInterruptCasting()
     end
     local elapsed = GetTime() - (startTimeMS / 1000)
     return name and not notInterruptible and elapsed > 0.2
-end
-
-function Unit:Debug()
-    --local draw = runner.Draw
-    --draw:Text(self:NavigationDistance(), "GameFontNormal", self.x, self.y, self.z)
 end

@@ -11,7 +11,6 @@ end
 
 function HunterRotation:Pulse(target)
     runner.Rotations.BaseRotation.Pulse(self, target)
-    self.Pet = UnitName("pet")
     target = self.target
 
     if Unlock(UnitAffectingCombat, "player") and target and (

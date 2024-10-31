@@ -12,7 +12,32 @@ function BaseRotation:init()
     self.DeEnrage = nil
     self.Target = nil
     self.LowestPlayer = nil
+    self.AoeEnemies = 0
     self.PullRange = 30
+    self.combatRange = 30
+end
+
+function BaseRotation:Pull(target)
+    target = target or UnitTarget("player")
+    if not target then
+        return
+    end
+    if type(target) ~= "table" then
+        target = runner.Engine.ObjectManager:GetByPointer(target)
+    end
+    if not target then
+        return
+    end
+    self.Target = target
+
+    if SpellIsTargeting() then
+        local x,y,z = runner.nn.ObjectPosition('target')
+        runner.nn.ClickPosition(x,y,z)
+    end
+
+    if not C_Spell.IsCurrentSpell(6603) then
+        self:Cast("Auto Attack")
+    end
 end
 
 function BaseRotation:Pulse(target)
@@ -34,6 +59,8 @@ function BaseRotation:Pulse(target)
     self.DeEnrage = self:GetDeEnrage()
     self.SpellSteal = self:ClosestSpellSteal()
     self.LowestPlayer = self:GetLowestPlayer()
+    self.Pet = UnitName("pet")
+    self.AoeEnemies = self.Target:EnemiesInRange(10)
 
     if runner.LocalPlayer.IsCasting then
         return
@@ -42,6 +69,10 @@ function BaseRotation:Pulse(target)
     if SpellIsTargeting() then
         local x,y,z = runner.nn.ObjectPosition('target')
         runner.nn.ClickPosition(x,y,z)
+    end
+
+    if not C_Spell.IsCurrentSpell(6603) then
+        self:Cast("Auto Attack")
     end
 end
 
@@ -59,45 +90,6 @@ function BaseRotation:GetLowestPlayer(range)
         lowestPlayer = runner.LocalPlayer
     end
     return lowestPlayer
-end
-
-function BaseRotation:CanCast(spell, target, forceMelee)
-    forceMelee = forceMelee or false
-    target = target or "target"
-    if not spell then
-        return false
-    end
-    if type(target) ~= "table" then
-        target = runner.Engine.ObjectManager:GetByPointer(target)
-    end
-
-    if not target then
-        return false
-    end
-
-    local spellInfo = C_Spell.GetSpellInfo(spell)
-    if not spellInfo then
-        return false
-    end
-    local isKnown = IsPlayerSpell(spellInfo.spellID)
-    if not isKnown then
-        return false
-    end
-
-    local cdInfo = C_Spell.GetSpellCooldown(spell)
-    local onCD = cdInfo.duration > 0
-
-    local inRange = false
-    if not forceMelee then
-        inRange = target:DistanceFromPlayer() < spellInfo.maxRange or spellInfo.maxRange == 0
-    else
-        inRange = target:DistanceFromPlayer() < 10
-    end
-    local canCast = C_Spell.IsSpellUsable(spell)
-
-    --print("Spell: " .. spell .. " Known: " .. tostring(isKnown) .. " CD: " .. tostring(onCD) .. " Range: " .. tostring(inRange) .. " Castable: " .. tostring(canCast))
-
-    return not onCD and inRange and isKnown and canCast
 end
 
 function BaseRotation:ClosestSpellSteal()
@@ -208,6 +200,65 @@ function BaseRotation:IsGCD()
         return false
     end
     return true
+end
+
+function BaseRotation:GetClosestWithoutDebuff(debuff)
+    local closest = nil
+    local closestDistance = 9999
+    for k,v in pairs(runner.Engine.ObjectManager.units) do
+        if not v:HasAura(debuff, "HARMFUL") and v:DistanceFromPlayer() < closestDistance
+        and v.Reaction and v.Reaction < 4 and v.InCombat then
+            closest = v
+            closestDistance = v:DistanceFromPlayer()
+        end
+    end
+    for k,v in pairs(runner.Engine.ObjectManager.players) do
+        if not v:HasAura(debuff, "HARMFUL") and v:DistanceFromPlayer() < closestDistance
+                and v.Reaction and v.Reaction < 4 then
+            closest = v
+            closestDistance = v:DistanceFromPlayer()
+        end
+    end
+    return closest
+end
+
+function BaseRotation:CanCast(spell, target, forceMelee)
+    forceMelee = forceMelee or false
+    target = target or "target"
+    if not spell then
+        return false
+    end
+    if type(target) ~= "table" then
+        target = runner.Engine.ObjectManager:GetByPointer(target)
+    end
+
+    if not target then
+        return false
+    end
+
+    local spellInfo = C_Spell.GetSpellInfo(spell)
+    if not spellInfo then
+        return false
+    end
+    local isKnown = IsPlayerSpell(spellInfo.spellID)
+    if not isKnown then
+        return false
+    end
+
+    local cdInfo = C_Spell.GetSpellCooldown(spell)
+    local onCD = cdInfo.duration > 0
+
+    local inRange = false
+    if not forceMelee then
+        inRange = target:DistanceFromPlayer() < spellInfo.maxRange or spellInfo.maxRange == 0
+    else
+        inRange = target:DistanceFromPlayer() < 10
+    end
+    local canCast = C_Spell.IsSpellUsable(spell)
+
+    --print("Spell: " .. spell .. " Known: " .. tostring(isKnown) .. " CD: " .. tostring(onCD) .. " Range: " .. tostring(inRange) .. " Castable: " .. tostring(canCast))
+
+    return not onCD and inRange and isKnown and canCast
 end
 
 function BaseRotation:Cast(spell, target)

@@ -7,7 +7,20 @@
         self.Class = "Demon Hunter"
         self.Name = "Demon Hunter"
         self.Description = "Demon Hunter Rotation"
-        self.PullRange = 6
+        self.PullRange = 30
+        self.combatRange = 7
+    end
+
+    function DemonHunterRotation:Pull(target)
+        runner.Rotations.BaseRotation.Pull(self, target)
+        if (self:CanCast("Infernal Strike", self.Target) and self.Target:DistanceFromPlayer() > 10) then
+            self:Cast("Infernal Strike")
+            return
+        end
+        if (self:CanCast("Throw Glaive", self.Target)) then
+            self:Cast("Throw Glaive", target.pointer)
+            return
+        end
     end
 
     function DemonHunterRotation:Pulse(target)
@@ -16,10 +29,6 @@
 
         if runner.LocalPlayer.IsCasting then
             return
-        end
-
-        if not C_Spell.IsCurrentSpell(6603) then
-            self:Cast("Auto Attack")
         end
 
         if UnitAffectingCombat("player") then
