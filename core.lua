@@ -1,6 +1,5 @@
 local nn = ...
 nn:Require('/scripts/mainrunner/class.lua', runner)
-nn:Require('/scripts/mainrunner/LibStub.lua', runner)
 
 --Main tables
 runner = {}
@@ -76,7 +75,6 @@ nn:Require('/scripts/mainrunner/Classes/Unit.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/Player.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/LocalPlayer.lua', runner)
 --UI
-nn:Require('/scripts/mainrunner/UI/ObjectViewer.lua', runner)
 nn:Require('/scripts/mainrunner/UI/ObjectViewer2.lua', runner)
 nn:Require('/scripts/mainrunner/UI/Menu.lua', runner)
 --Rotations

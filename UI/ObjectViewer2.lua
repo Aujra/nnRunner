@@ -183,6 +183,7 @@ function OV:BuildObjectList(container, selected, SelectedPointer)
         if type(v) == "string" or type(v) == "number" or type(v) == "boolean" then
             local label = runner.nn.Utils.AceGUI:Create("Label")
             label:SetText(k .. ": " .. tostring(v))
+            label:SetFullWidth(true)
             container:AddChild(label)
         end
     end
