@@ -24,7 +24,7 @@ function Navigation:MoveTo(unit)
             local ty = tonumber(path[pathIndex].y)
             local tz = tonumber(path[pathIndex].z)
             local distance = distance3D(px, py, pz, tx, ty, tz)
-            if distance < 3 then
+            if distance < 2 then
                 pathIndex = pathIndex + 1
                 if pathIndex > #path then
                     Unlock(MoveForwardStop)
@@ -70,7 +70,7 @@ function Navigation:MoveToPoint(x,y,z)
         local ty = tonumber(path[pathIndex].y)
         local tz = tonumber(path[pathIndex].z)
         local distance = distance3D(px, py, pz, tx, ty, tz)
-        if distance < 3 then
+        if distance < 2 then
             pathIndex = pathIndex + 1
             if pathIndex > #path then
                 Unlock(MoveForwardStop)

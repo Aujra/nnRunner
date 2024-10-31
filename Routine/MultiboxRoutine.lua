@@ -414,7 +414,7 @@ function MultiboxRoutine:HandleFollowing(player)
         distance
     ))
     
-    if distance > .95 then  -- Within a yard of target position
+    if distance > 2 then  -- Within 2 yards of target position
         runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
             "Moving to position (%.2f, %.2f, %.2f)", 
             followPos.x, followPos.y, followPos.z

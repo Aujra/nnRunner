@@ -216,12 +216,15 @@ function FormationManager:DrawDebug()
     if master then
         local mx, my, mz = ObjectPosition(master.pointer)
         local mf = ObjectFacing(master.pointer)
+        
         if mx then
             -- Draw master position and facing
-            runner.Draw:Circle(mx, my, mz, 1, 1, 0, 0, 1)  -- Red circle
+            runner.Draw:SetColor(255, 0, 0, 255)  -- Pure red
+            runner.Draw:Circle(mx, my, mz, 1)
+            
             local fx = mx + math.cos(mf) * 3
             local fy = my + math.sin(mf) * 3
-            runner.Draw:Line(mx, my, mz, fx, fy, mz, 1, 0, 0, 1)  -- Red line
+            runner.Draw:Line(mx, my, mz, fx, fy, mz)
             
             -- Draw formation boundaries
             local leftAngle = mf + math.pi - self.ARC_WIDTH/2
@@ -230,24 +233,29 @@ function FormationManager:DrawDebug()
             local ly = my + math.sin(leftAngle) * self.MAX_DISTANCE
             local rx = mx + math.cos(rightAngle) * self.MAX_DISTANCE
             local ry = my + math.sin(rightAngle) * self.MAX_DISTANCE
-            runner.Draw:Line(mx, my, mz, lx, ly, mz, 0, 1, 1, 0.5)  -- Cyan lines
-            runner.Draw:Line(mx, my, mz, rx, ry, mz, 0, 1, 1, 0.5)
+            
+            runner.Draw:SetColor(0, 255, 255, 128)  -- Cyan with 50% opacity
+            runner.Draw:Line(mx, my, mz, lx, ly, mz)
+            runner.Draw:Line(mx, my, mz, rx, ry, mz)
             
             -- Draw assigned positions
+            runner.Draw:SetColor(0, 255, 0, 255)  -- Pure green
             for guid, pos in pairs(self.positions) do
-                runner.Draw:Circle(pos.x, pos.y, pos.z, 0.5, 0, 1, 0, 1)  -- Green circle
+                runner.Draw:Circle(pos.x, pos.y, pos.z, 0.5)
                 local followerName = self:GetFollowerName(guid)
                 runner.Draw:Text(followerName, "GAMEFONTNORMAL", pos.x, pos.y, pos.z + 2)
             end
             
-            -- Draw actual follower positions and lines to their assigned positions
+            -- Draw actual follower positions and lines
+            runner.Draw:SetColor(255, 255, 0, 255)  -- Yellow
             for _, follower in ipairs(self.followers) do
                 local px, py, pz = ObjectPosition(follower.player.pointer)
                 if px then
-                    runner.Draw:Circle(px, py, pz, 0.5, 1, 1, 0, 1)  -- Yellow circle
+                    runner.Draw:Circle(px, py, pz, 0.5)
                     local pos = self.positions[follower.guid]
                     if pos then
-                        runner.Draw:Line(px, py, pz, pos.x, pos.y, pos.z, 0, 1, 0, 1)  -- Green line
+                        runner.Draw:SetColor(0, 255, 0, 255)  -- Green
+                        runner.Draw:Line(px, py, pz, pos.x, pos.y, pos.z)
                     end
                 end
             end
