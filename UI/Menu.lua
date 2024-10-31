@@ -176,7 +176,7 @@ function menuFrame:UpdateMenu()
         OMToggle:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 800, 0)
         OMToggle:SetNormalTexture("Interface/ICONS/INV_Misc_PocketWatch_01")
         OMToggle:SetScript("OnClick", function()
-            runner.UI.ObjectViewer:Toggle()
+            runner.UI.ObjectViewer2:Toggle()
         end)
 
         mainFrame.pauseButton = pauseButton
@@ -230,18 +230,20 @@ end
 function routineMenu_Initialize(self, level)
     local info = UIDropDownMenu_CreateInfo()
     for k,v in pairs(runner.routines) do
-        info.text = v.Name
-        info.func = function()
-            runner.routine = v
-            for k,v in pairs(runner.routines) do
-                if v.Name == runner.routine.Name then
-                    v:ShowGUI()
-                else
-                    v:HideGUI()
+        if v.Name ~= "BaseRoutine" then
+            info.text = v.Name
+            info.func = function()
+                runner.routine = v
+                for k,v in pairs(runner.routines) do
+                    if v.Name == runner.routine.Name then
+                        v:ShowGUI()
+                    else
+                        v:HideGUI()
+                    end
                 end
             end
+            UIDropDownMenu_AddButton(info)
         end
-        UIDropDownMenu_AddButton(info)
     end
 end
 

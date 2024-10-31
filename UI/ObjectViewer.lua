@@ -70,6 +70,7 @@ function OV:SelectGroup(group)
         OV.mode = "areatriggers"
         for k,v in pairs(runner.AreaTriggerViewColumns) do
             self:AddColumn(v)
+            print("Adding column: " .. v)
         end
     end
     local str = string.gsub(" "..OV.mode, "%W%l", string.upper):sub(2)
@@ -84,7 +85,7 @@ function OV:Update()
         viewerFrame:SetLayout("Flow")
         viewerFrame:SetWidth(1024)
         viewerFrame:SetHeight(600)
-        viewerFrame:Show()
+        viewerFrame:Hide()
         if not SearchInput then
             SearchInput = runner.nn.Utils.AceGUI:Create("EditBox")
             SearchInput:SetLabel("Search")

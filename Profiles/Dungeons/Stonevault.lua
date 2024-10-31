@@ -167,6 +167,17 @@ profile["Steps"] = {
         ["Mobs"] = {
             "Speaker Brokk"
         },
+        ["Mechanics"] = {
+            ["Name"] = "Get to safe spot",
+            ["Condition"] = {
+                ["Type"] = "casting",
+                ["Mob"] = "Speaker Brokk",
+                ["SpellName"] = "Scrap Song",
+                ["DistanceLocation"] = {["X"] = -220.74468994141, ["Y"] = 292.68572998047, ["Z"] = 349.43923950195, ["Radius"] = 5, }
+            },
+            ["Task"] = "move_to",
+            ["Location"] = {["X"] = -220.74468994141, ["Y"] = 292.68572998047, ["Z"] = 349.43923950195, ["Radius"] = 5, }
+        }
     },
     { ["Name"] = "Move to main room",
       ["Task"] = "move_to",

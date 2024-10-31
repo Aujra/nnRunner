@@ -39,9 +39,10 @@ function Navigation:MoveTo(unit)
             if radians < 0 then radians = radians + math.pi * 2 end
             runner.nn.SetPlayerFacing(radians)
             Unlock(MoveForwardStart)
-            if GetTime() - lastPOSCheck > .5 then
+            if GetTime() - lastPOSCheck > 5 then
                 local playerX, playerY, playerZ = ObjectPosition("player")
-                if playerX == lastPOSX and playerY == lastPOSY then
+                local stuckdist = distance3D(playerX, playerY, playerZ, lastPOSX, lastPOSY, lastPOSZ)
+                if stuckdist < 2 then
                     print("Stuck, jumping")
                     Unlock(JumpOrAscendStart)
                 end

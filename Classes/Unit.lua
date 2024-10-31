@@ -29,6 +29,7 @@ function Unit:init(pointer)
     self.isDead = Unlock(UnitIsDeadOrGhost, self.pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = 0
+    self.Threat = 0
 end
 
 function Unit:Update()
@@ -44,19 +45,30 @@ function Unit:Update()
     self.isDead = Unlock(UnitIsDeadOrGhost, self.pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = self:GetAuraCount("Soul Fragments", "HELPFUL")
+    self.Threat = Unlock(UnitThreatSituation, "player", self.pointer)
     self:Debug()
 end
 
 function Unit:GetScore()
-
+    local score = 0
+    local distance = self:DistanceFromPlayer()
+    local HP = self.HP
+    score = score + (800 - (distance * 5))
+    score = score + ((100 - HP) * 3)
+    if self.InCombat then
+        score = score + 300
+    end
+    if self.Threat and runner.LocalPlayer.Role == "TANK" then
+        score = score + ((4-self.Threat) * 30)
+    end
+    if not self:LOS() then
+        score = score - 400
+    end
+    if self.isDead then
+        score = score - 10000
+    end
+    return score
 end
-
--- function Unit:LOS()
---     local x1, y1, z1 = runner.nn.ObjectPosition('player')
---     local x2, y2, z2 = runner.nn.ObjectPosition(self.pointer)
---     local x, y, z = TraceLine(x1, y1, z1+2, x2, y2, z2+2, 0x100111)
---     return x == false
--- end
 
 function Unit:LOS()
     local x1, y1, z1 = runner.nn.ObjectPosition('player')
@@ -178,9 +190,4 @@ function Unit:ShouldInterruptCasting()
     end
     local elapsed = GetTime() - (startTimeMS / 1000)
     return name and not notInterruptible and elapsed > 0.2
-end
-
-function Unit:Debug()
-    --local draw = runner.Draw
-    --draw:Text(self:NavigationDistance(), "GameFontNormal", self.x, self.y, self.z)
 end

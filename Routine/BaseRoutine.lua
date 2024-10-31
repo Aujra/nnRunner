@@ -14,7 +14,10 @@ function BaseRoutine:Run()
     end
 end
 
-function BaseRoutine:BuildGUI()
+function BaseRoutine:ShowGUI()
+end
+
+function BaseRoutine:HideGUI()
 end
 
 function BaseRoutine:ShowGUI()

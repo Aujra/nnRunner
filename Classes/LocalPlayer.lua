@@ -26,10 +26,9 @@ function LocalPlayer:EquipUpgrades()
             if item then
                 local itemLoc = ItemLocation:CreateFromBagAndSlot(i, j)
                 local itemLink = C_Item.GetItemLink(itemLoc)
-                local itemInfo = C_Item.GetItemInfo(item.itemID)
                 local isUpgrade = PawnIsItemDefinitivelyAnUpgrade(itemLink, true)
                 if isUpgrade then
-                    C_Item.EquipItemByName(itemInfo)
+                    C_Container.UseContainerItem(i, j)
                     if StaticPopup1Button1 ~= nil and StaticPopup1Button1:IsVisible() then
                         print("Accepting upgrade")
                         Unlock(RunMacroText, "/click StaticPopup1Button1")

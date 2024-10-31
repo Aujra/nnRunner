@@ -12,6 +12,8 @@ function OM:Update()
     local Players = nn.ObjectManager("Player" or 6)
     local AreaTriggers = nn.ObjectManager("AreaTrigger" or 11)
 
+    self.party = {}
+
     for k,v in pairs(self.gameobjects) do
         if not runner.nn.ObjectExists(v.pointer) then
             self.gameobjects[k] = nil
@@ -44,6 +46,9 @@ function OM:Update()
         if not self.units[pointer] then
             self.units[pointer] = runner.Classes.Unit:new(pointer)
         else
+            if Unlock(UnitInParty, pointer) then
+                table.insert(self.party, self.units[pointer])
+            end
             self.units[pointer]:Update()
         end
     end
@@ -51,6 +56,9 @@ function OM:Update()
         if not self.players[pointer] then
             self.players[pointer] = runner.Classes.Player:new(pointer)
         else
+            if Unlock(UnitInParty, pointer) then
+                table.insert(self.party, self.units[pointer])
+            end
             self.players[pointer]:Update()
         end
     end
@@ -64,6 +72,7 @@ function OM:Update()
 end
 
 function OM:GetByPointer(pointer)
+    pointer = tonumber(pointer)
     if self.gameobjects[pointer] then
         return self.gameobjects[pointer]
     end

@@ -47,6 +47,19 @@ function ShamanRotation:Pulse(target)
                 return
             end
 
+            local itemID = GetInventoryItemID("player", 13) -- 13 for trinket1, 14 for trinket2
+            local start, duration, enable = C_Container.GetItemCooldown(itemID)
+            if enable == 1 and duration == 0 then
+                return
+                Unlock(RunMacroText, "/use 13")
+            end
+            local itemID = GetInventoryItemID("player", 14) -- 13 for trinket1, 14 for trinket2
+            local start, duration, enable = C_Container.GetItemCooldown(itemID)
+            if enable == 1 and duration == 0 then
+                Unlock(RunMacroText, "/use 14")
+                return
+            end
+
             if self:CanCast("Storm Elemental", runner.LocalPlayer) then
                 self:Cast("Storm Elemental")
                 return
@@ -81,10 +94,6 @@ function ShamanRotation:Pulse(target)
             end
             if self:CanCast("Earth Shock", self.Target) and enemiesAround <= 2 then
                 self:Cast("Earth Shock", self.Target.pointer)
-                return
-            end
-            if runner.LocalPlayer:HasAura("Icefury", "HELPFUL") then
-                self:Cast("Icefury", self.Target.pointer)
                 return
             end
             if self:CanCast("Lava Burst", self.Target) then
