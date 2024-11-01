@@ -163,18 +163,54 @@ function DungeonRoutine:Run()
             if step then
                 if self:NeedStep(step) then
                     if step.Task == "move_to" then
+                        runner.Engine.DebugManager:Debug("DungeonRoutine", "Processing move_to step: " .. step.Name)
+                        
                         local location = step.Locations[1]
                         local x = location.X
                         local y = location.Y
                         local z = location.Z
                         local radius = location.Radius
 
+                        runner.Engine.DebugManager:Debug("DungeonRoutine", string.format(
+                            "Target location: X=%.2f, Y=%.2f, Z=%.2f, Radius=%.2f",
+                            x, y, z, radius
+                        ))
+
                         runner.Draw:Circle(x, y, z, radius)
                         runner.Draw:Text(step.Name, "GAMEFONTNORMAL", x, y, z)
 
-                        if player:DistanceFromPoint(x, y, z) > radius then
+                        local playerX, playerY, playerZ = ObjectPosition("player")
+                        if not playerX then
+                            runner.Engine.DebugManager:Error("DungeonRoutine", "Failed to get player position")
+                            return
+                        end
+
+                        runner.Engine.DebugManager:Debug("DungeonRoutine", string.format(
+                            "Player position: X=%.2f, Y=%.2f, Z=%.2f",
+                            playerX, playerY, playerZ
+                        ))
+
+                        local distance = player:DistanceFromPoint(x, y, z)
+                        runner.Engine.DebugManager:Debug("DungeonRoutine", string.format(
+                            "Distance to target: %.2f (Radius: %.2f)",
+                            distance, radius
+                        ))
+
+                        if distance > radius then
+                            runner.Engine.DebugManager:Debug("DungeonRoutine", "Moving to target position")
                             runner.Engine.Navigation:MoveToPoint(x, y, z)
+                            
+                            local navPath = runner.Engine.Navigation:GetCurrentPath()
+                            if navPath then
+                                runner.Engine.DebugManager:Debug("DungeonRoutine", string.format(
+                                    "Navigation path created with %d points",
+                                    #navPath
+                                ))
+                            else
+                                runner.Engine.DebugManager:Warning("DungeonRoutine", "No navigation path created")
+                            end
                         else
+                            runner.Engine.DebugManager:Debug("DungeonRoutine", "Within radius - marking step complete")
                             Unlock(MoveForwardStop)
                             DungeonRoutine:MarkStepComplete(step, self.Steps)
                         end
