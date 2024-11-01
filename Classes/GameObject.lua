@@ -7,6 +7,7 @@ runner.GameObjectViewColumns = {
     "Pointer",
     "Distance",
     "Type",
+    "Lootable"
 }
 
 function GameObject:init(pointer)
@@ -14,8 +15,12 @@ function GameObject:init(pointer)
     self.Name = ObjectName(self.pointer)
     self.Type = runner.nn.GameObjectType(self.pointer)
     self.x, self.y, self.z = ObjectPosition(self.pointer)
+    self.Facing = ObjectFacing(self.pointer)
+    self.BoundingRadius = ObjectBoundingRadius(self.pointer)
+    self.Height = ObjectHeight(self.pointer)
     self.Distance = 99999
     self.PathDistance = 0
+    self.CanLoot = false
 end
 
 function GameObject:Update()
@@ -23,6 +28,8 @@ function GameObject:Update()
     self.Type = runner.nn.GameObjectType(self.pointer)
     self.x, self.y, self.z = ObjectPosition(self.pointer)
     self.Distance = self:DistanceFromPlayer()
+    self.Facing = ObjectFacing(self.pointer)
+    self.CanLoot = runner.nn.ObjectLootable(self.pointer)
 end
 
 function GameObject:Debug()
@@ -37,7 +44,8 @@ function GameObject:ToViewerRow()
         self.Name,
         self.pointer,
         string.format("%.2f", self.Distance),
-        self.Type
+        self.Type,
+        self.CanLoot and "Yes" or "No"
     }
 end
 

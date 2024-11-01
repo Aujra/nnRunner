@@ -70,11 +70,14 @@ end
 nn:Require('/scripts/mainrunner/ScrollingTable.lua', runner)
 nn:Require('/scripts/mainrunner/Engine/ObjectManager.lua', runner)
 nn:Require('/scripts/mainrunner/Engine/Navigation.lua', runner)
+nn:Require('/scripts/mainrunner/Engine/FormationManager.lua', runner)
+nn:Require('/scripts/mainrunner/Engine/DebugManager.lua', runner)
 --Classes
 nn:Require('/scripts/mainrunner/Classes/GameObject.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/AreaTrigger.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/Unit.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/Player.lua', runner)
+nn:Require('/scripts/mainrunner/Classes/MultiboxPlayer.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/LocalPlayer.lua', runner)
 --UI
 nn:Require('/scripts/mainrunner/UI/ObjectViewer2.lua', runner)
@@ -89,6 +92,7 @@ end
 nn:Require('/scripts/mainrunner/Routine/BaseRoutine.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/RotationRoutine.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/DungeonRoutine.lua', runner)
+nn:Require('/scripts/mainrunner/Routine/MultiboxRoutine.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/DungeonRoutine2.lua', runner)
 --Profiles
 local path = "/scripts/mainrunner/Profiles/Dungeons/*.lua"
@@ -128,11 +132,11 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
             runner.Draw:ClearCanvas()
         end
 
-        if not runner.LocalPlayer then
-            runner.LocalPlayer = runner.Classes.LocalPlayer:new("player")
-        else
-            runner.LocalPlayer:Update()
-        end
+    if not runner.LocalPlayer then
+        runner.LocalPlayer = runner.Classes.MultiboxPlayer:new("player")
+    else
+        runner.LocalPlayer:Update()
+    end
 
         runner.Engine.ObjectManager:Update()
         if runner.UI.ObjectViewer2 then

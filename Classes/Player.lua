@@ -10,7 +10,9 @@ runner.PlayerViewColumns = {
     "Level",
     "IsCasting",
     "HP",
-    "Focus"
+    "Focus",
+    "Height",
+    "BoundingRadius"
 }
 function Player:init(pointer)
     runner.Classes.Unit.init(self, pointer)
@@ -49,13 +51,15 @@ end
 
 function Player:ToViewerRow()
     return {
-    self.Name,
-    self.pointer,
-    string.format("%.2f", self.Distance),
-    self.Reaction,
-    self.Level,
-    self.IsCasting and "Yes" or "No",
-    string.format("%.2f", self.HP),
-    self.IsFocus and "yes" or "no"
+        self.Name,
+        self.pointer,
+        string.format("%.2f", self.Distance),
+        self.Reaction,
+        self.Level,
+        self.IsCasting and "Yes" or "No",
+        string.format("%.2f", self.HP),
+        self.IsFocus and "yes" or "no",
+        string.format("%.2f", self.Height),
+        string.format("%.2f", self.BoundingRadius)
     }
 end
