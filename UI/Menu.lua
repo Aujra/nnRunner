@@ -51,11 +51,16 @@ function menuFrame:UpdateMenu()
         mainFrame:Show()
 
         local pauseButton = CreateFrame("Button", nil, mainFrame, "UIPanelButtonTemplate")
-        pauseButton:SetSize(30, 30)
+        pauseButton:SetSize(79, 30)
         pauseButton:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 0, 0)
-        pauseButton:SetNormalTexture("Interface/ICONS/INV_Misc_PocketWatch_01")
+        pauseButton:SetText("Pause")
         pauseButton:SetScript("OnClick", function()
             runner.running = not runner.running
+            if runner.running then
+                pauseButton:SetText("Pause")
+            else
+                pauseButton:SetText("Resume")
+            end
         end)
 
         local markWaypoint = CreateFrame("Button", nil, mainFrame, "UIPanelButtonTemplate")
@@ -65,6 +70,7 @@ function menuFrame:UpdateMenu()
         markWaypoint:SetScript("OnClick", function()
             table.insert(runner.waypoints, {x = runner.LocalPlayer.x, y = runner.LocalPlayer.y, z = runner.LocalPlayer.z})
         end)
+        markWaypoint:Hide()
 
         local showWaypoints = CreateFrame("Button", nil, mainFrame, "UIPanelButtonTemplate")
         showWaypoints:SetSize(30, 30)
@@ -80,6 +86,7 @@ function menuFrame:UpdateMenu()
             end
             runner.nn.WriteFile("/scripts/mainrunner/waypoints.json", waypoint_string)
         end)
+        showWaypoints:Hide()
 
         local dropDown = CreateFrame("Frame", "rotationMenu", mainFrame, "UIDropDownMenuTemplate")
         dropDown:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 40, 0)
@@ -140,7 +147,8 @@ end
 function rotationMenu_Initialize(self, level)
     local info = UIDropDownMenu_CreateInfo()
     for k,v in pairs(runner.rotations) do
-        if v.Class:lower() == select(1, UnitClass("player")):lower() then
+        print(v.Class:lower())
+        if v.Class:lower() == select(1, UnitClass("player")):lower() or v.Class:lower() == "any" then
             info.text = v.Name
             info.func = function() runner.rotation = v end
             UIDropDownMenu_AddButton(info)
