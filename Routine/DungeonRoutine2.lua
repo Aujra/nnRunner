@@ -12,17 +12,14 @@ function DungeonRoutine2:init()
 end
 
 function DungeonRoutine2:Run()
-    self:Debug()
-    local target = self:getBestTarget()
-    if target then
-        print("Target: " .. target.Name)
-        if target:DistanceFromPlayer() > 6 or not target:LOS() then
-            runner.Engine.Navigation:MoveTo(target.pointer)
-            Unlock(TargetUnit, target.pointer)
-        else
-            Unlock("MoveForwardStop")
-            runner.Engine.Navigation:FaceUnit(target.pointer)
-            runner.rotation:Pulse(target)
+    local tank = runner.Engine.ObjectManager:GetTank()
+    if tank and tank:DistanceFromPlayer() > 40 then
+        runner.Navigator:MoveTo(tank.x, tank.y, tank.z, 1)
+    else
+        local target = Unlock(AssistUnit, tank.pointer)
+        if target then
+            runner.Navigator:FaceUnit(target.pointer)
+            runner.rotation:Pulse(target.pointer)
         end
     end
 end
