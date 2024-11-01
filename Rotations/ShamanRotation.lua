@@ -112,17 +112,21 @@ function ShamanRotation:Pulse(target)
         end
 
         if runner.LocalPlayer.specName == "Restoration" then
-            if lowestPlayer then
-                if self:CanCast("Healing Surge", lowestPlayer) and lowestPlayer.HP < 50 then
-                    self:Cast("Healing Surge", lowestPlayer.pointer)
+            if self.LowestPlayer then
+                if self:CanCast("Healing Surge", self.LowestPlayer) and self.LowestPlayer.HP < 50 then
+                    self:Cast("Healing Surge", self.LowestPlayer.pointer)
                     return
                 end
-                if self:CanCast("Healing Wave", lowestPlayer) and lowestPlayer.HP < 70 then
-                    self:Cast("Healing Wave", lowestPlayer.pointer)
+                if self:CanCast("Healing Wave", self.LowestPlayer) and self.LowestPlayer.HP < 70 then
+                    self:Cast("Healing Wave", self.LowestPlayer.pointer)
                     return
                 end
-                if self:CanCast("Riptide", lowestPlayer) and lowestPlayer.HP < 90 then
-                    self:Cast("Riptide", lowestPlayer.pointer)
+                if self:CanCast("Riptide", self.LowestPlayer) and self.LowestPlayer.HP < 90 then
+                    self:Cast("Riptide", self.LowestPlayer.pointer)
+                    return
+                end
+                if self:CanCast("Healing Rain", self.LowestPlayer) and self.LowestPlayer.HP < 95 then
+                    self:Cast("Healing Rain", self.LowestPlayer.pointer)
                     return
                 end
                 if self:CanCast("Earth Shield", self.Tank) and not self.Tank:HasAura("Earth Shield", "HELPFUL") then

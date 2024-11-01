@@ -7,14 +7,14 @@ local inlineGroup = nil
 local ScrollFrame = nil
 local sortKey = "Distance"
 
-local mainFrame = runner.nn.Utils.AceGUI:Create("Window", "ObjectViewerFrame", UIParent)
+local mainFrame = runner.AceGUI:Create("Window", "ObjectViewerFrame", UIParent)
 mainFrame:SetTitle("Object Manager")
 mainFrame:SetLayout("Flow")
 mainFrame:SetWidth(1000)
 mainFrame:SetHeight(800)
 mainFrame:Show()
 
-local sortDropdown = runner.nn.Utils.AceGUI:Create("Dropdown")
+local sortDropdown = runner.AceGUI:Create("Dropdown")
 sortDropdown:SetList({
     ["Distance"] = "Distance",
     ["Name"] = "Name",
@@ -27,7 +27,7 @@ sortDropdown:SetCallback("OnValueChanged", function(_, _, key)
 end)
 mainFrame:AddChild(sortDropdown)
 
-local tree = runner.nn.Utils.AceGUI:Create("TreeGroup")
+local tree = runner.AceGUI:Create("TreeGroup")
 tree:SetLayout("Fill")
 tree:SetFullWidth(true)
 tree:SetFullHeight(700)
@@ -47,13 +47,13 @@ tree:SetTree(
 )
 tree:SetCallback("OnGroupSelected", function(container, _, group)
     tree:ReleaseChildren()
-    inlineGroup = runner.nn.Utils.AceGUI:Create("InlineGroup")
+    inlineGroup = runner.AceGUI:Create("InlineGroup")
     inlineGroup:SetFullWidth(true)
     inlineGroup:SetFullHeight(true)
     inlineGroup:SetLayout("Fill")
     tree:AddChild(inlineGroup)
 
-    ScrollFrame = runner.nn.Utils.AceGUI:Create("ScrollFrame")
+    ScrollFrame = runner.AceGUI:Create("ScrollFrame")
     ScrollFrame:SetLayout("Flow")
     ScrollFrame:SetFullWidth(true)
     ScrollFrame:SetFullHeight(true)
@@ -117,7 +117,7 @@ function OV:Update()
     for k,v in pairs(runner.Engine.ObjectManager.areatrigger) do
         table.insert(areaTriggerData, {
             value = v.pointer,
-            text = v.Name
+            text = "AreaTrigger"
         })
     end
 
@@ -181,7 +181,7 @@ function OV:BuildObjectList(container, selected, SelectedPointer)
 
     for k,v in pairs(object._) do
         if type(v) == "string" or type(v) == "number" or type(v) == "boolean" then
-            local label = runner.nn.Utils.AceGUI:Create("Label")
+            local label = runner.AceGUI:Create("Label")
             label:SetText(k .. ": " .. tostring(v))
             label:SetFullWidth(true)
             container:AddChild(label)

@@ -16,6 +16,8 @@ runner.rotation = nil
 runner.routines = {}
 runner.routine = nil
 
+runner.AceGUI = LibStub("AceGUI-3.0")
+
 --Main Variables
 runner.localPlayer = nil
 runner.Draw = nil

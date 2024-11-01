@@ -31,6 +31,7 @@ function OM:Update()
     end
     for k,v in pairs(self.areatrigger) do
         if not runner.nn.ObjectExists(v.pointer) then
+            print("Removing areatrigger " .. v.pointer)
             self.areatrigger[k] = nil
         end
     end
@@ -81,6 +82,9 @@ function OM:GetByPointer(pointer)
     end
     if self.players[pointer] then
         return self.players[pointer]
+    end
+    if self.areatrigger[pointer] then
+        return self.areatrigger[pointer]
     end
     return nil
 end
@@ -135,4 +139,13 @@ function OM:GetClosestByName(name)
         end
     end
     return closest
+end
+
+function OM:GetTank()
+    for k,v in pairs(self.units) do
+        if v.Role == "TANK" then
+            return v
+        end
+    end
+    return nil
 end
