@@ -3,7 +3,7 @@ local BaseRotation = runner.Rotations.BaseRotation
 runner.Rotations.BaseRotation = BaseRotation
 
 function BaseRotation:init()
-    self.Class = "Base"
+    self.Class = "any"
     self.Name = "Base"
     self.Description = "Base Rotation"
     self.ClosestCaster = nil
@@ -266,3 +266,5 @@ function BaseRotation:Cast(spell, target)
     --print("Casting: " .. spell .. " on " .. target)
     Unlock(CastSpellByName, spell, target)
 end
+
+registerRotation(BaseRotation)
