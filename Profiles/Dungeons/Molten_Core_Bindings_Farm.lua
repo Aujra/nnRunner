@@ -1,5 +1,5 @@
 local profile = {}
-profile["Name"] = "Molte Core"
+profile["Name"] = "Molten Core"
 profile["Description"] = "Profile for Molten Core Bindings of The Windseeker Farm"
 profile["Steps"] = {
     { ["Name"] = "Move to Garr",

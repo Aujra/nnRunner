@@ -67,7 +67,6 @@ function deep_copy( original, copies )
 end
 
 --Require Files
-nn:Require('/scripts/mainrunner/ScrollingTable.lua', runner)
 nn:Require('/scripts/mainrunner/Engine/ObjectManager.lua', runner)
 nn:Require('/scripts/mainrunner/Engine/Navigation.lua', runner)
 nn:Require('/scripts/mainrunner/Engine/FormationManager.lua', runner)
