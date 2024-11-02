@@ -8,24 +8,13 @@ function BaseRoutine:init()
 end
 
 function BaseRoutine:Run()
-    local target = UnitTarget("player")
-    if target then
-        runner.Engine.Navigation:MoveTo(target)
-    end
+
 end
 
 function BaseRoutine:ShowGUI()
 end
 
 function BaseRoutine:HideGUI()
-end
-
-function BaseRoutine:ShowGUI()
-    
-end
-
-function BaseRoutine:HideGUI()
-    
 end
 
 registerRoutine(BaseRoutine)

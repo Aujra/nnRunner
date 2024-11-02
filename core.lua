@@ -77,8 +77,8 @@ nn:Require('/scripts/mainrunner/Classes/GameObject.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/AreaTrigger.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/Unit.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/Player.lua', runner)
-nn:Require('/scripts/mainrunner/Classes/MultiboxPlayer.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/LocalPlayer.lua', runner)
+nn:Require('/scripts/mainrunner/Classes/MultiboxPlayer.lua', runner)
 --UI
 nn:Require('/scripts/mainrunner/UI/ObjectViewer2.lua', runner)
 nn:Require('/scripts/mainrunner/UI/Menu.lua', runner)
@@ -104,7 +104,7 @@ end
 --Main Loop
 runner.frame = CreateFrame("Frame")
 runner.frame:SetScript("OnUpdate", function(self, elapsed)
-    if GetTime() - runner.lastTick > .2 then
+    if GetTime() - runner.lastTick > .15 then
         if GetTime() - runner.lastAFK > 60 then
             LastHardwareAction(GetTime()*1000)
             runner.lastAFK = GetTime()

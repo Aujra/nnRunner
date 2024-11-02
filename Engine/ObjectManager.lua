@@ -30,8 +30,7 @@ function OM:Update()
         end
     end
     for k,v in pairs(self.areatrigger) do
-        if not runner.nn.ObjectExists(v.pointer) then
-            print("Removing areatrigger " .. v.pointer)
+        if not runner.nn.ObjectExists(v.pointer) or v.x == 0 then
             self.areatrigger[k] = nil
         end
     end
@@ -63,13 +62,13 @@ function OM:Update()
             self.players[pointer]:Update()
         end
     end
-    for index,pointer in pairs(AreaTriggers) do
-        if not self.areatrigger[pointer] then
-            self.areatrigger[pointer] = runner.Classes.AreaTrigger:new(pointer)
-        else
-            self.areatrigger[pointer]:Update()
-        end
-    end
+    --for index,pointer in pairs(AreaTriggers) do
+    --    if not self.areatrigger[pointer] then
+    --        self.areatrigger[pointer] = runner.Classes.AreaTrigger:new(pointer)
+    --    else
+    --        self.areatrigger[pointer]:Update()
+    --    end
+    --end
 end
 
 function OM:GetByPointer(pointer)
@@ -148,4 +147,19 @@ function OM:GetTank()
         end
     end
     return nil
+end
+
+function OM:GetClosestLootable()
+    local closest = nil
+    local closestDistance = 9999
+    for k,v in pairs(self.units) do
+        if v.CanLoot then
+            local distance = v:DistanceFromPlayer()
+            if distance < closestDistance then
+                closest = v
+                closestDistance = distance
+            end
+        end
+    end
+    return closest
 end

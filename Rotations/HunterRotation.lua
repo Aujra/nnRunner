@@ -22,7 +22,6 @@ function HunterRotation:Pulse(target)
 
         if not target:HasAura("Hunter's Mark", "HARMFUL") and target.HP > 85 then
             self:Cast("Hunter's Mark")
-
         end
 
         if runner.LocalPlayer.specName == "Survival" then
@@ -71,9 +70,7 @@ function HunterRotation:Pulse(target)
         end
 
         if runner.LocalPlayer.specName == "Marksmanship" then
-
             if (self.Focus and self:CanCast("Misdirection", self.Focus) and self.Focus:DistanceFromPlayer() < 40) then
-                print("Misdirection")
                 self:Cast("Misdirection", "focus")
                 return
             end

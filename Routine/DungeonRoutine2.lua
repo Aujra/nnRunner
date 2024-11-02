@@ -9,6 +9,8 @@ function DungeonRoutine2:init()
     self.BlackList = {
         "Vent Stalker", "Speaker Mechhand", "Reinforce Stalker", "Eternal Flame", "Dummy Stalker", "Mini-Boss Stalker"
     }
+    self.SettingsGUI = nil
+    self.ProfileMakerGUI = nil
 end
 
 function DungeonRoutine2:Run()
@@ -49,6 +51,20 @@ function DungeonRoutine2:BlackListed(name)
 end
 
 function DungeonRoutine2:ShowGUI()
+    if not self.ProfileMakerGUI then
+        self.ProfileMakerGUI = runner.AceGUI:Create("Window")
+        self.ProfileMakerGUI:SetTitle("DungeonRoutine2 Profile Maker")
+        self.ProfileMakerGUI:SetWidth(600)
+        self.ProfileMakerGUI:SetHeight(600)
+        self.ProfileMakerGUI:SetLayout("Flow")
+        self.ProfileMakerGUI:Show()
+
+        local treeData = runner.Routines.DungeonRoutine2:GetProfileSteps()
+
+        local profileTree = runner.AceGUI:Create("TreeGroup")
+        profileTree:SetLayout("Fill")
+
+    end
 end
 function DungeonRoutine2:HideGUI()
 end

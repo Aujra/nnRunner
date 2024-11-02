@@ -121,7 +121,7 @@ function menuFrame:UpdateMenu()
         OMToggle:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 800, 0)
         OMToggle:SetNormalTexture("Interface/ICONS/INV_Misc_Eye_02")
         OMToggle:SetScript("OnClick", function()
-            runner.UI.ObjectViewer:Toggle()
+            runner.UI.ObjectViewer2:Toggle()
         end)
         OMToggle:SetScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -135,7 +135,7 @@ function menuFrame:UpdateMenu()
         -- Debug button
         local debugButton = CreateFrame("Button", nil, mainFrame, "UIPanelButtonTemplate")
         debugButton:SetSize(30, 30)
-        debugButton:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 850, 0)
+        debugButton:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 750, 0)
         debugButton:SetNormalTexture("Interface/ICONS/INV_Misc_Note_02")
         debugButton:SetScript("OnClick", function()
             runner.Engine.DebugManager:Toggle()
@@ -151,7 +151,7 @@ function menuFrame:UpdateMenu()
 
         -- Debug level dropdown
         local debugLevelDropdown = CreateFrame("Frame", "debugLevelMenu", mainFrame, "UIDropDownMenuTemplate")
-        debugLevelDropdown:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 890, -5)
+        debugLevelDropdown:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 830, 0)
         UIDropDownMenu_SetWidth(debugLevelDropdown, 80)
         UIDropDownMenu_Initialize(debugLevelDropdown, function(self, level)
             local info = UIDropDownMenu_CreateInfo()
@@ -226,7 +226,6 @@ end
 function rotationMenu_Initialize(self, level)
     local info = UIDropDownMenu_CreateInfo()
     for k,v in pairs(runner.rotations) do
-        print(v.Class:lower())
         if v.Class:lower() == select(1, UnitClass("player")):lower() or v.Class:lower() == "any" then
             info.text = v.Name
             info.func = function() runner.rotation = v end

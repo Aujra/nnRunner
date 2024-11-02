@@ -45,7 +45,7 @@ function Unit:Update()
     self.isDead = Unlock(UnitIsDeadOrGhost, self.pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = self:GetAuraCount("Soul Fragments", "HELPFUL")
-    self.Threat = Unlock(UnitThreatSituation, "player", self.pointer)    
+    self.Threat = Unlock(UnitThreatSituation, "player", self.pointer)
 end
 
 function Unit:GetScore()
