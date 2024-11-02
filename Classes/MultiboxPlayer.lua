@@ -1,4 +1,4 @@
-runner.Classes.MultiboxPlayer = runner.Classes.Player:extend()
+runner.Classes.MultiboxPlayer = runner.Classes.LocalPlayer:extend()
 local MultiboxPlayer = runner.Classes.MultiboxPlayer
 runner.Classes.MultiboxPlayer = MultiboxPlayer
 
@@ -31,7 +31,7 @@ end
 
 function MultiboxPlayer:Update()
     -- Call parent update
-    runner.Classes.Player.Update(self)
+    runner.Classes.LocalPlayer.Update(self)
     
     -- Update master object reference if needed
     if self.masterGUID and not self.masterObject then

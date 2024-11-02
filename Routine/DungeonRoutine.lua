@@ -279,16 +279,46 @@ function DungeonRoutine:NeedStep(step)
     return true
 end
 
+function DungeonRoutine:IsBossFromProfile(unitName)
+    local dungeon_profile = self:FindProfile()
+    if not dungeon_profile or not dungeon_profile.Steps then
+        return false
+    end
+
+    for _, step in pairs(dungeon_profile.Steps) do
+        if step.Task == "kill" and step.Mobs then
+            for _, mobName in pairs(step.Mobs) do
+                if unitName == mobName then
+                    return true
+                end
+            end
+        end
+    end
+    
+    return false
+end
+
 function DungeonRoutine:GetClosestLootableEnemy()
     local closestEnemy = nil
     local closestDistance = 9999
+    local dungeon_profile = self:FindProfile()
 
     for k, enemy in pairs(runner.Engine.ObjectManager.units) do
         if enemy.Reaction and enemy.Reaction < 4 and enemy.CanLoot then
-            local distance = enemy:DistanceFromPlayer()
-            if distance < closestDistance then
-                closestEnemy = enemy
-                closestDistance = distance
+            local shouldCheck = true
+            
+            if dungeon_profile and dungeon_profile.LootBossOnly == true then
+                if not self:IsBossFromProfile(enemy.Name) then
+                    shouldCheck = false
+                end
+            end
+
+            if shouldCheck then
+                local distance = enemy:DistanceFromPlayer()
+                if distance < closestDistance then
+                    closestEnemy = enemy
+                    closestDistance = distance
+                end
             end
         end
     end

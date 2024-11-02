@@ -88,7 +88,7 @@ function menuFrame:UpdateMenu()
         markWaypoint:SetScript("OnLeave", function(self)
             GameTooltip:Hide()
         end)
-        markWaypoint:Hide()
+        --markWaypoint:Hide()
 
         -- Show waypoints button
         local showWaypoints = CreateFrame("Button", nil, mainFrame, "UIPanelButtonTemplate")
@@ -165,7 +165,7 @@ function menuFrame:UpdateMenu()
             end
         end)
         UIDropDownMenu_SetText(debugLevelDropdown, "DEBUG")
-        showWaypoints:Hide()
+        --showWaypoints:Hide()
 
         local dropDown = CreateFrame("Frame", "rotationMenu", mainFrame, "UIDropDownMenuTemplate")
         dropDown:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 40, 0)
