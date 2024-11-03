@@ -20,9 +20,9 @@ local DebugManager = {
         ROLE = "Role",
         MASTER = "Master",
         DUNGEON = "Dungeon Routine",
-        LOOT = "Looting"  -- New type for loot operations
+        LOOT = "Looting"
     },
-    enabledTypes = {},  -- Will store which debug types are enabled
+    enabledTypes = {},  
     currentLevel = 1,  -- Default to DEBUG
     filterWindow = nil
 }
@@ -30,7 +30,7 @@ runner.Engine.DebugManager = DebugManager
 
 -- Initialize enabled types
 for type, _ in pairs(DebugManager.DEBUG_TYPES) do
-    DebugManager.enabledTypes[type] = true  -- Default all to enabled
+    DebugManager.enabledTypes[type] = true
 end
 
 function DebugManager:Toggle()
