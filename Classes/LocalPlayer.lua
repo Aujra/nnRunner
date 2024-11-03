@@ -6,13 +6,19 @@ function LocalPlayer:init(pointer)
     runner.Classes.Player.init(self, pointer)
     self.spec = GetSpecialization()
     self.specName = select(2, GetSpecializationInfo(self.spec))
+    self.Yaw = 0
 end
 
 function LocalPlayer:Update()
+    local lastZ = self.z
     runner.Classes.Player.Update(self)
+    self.ZDelta = self.z - lastZ
     self.spec = GetSpecialization()
     self.specName = select(2, GetSpecializationInfo(self.spec))
-    self:EquipUpgrades()
+    self.Yaw = runner.nn.ObjectYaw(self.pointer)
+    self.Rotation = runner.nn.ObjectRotation(self.pointer)
+    self.ForwardSpeed = select(3, C_PlayerInfo.GetGlidingInfo())
+    self.Gliding = select(1, C_PlayerInfo.GetGlidingInfo())
 end
 
 function LocalPlayer:EquipUpgrades()

@@ -11,7 +11,7 @@ function menuFrame:UpdateMenu()
         mainFrame:SetResizable(true)
         mainFrame:SetWidth(UIParent:GetWidth()/2)
         mainFrame:SetHeight(30)
-        mainFrame:SetPoint("CENTER", UIParent, "CENTER", 0,150)
+        mainFrame:SetPoint("TOP", UIParent, "TOP", 0,-20)
         mainFrame:SetBackdrop({bgFile = "Interface/Tooltips/UI-Tooltip-Background",
                                edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
                                tile = true, tileSize = 16, edgeSize = 16,
@@ -69,7 +69,7 @@ function menuFrame:UpdateMenu()
             GameTooltip:Show()
         end)
         pauseButton:SetScript("OnLeave", function(self)
-            GameTooltip:Hide()
+            GameTooltip:Show()
         end)
 
         -- Mark waypoint button
@@ -88,7 +88,7 @@ function menuFrame:UpdateMenu()
         markWaypoint:SetScript("OnLeave", function(self)
             GameTooltip:Hide()
         end)
-        markWaypoint:Hide()
+        markWaypoint:Show()
 
         -- Show waypoints button
         local showWaypoints = CreateFrame("Button", nil, mainFrame, "UIPanelButtonTemplate")
@@ -112,7 +112,7 @@ function menuFrame:UpdateMenu()
             GameTooltip:Show()
         end)
         showWaypoints:SetScript("OnLeave", function(self)
-            GameTooltip:Hide()
+            GameTooltip:Show()
         end)
 
         -- Object Manager toggle
@@ -129,7 +129,7 @@ function menuFrame:UpdateMenu()
             GameTooltip:Show()
         end)
         OMToggle:SetScript("OnLeave", function(self)
-            GameTooltip:Hide()
+            GameTooltip:Show()
         end)
 
         -- Debug button
@@ -165,7 +165,7 @@ function menuFrame:UpdateMenu()
             end
         end)
         UIDropDownMenu_SetText(debugLevelDropdown, "DEBUG")
-        showWaypoints:Hide()
+        showWaypoints:Show()
 
         local dropDown = CreateFrame("Frame", "rotationMenu", mainFrame, "UIDropDownMenuTemplate")
         dropDown:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 40, 0)
@@ -203,7 +203,7 @@ function menuFrame:UpdateMenu()
                                tile = true, tileSize = 16, edgeSize = 16,
                                insets = { left = 4, right = 4, top = 4, bottom = 4 }});
         statusFrame:SetBackdropColor(0,0,0,1);
-        statusFrame:Show()
+        statusFrame:Hide()
         local statusText = statusFrame:CreateFontString("StatusText", "OVERLAY", "GameFontNormal")
         statusText:SetPoint("CENTER", statusFrame, "CENTER", 0, 0)
         statusText:SetText("Status: Running")

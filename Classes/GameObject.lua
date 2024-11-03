@@ -21,6 +21,8 @@ function GameObject:init(pointer)
     self.Distance = 99999
     self.PathDistance = 0
     self.CanLoot = false
+    self.ObjectType = runner.nn.GameObjectType(self.pointer)
+    self.CanGather = self.ObjectType == 50
 end
 
 function GameObject:Update()
@@ -30,6 +32,8 @@ function GameObject:Update()
     self.Distance = self:DistanceFromPlayer()
     self.Facing = ObjectFacing(self.pointer)
     self.CanLoot = runner.nn.ObjectLootable(self.pointer)
+    self.ObjectType = runner.nn.GameObjectType(self.pointer)
+    self.CanGather = self.ObjectType == 50
 end
 
 function GameObject:Debug()
@@ -70,11 +74,21 @@ function GameObject:DistanceFrom(unit)
 end
 
 function GameObject:DistanceFromPoint(x, y, z)
+    z = z or self.z
     local x1, y1, z1 = self.x, self.y, self.z
     if not x1 then
         return 99999
     end
     return math.sqrt((x - x1)^2 + (y - y1)^2 + (z - z1)^2) or 99999
+end
+
+function GameObject:DistanceFromPlayer2D()
+    local x1, y1 = self.x, self.y
+    local x2, y2 = ObjectPosition("player")
+    if not x2 then
+        return 99999
+    end
+    return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
 end
 
 function GameObject:UnitsInRange(range)

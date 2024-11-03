@@ -8,6 +8,7 @@ runner.Rotations = {}
 runner.Engine = {}
 runner.Classes = {}
 runner.Routines = {}
+runner.Behaviors = {}
 runner.UI = {}
 runner.UI.menuFrame = {}
 runner.LocalPlayer = nil
@@ -15,6 +16,7 @@ runner.rotations = {}
 runner.rotation = nil
 runner.routines = {}
 runner.routine = nil
+runner.behaviors = {}
 
 runner.AceGUI = LibStub("AceGUI-3.0")
 
@@ -44,6 +46,10 @@ end
 
 function registerProfile(profile)
     table.insert(runner.profiles, profile)
+end
+
+function registerBehavior(name, behavior)
+    runner.behaviors[name:lower()] = behavior
 end
 
 function deep_copy( original, copies )
@@ -94,12 +100,21 @@ nn:Require('/scripts/mainrunner/Routine/RotationRoutine.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/DungeonRoutine.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/MultiboxRoutine.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/DungeonRoutine2.lua', runner)
+nn:Require('/scripts/mainrunner/Routine/MoveToRoutine.lua', runner)
 --Profiles
 local path = "/scripts/mainrunner/Profiles/Dungeons/*.lua"
 local files = nn.ListFiles(path)
 for k,v in pairs(files) do
     nn:Require("/scripts/mainrunner/Profiles/Dungeons/" .. v, runner)
 end
+--Behaviors
+local path = "/scripts/mainrunner/Behaviors/*.lua"
+local files = nn.ListFiles(path)
+for k,v in pairs(files) do
+    nn:Require("/scripts/mainrunner/Behaviors/" .. v, runner)
+end
+
+nn:Require('/scripts/mainrunner/UI/DungeonProfileMaker.lua', runner)
 
 --Main Loop
 runner.frame = CreateFrame("Frame")
@@ -132,11 +147,18 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
             runner.Draw:ClearCanvas()
         end
 
-    if not runner.LocalPlayer then
-        runner.LocalPlayer = runner.Classes.MultiboxPlayer:new("player")
-    else
-        runner.LocalPlayer:Update()
-    end
+        --local looking = IsMouselooking()
+        --if not looking then
+        --    MouselookStart()
+        --end
+        --MoveViewUpStart(25/tonumber(GetCVar("cameraPitchMoveSpeed")))
+        --Unlock(CameraOrSelectOrMoveStart)
+
+        if not runner.LocalPlayer then
+            runner.LocalPlayer = runner.Classes.MultiboxPlayer:new("player")
+        else
+            runner.LocalPlayer:Update()
+        end
 
         runner.Engine.ObjectManager:Update()
         if runner.UI.ObjectViewer2 then

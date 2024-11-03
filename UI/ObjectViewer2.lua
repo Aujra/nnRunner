@@ -6,6 +6,9 @@ OV.SelectedPointer = nil
 local inlineGroup = nil
 local ScrollFrame = nil
 local sortKey = "Distance"
+local searchText = ""
+
+local green, red, blue, yellow = "|cff00ff00", "|cffff0000", "|cff0000ff", "|cffffff00"
 
 local mainFrame = runner.AceGUI:Create("Window", "ObjectViewerFrame", UIParent)
 mainFrame:SetTitle("Object Manager")
@@ -25,6 +28,13 @@ sortDropdown:SetCallback("OnValueChanged", function(_, _, key)
     sortKey = key
     OV:Update()
 end)
+local searchBox = runner.AceGUI:Create("EditBox")
+searchBox:SetLabel("Search")
+searchBox:SetCallback("OnEnterPressed", function(_, _, text)
+    searchText = text
+    OV:Update()
+end)
+mainFrame:AddChild(searchBox)
 mainFrame:AddChild(sortDropdown)
 
 local tree = runner.AceGUI:Create("TreeGroup")
@@ -82,7 +92,6 @@ end
 
 function OV:Update()
     local gameobjectData, unitData, playerData, areaTriggerData = {}, {}, {}, {}
-    local green, red, blue, yellow = "|cff00ff00", "|cffff0000", "|cff0000ff", "|cffffff00"
 
     for k,v in pairs(OV:SortBy(runner.Engine.ObjectManager.gameobjects, sortKey)) do
         table.insert(gameobjectData, {
@@ -182,8 +191,11 @@ function OV:BuildObjectList(container, selected, SelectedPointer)
     for k,v in pairs(object._) do
         if type(v) == "string" or type(v) == "number" or type(v) == "boolean" then
             local label = runner.AceGUI:Create("Label")
-            label:SetText(k .. ": " .. tostring(v))
-            label:SetFullWidth(true)
+            if searchText and searchText ~= ''and (string.find(tostring(v):lower(), searchText:lower()) or string.find(k:lower(), searchText:lower())) then
+                label:SetText(green..k .. ": " .. tostring(v))
+            else
+                label:SetText(k .. ": " .. tostring(v))
+            end
             container:AddChild(label)
         end
     end

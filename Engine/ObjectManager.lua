@@ -71,6 +71,21 @@ function OM:Update()
     --end
 end
 
+function OM:GetClosestGatherable()
+    local closest = nil
+    local closestDistance = 9999
+    for k,v in pairs(self.gameobjects) do
+        if v.CanGather then
+            local distance = v:DistanceFromPlayer()
+            if distance < closestDistance then
+                closest = v
+                closestDistance = distance
+            end
+        end
+    end
+    return closest
+end
+
 function OM:GetByPointer(pointer)
     pointer = tonumber(pointer)
     if self.gameobjects[pointer] then

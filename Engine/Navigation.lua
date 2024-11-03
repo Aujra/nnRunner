@@ -7,6 +7,8 @@ local lastPOSX, lastPOSY, lastPOSZ = 0, 0, 0
 local currentPath = nil
 local currentPathIndex = nil
 
+local lastSurge = 0
+
 local function Distance3D(x1, y1, z1, x2, y2, z2)
     local dx = x2 - x1
     local dy = y2 - y1
@@ -54,6 +56,15 @@ local function GenerateStraightLinePath(startX, startY, startZ, endX, endY, endZ
     end
     
     return path
+end
+
+function Navigation:FacePoint(x, y, z)
+    local px, py, pz = ObjectPosition("player")
+    z = z or pz
+    local dx, dy, dz = px-x, py-y, pz-z
+    local radians = math.atan2(-dy, -dx)
+    if radians < 0 then radians = radians + math.pi * 2 end
+    runner.nn.SetPlayerFacing(radians)
 end
 
 local function GeneratePath(startX, startY, startZ, endX, endY, endZ)
@@ -131,6 +142,47 @@ function Navigation:MoveTo(unit)
     end
 end
 
+function Navigation:FlyToPoint(x,y,z)
+    if not IsFlyableArea() then
+        return
+    end
+
+    if GetShapeshiftForm() ~= 3 then
+        Unlock(CastSpellByName, "Travel Form")
+    end
+
+    runner.Engine.Navigation:FacePoint(x, y, z)
+    local groundZ = select(3, runner.nn.TraceLine(runner.LocalPlayer.x, runner.LocalPlayer.y, 10000, runner.LocalPlayer.x, runner.LocalPlayer.y, -10000, 0x110))
+
+    runner.Draw:Text("Distance left " .. self:Distance2D(runner.LocalPlayer.x, runner.LocalPlayer.y, x, y) , "GAMEFONTNORMAL", runner.LocalPlayer.x, runner.LocalPlayer.y, runner.LocalPlayer.z + 3)
+
+    if self:Distance2D(runner.LocalPlayer.x, runner.LocalPlayer.y, x, y) > 20 then
+        if runner.LocalPlayer.z - groundZ < 30 then
+            Unlock(CastSpellByName, "Skyward Ascent")
+        end
+
+        if runner.LocalPlayer.Vigor < 4 then
+            Unlock(CastSpellByName, "Second Wind")
+        end
+        if not runner.LocalPlayer:HasAura("Ohn'ahra's Gusts" , "HELPFUL") and runner.LocalPlayer.z - groundZ > 80
+                or not runner.LocalPlayer:HasAura("Thrill of the Sky", "HELPFUL") and runner.LocalPlayer.Vigor > 2
+        and GetTime() - lastSurge > 4 then
+            Unlock(CastSpellByName, "Surge Forward")
+            lastSurge = GetTime()
+        end
+    else
+        if runner.LocalPlayer.z - groundZ > 5 then
+            SetCVar("cameraPitchMoveSpeed", 90)
+            Unlock(PitchUpStop)
+            Unlock(PitchDownStart)
+        end
+    end
+end
+
+function Navigation:Distance2D(x1, y1, x2, y2)
+    return sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+end
+
 function Navigation:MoveToPoint(x, y, z)
     local px, py, pz = ObjectPosition("player")
     local path = GeneratePath(px, py, pz, x, y, z)
@@ -139,6 +191,7 @@ function Navigation:MoveToPoint(x, y, z)
     currentPathIndex = 2
 
     if #path > 1 then
+        self:Debug(path)
         local pathIndex = 2
         local tx = tonumber(path[pathIndex].x)
         local ty = tonumber(path[pathIndex].y)

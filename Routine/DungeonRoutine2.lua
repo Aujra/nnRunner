@@ -9,19 +9,20 @@ function DungeonRoutine2:init()
     self.BlackList = {
         "Vent Stalker", "Speaker Mechhand", "Reinforce Stalker", "Eternal Flame", "Dummy Stalker", "Mini-Boss Stalker"
     }
+
     self.SettingsGUI = nil
-    self.ProfileMakerGUI = nil
+    self.Steps = {}
 end
 
 function DungeonRoutine2:Run()
-    local tank = runner.Engine.ObjectManager:GetTank()
-    if tank and tank:DistanceFromPlayer() > 40 then
-        runner.Navigator:MoveTo(tank.x, tank.y, tank.z, 1)
-    else
-        local target = Unlock(AssistUnit, tank.pointer)
-        if target then
-            runner.Navigator:FaceUnit(target.pointer)
-            runner.rotation:Pulse(target.pointer)
+    if self.Steps == nil or #self.Steps == 0 then
+        local json = runner.nn.ReadFile("/scripts/mainrunner/profile.json")
+        local profile = runner.nn.Utils.JSON.decode(json)
+        profileSteps = {}
+        for k,v in pairs(profile) do
+            local behavior = runner.behaviors[v.Name:lower()]()
+            behavior.Step = v.Step
+            table.insert(profileSteps, {index = #profileSteps, step = behavior})
         end
     end
 end
@@ -51,20 +52,7 @@ function DungeonRoutine2:BlackListed(name)
 end
 
 function DungeonRoutine2:ShowGUI()
-    if not self.ProfileMakerGUI then
-        self.ProfileMakerGUI = runner.AceGUI:Create("Window")
-        self.ProfileMakerGUI:SetTitle("DungeonRoutine2 Profile Maker")
-        self.ProfileMakerGUI:SetWidth(600)
-        self.ProfileMakerGUI:SetHeight(600)
-        self.ProfileMakerGUI:SetLayout("Flow")
-        self.ProfileMakerGUI:Show()
 
-        local treeData = runner.Routines.DungeonRoutine2:GetProfileSteps()
-
-        local profileTree = runner.AceGUI:Create("TreeGroup")
-        profileTree:SetLayout("Fill")
-
-    end
 end
 function DungeonRoutine2:HideGUI()
 end
