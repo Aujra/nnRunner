@@ -26,7 +26,7 @@ function MultiboxRoutine:ShowGUI()
     _G.SLASH_MBXR1 = "/mbxr"
     _G.SlashCmdList["MBXR"] = function(msg) self:HandleSlashCommands(msg) end
     
-    -- Create event frame for addon communication
+    -- Create event frame for addon communication and target changes
     if not self.eventFrame then
         self.eventFrame = CreateFrame("Frame")
         self.eventFrame:RegisterEvent("CHAT_MSG_ADDON")
@@ -73,31 +73,6 @@ function MultiboxRoutine:OnEvent(event, ...)
         local prefix, message, channel, sender = ...
         
         if prefix == self.addonPrefix then
-            if message:sub(1, 7) == "MASTER:" then
-                local masterGUID, masterName = message:match("MASTER:([^:]+):(.+)")
-                if masterGUID and masterName then
-                    self:HandleMasterBroadcast(masterGUID, masterName, sender)
-                end
-            elseif message:sub(1, 13) == "MASTERTARGET:" then
-                local targetGUID = message:match("MASTERTARGET:(.+)")
-                if targetGUID then
-                    self:HandleMasterTarget(targetGUID, sender)
-                end
-            elseif message:sub(1, 6) == "STATE:" then
-                local guid, enabled = message:match("STATE:([^:]+):(%d)")
-                if guid and enabled then
-                    self:HandleStateSync(guid, enabled == "1")
-                end
-            end
-        end
-    end
-end
-
-function MultiboxRoutine:OnEvent(event, ...)
-    if event == "CHAT_MSG_ADDON" then
-        local prefix, message, channel, sender = ...
-        
-        if prefix == self.addonPrefix then
             if message:sub(1, 10) == "FORMATION:" then
                 if not runner.LocalPlayer.isMaster then
                     self:HandleFormationUpdate(message:sub(11))
@@ -105,13 +80,29 @@ function MultiboxRoutine:OnEvent(event, ...)
             elseif message:sub(1, 7) == "MASTER:" then
                 local masterGUID, masterName = message:match("MASTER:([^:]+):(.+)")
                 if masterGUID and masterName then
+                    -- If we were master before and someone else is taking over
+                    if runner.LocalPlayer.isMaster and masterGUID ~= UnitGUID("player") then
+                        runner.LocalPlayer.isMaster = false
+                        self.eventFrame:UnregisterEvent("PLAYER_TARGET_CHANGED")
+                        runner.Engine.DebugManager:Debug("MultiboxRoutine", "No longer master - unregistered target events", "TARGETING")
+                    end
+                    
                     self:HandleMasterBroadcast(masterGUID, masterName, sender)
+                    
+                    -- If we're the new master, register for target changes
+                    if runner.LocalPlayer.isMaster then
+                        self.eventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+                        runner.Engine.DebugManager:Debug("MultiboxRoutine", "Became master - registered target events", "TARGETING")
+                    end
                 end
             elseif message:sub(1, 13) == "MASTERTARGET:" then
+                -- Ignore our own broadcasts
+                if sender == UnitName("player") then return end
+                
                 local targetGUID = message:match("MASTERTARGET:(.+)")
                 if targetGUID then
                     self:HandleMasterTarget(targetGUID, sender)
-                end
+                end            
             elseif message:sub(1, 6) == "STATE:" then
                 local guid, enabled = message:match("STATE:([^:]+):(%d)")
                 if guid and enabled then
@@ -119,11 +110,28 @@ function MultiboxRoutine:OnEvent(event, ...)
                 end
             end
         end
+    elseif event == "PLAYER_TARGET_CHANGED" and runner.LocalPlayer.isMaster then
+        -- Broadcast new target when master changes target
+        if UnitExists("target") then
+            local targetGUID = UnitGUID("target")
+            local message = "MASTERTARGET:" .. targetGUID
+            
+            runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
+                "Master target changed - broadcasting: %s",
+                UnitName("target")
+            ), "TARGETING")
+            
+            if IsInRaid() then
+                C_ChatInfo.SendAddonMessage(self.addonPrefix, message, "RAID")
+            elseif IsInGroup() then
+                C_ChatInfo.SendAddonMessage(self.addonPrefix, message, "PARTY")
+            end
+        end
     end
 end
 
 function MultiboxRoutine:HandleFormationUpdate(positionData)
-    runner.Engine.DebugManager:Debug("MultiboxRoutine", "Received formation update from master")
+    runner.Engine.DebugManager:Debug("MultiboxRoutine", "Received formation update from master", "FORMATION")
     
     local positions = {}
     local posCount = 0
@@ -141,13 +149,13 @@ function MultiboxRoutine:HandleFormationUpdate(positionData)
             runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
                 "Parsed position - GUID=%s, x=%.2f, y=%.2f, z=%.2f",
                 guid, positions[guid].x, positions[guid].y, positions[guid].z
-            ))
+            ), "POSITIONING")
         end
     end
     
     runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
         "Updated formation with %d positions", posCount
-    ))
+    ), "POSITIONING")
     
     runner.Engine.FormationManager.positions = positions
     runner.Engine.FormationManager:DumpDebugState()
@@ -157,7 +165,7 @@ function MultiboxRoutine:HandleStateSync(guid, enabled)
     runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
         "Received state sync: GUID=%s, Enabled=%s",
         guid, tostring(enabled)
-    ))
+    ), "STATE")
     
     -- Update state for all matching players in ObjectManager
     for _, player in pairs(runner.Engine.ObjectManager.players) do
@@ -185,7 +193,7 @@ function MultiboxRoutine:BroadcastState()
     runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
         "Broadcasting state: GUID=%s, Enabled=%s",
         guid, tostring(runner.LocalPlayer.isMultiboxEnabled)
-    ))
+    ), "STATE")
     
     if IsInRaid() then
         C_ChatInfo.SendAddonMessage(self.addonPrefix, message, "RAID")
@@ -202,7 +210,7 @@ function MultiboxRoutine:HandleMasterBroadcast(masterGUID, masterName, sender)
         runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
             "Received master broadcast: GUID=%s, Name=%s",
             masterGUID, masterName
-        ))
+        ), "MASTER")
         
         player.isMaster = false
         player.masterGUID = masterGUID
@@ -225,7 +233,7 @@ function MultiboxRoutine:HandleMasterBroadcast(masterGUID, masterName, sender)
 end
 
 function MultiboxRoutine:UpdateFormation()
-    runner.Engine.DebugManager:Debug("MultiboxRoutine", "Starting formation update")
+    runner.Engine.DebugManager:Debug("MultiboxRoutine", "Starting formation update", "FORMATION")
     
     -- Clear existing followers (but keep positions)
     local oldPositions = runner.Engine.FormationManager.positions
@@ -240,7 +248,7 @@ function MultiboxRoutine:UpdateFormation()
                 "Adding self to formation: GUID=%s, Name=%s",
                 selfGUID,
                 UnitName("player")
-            ))
+            ), "FORMATION")
             runner.Engine.FormationManager:AddFollower(runner.LocalPlayer)
         end
         
@@ -258,7 +266,7 @@ function MultiboxRoutine:UpdateFormation()
                         if player.isMultiboxEnabled and not player.isMaster then
                             runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
                                 "Adding player to formation: %s", UnitName(player.pointer)
-                            ))
+                            ), "FORMATION")
                             runner.Engine.FormationManager:AddFollower(player)
                         end
                         break
@@ -289,11 +297,17 @@ function MultiboxRoutine:HandleMasterTarget(targetGUID, sender)
     if not player or player.isMaster then return end
     
     if player.masterGUID then
-        for _, unit in pairs(runner.Engine.ObjectManager.units) do
-            if UnitGUID(unit.pointer) == targetGUID then
-                Unlock(TargetUnit, unit.pointer)
-                runner.UI.menuFrame:UpdateStatusText("Multibox: Targeting " .. unit.Name)
-                break
+        -- Store the master's target GUID
+        player.masterTargetGUID = targetGUID
+        
+        -- Update our target if needed
+        if player:UpdateTargetFromGUID(targetGUID) then
+            -- Find target name for status message
+            for _, unit in pairs(runner.Engine.ObjectManager.units) do
+                if UnitGUID(unit.pointer) == targetGUID then
+                    runner.UI.menuFrame:UpdateStatusText("Multibox: Targeting " .. unit.Name)
+                    break
+                end
             end
         end
     end
@@ -381,14 +395,28 @@ function MultiboxRoutine:HandleInteraction(interactable)
     end
 end
 
+function MultiboxRoutine:HandleMasterInteractTarget(player)
+    if not player or player.isMaster then return false end
+    
+    local targetObject = player:GetMasterInteractTarget()
+    if not targetObject then return false end
+    
+    runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
+        "Master is targeting interactable object: %s",
+        targetObject.Name
+    ), "INTERACTION")
+        
+    return self:HandleInteraction(targetObject)
+end
+
 function MultiboxRoutine:HandleFollowing(player)
     if not player:ShouldFollowMaster() then 
-        runner.Engine.DebugManager:Debug("MultiboxRoutine", "Not following: ShouldFollowMaster returned false")
+        runner.Engine.DebugManager:Debug("MultiboxRoutine", "Not following: ShouldFollowMaster returned false", "FOLLOW")
         return false 
     end
     
     if not player.masterObject then 
-        runner.Engine.DebugManager:Debug("MultiboxRoutine", "Not following: No master object")
+        runner.Engine.DebugManager:Debug("MultiboxRoutine", "Not following: No master object", "FOLLOW")
         return false 
     end
     
@@ -397,14 +425,14 @@ function MultiboxRoutine:HandleFollowing(player)
     if not followPos then 
         runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
             "Not following: No formation position for %s", UnitName(player.pointer)
-        ))
+        ), "FOLLOW")
         return false 
     end
     
     -- Move if needed
     local px, py, pz = ObjectPosition(player.pointer)
     if not px then 
-        runner.Engine.DebugManager:Debug("MultiboxRoutine", "Not following: Could not get player position")
+        runner.Engine.DebugManager:Debug("MultiboxRoutine", "Not following: Could not get player position", "FOLLOW")
         return false 
     end
     
@@ -412,18 +440,18 @@ function MultiboxRoutine:HandleFollowing(player)
     runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
         "Follow check: Distance to target = %.2f", 
         distance
-    ))
+    ), "FOLLOW")
     
     if distance > 2 then  -- Within 2 yards of target position
         runner.Engine.DebugManager:Debug("MultiboxRoutine", string.format(
             "Moving to position (%.2f, %.2f, %.2f)", 
             followPos.x, followPos.y, followPos.z
-        ))
+        ), "FOLLOW")
         runner.Engine.Navigation:MoveToPoint(followPos.x, followPos.y, followPos.z)
         runner.UI.menuFrame:UpdateStatusText("Following Master")
         return true
     else
-        runner.Engine.DebugManager:Debug("MultiboxRoutine", "At target position, stopping movement")
+        runner.Engine.DebugManager:Debug("MultiboxRoutine", "At target position, stopping movement", "FOLLOW")
         Unlock(MoveForwardStop)
         return true
     end
@@ -442,19 +470,9 @@ function MultiboxRoutine:Run()
         local mf = ObjectFacing(player.pointer)
         
         if mx and runner.Engine.FormationManager:ShouldUpdatePositions(mx, my, mf) then
-            runner.Engine.DebugManager:Debug("MultiboxRoutine", "Master updating formation positions")
+            runner.Engine.DebugManager:Debug("MultiboxRoutine", "Master updating formation positions", "FORMATION")
             runner.Engine.FormationManager:AssignPositions(mx, my, mz, mf)
             runner.Engine.FormationManager:BroadcastPositions()
-        end
-        
-        -- Handle target broadcasts
-        if UnitExists("target") then
-            local message = "MASTERTARGET:" .. UnitGUID("target")
-            if IsInRaid() then
-                C_ChatInfo.SendAddonMessage(self.addonPrefix, message, "RAID")
-            elseif IsInGroup() then
-                C_ChatInfo.SendAddonMessage(self.addonPrefix, message, "PARTY")                
-            end
         end
         return
     end
@@ -463,6 +481,13 @@ function MultiboxRoutine:Run()
     if not player.isMaster and player:ShouldLoot() then
         local lootable = player:GetClosestLootable()
         if lootable and self:HandleInteraction(lootable) then
+            return
+        end
+    end
+
+    -- Handle interaction with master's target
+    if not player.isMaster and not UnitAffectingCombat("player") then
+        if self:HandleMasterInteractTarget(player) then
             return
         end
     end

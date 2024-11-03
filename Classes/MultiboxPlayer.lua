@@ -12,12 +12,14 @@ function MultiboxPlayer:init(pointer)
     self.masterGUID = nil
     self.masterName = nil
     self.masterObject = nil
+    self.masterTargetGUID = nil
     
     -- Combat constants
     self.FOLLOW_MIN_DISTANCE = 1
     self.FOLLOW_MAX_DISTANCE = 5
     self.MELEE_RANGE = 5
     self.RANGED_COMBAT_RANGE = 25
+    self.MASTER_LOOT_RANGE = 40
     
     -- Follow position tracking
     self.followPosition = nil
@@ -45,8 +47,16 @@ function MultiboxPlayer:Update()
 end
 
 function MultiboxPlayer:GetMasterTarget()
-    if not self.masterObject then return nil end
-    return runner.Engine.ObjectManager:GetByPointer(UnitTarget(self.masterObject.pointer))
+    if not self.masterTargetGUID then return nil end
+    
+    -- Look up the target in ObjectManager using the broadcast GUID
+    for _, unit in pairs(runner.Engine.ObjectManager.units) do
+        if UnitGUID(unit.pointer) == self.masterTargetGUID then
+            return unit
+        end
+    end
+    
+    return nil
 end
 
 function MultiboxPlayer:IsPlayerMeleeSpec()
@@ -65,6 +75,19 @@ function MultiboxPlayer:IsPlayerMeleeSpec()
     }
     
     return meleeSpecs[specID] or false
+end
+
+function MultiboxPlayer:IsPlayerMeleeHealer()
+    local _, className = UnitClass(self.pointer)
+    local specID = GetSpecialization()
+    
+    if className == "PALADIN" and specID == 1 then  -- Holy Paladin
+        return true
+    elseif className == "MONK" and specID == 2 then  -- Mistweaver Monk
+        return true
+    end
+    
+    return false
 end
 
 function MultiboxPlayer:IsInMeleePosition(target)
@@ -119,16 +142,31 @@ end
 function MultiboxPlayer:NeedsRepositioning(target)
     if not target then return false end
     
-    local isTank = UnitGroupRolesAssigned(self.pointer) == "TANK"
-    local isRanged = UnitGroupRolesAssigned(self.pointer) == "RANGED"
+    local role = UnitGroupRolesAssigned(self.pointer)
     
-    if isRanged then
-        return not self:IsInRangedPosition(target)
-    elseif isTank then
+    if role == "TANK" then
         return not self:IsInTankPosition(target)
-    else
-        return not self:IsInMeleePosition(target)
     end
+    
+    if role == "DAMAGER" then
+        if self:IsPlayerMeleeSpec() then
+            return not self:IsInMeleePosition(target)
+        else
+            return not self:IsInRangedPosition(target)
+        end
+    end
+    
+    -- Special handling for healers
+    if role == "HEALER" then
+        if self:IsPlayerMeleeHealer() then
+            return not self:IsInMeleePosition(target)
+        else
+            return not self:IsInRangedPosition(target)
+        end
+    end
+    
+    -- Default to melee positioning if no role assigned
+    return not self:IsInMeleePosition(target)
 end
 
 function MultiboxPlayer:CalculateRangedPosition(target)
@@ -173,23 +211,73 @@ function MultiboxPlayer:CalculateMeleePosition(target)
 end
 
 function MultiboxPlayer:GetCombatPosition(target)
-    if not target then return nil end
-    if not self:NeedsRepositioning(target) then return nil end
-    
-    local isTank = UnitGroupRolesAssigned(self.pointer) == "TANK"
-    local isRanged = UnitGroupRolesAssigned(self.pointer) == "RANGED"
-    
-    if isRanged then
-        return self:CalculateRangedPosition(target)
-    elseif not isTank then
-        return self:CalculateMeleePosition(target)
-    else
-        -- Tanks move to target's position plus a small offset for bounding radius
-        local tx, ty, tz = ObjectPosition(target.pointer)
-        -- Add a small offset to prevent clipping into the target
-        local offset = target.BoundingRadius * 0.5
-        return {x = tx + offset, y = ty + offset, z = tz}
+    if not target then
+        runner.Engine.DebugManager:Debug("MultiboxPlayer", "No target provided for combat position", "COMBAT_POS")
+        return nil
     end
+    
+    -- Debug target info
+    runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+        string.format("Calculating combat position for target: %s", target.Name),
+        "COMBAT_POS"
+    )
+
+    if not self:NeedsRepositioning(target) then
+        runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+            "No repositioning needed for current target",
+            "COMBAT_POS"
+        )
+        return nil
+    end
+
+    local role = UnitGroupRolesAssigned(self.pointer)
+    runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+        string.format("Determining position for role: %s", role),
+        "COMBAT_POS"
+    )
+
+    -- Tank positioning
+    if role == "TANK" then
+        local tx, ty, tz = ObjectPosition(target.pointer)
+        local offset = target.BoundingRadius * 0.5
+        local position = {x = tx + offset, y = ty + offset, z = tz}
+        
+        runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+            string.format("Tank position calculated - X: %.2f, Y: %.2f, Z: %.2f (Offset: %.2f)",
+                position.x, position.y, position.z, offset),
+            "COMBAT_POS"
+        )
+        return position
+    end
+
+    -- Healer positioning
+    if role == "HEALER" then
+        if self:IsPlayerMeleeHealer() then
+            runner.Engine.DebugManager:Debug("MultiboxPlayer", "Using melee position for healer", "COMBAT_POS")
+            return self:CalculateMeleePosition(target)
+        else
+            runner.Engine.DebugManager:Debug("MultiboxPlayer", "Using ranged position for healer", "COMBAT_POS")
+            return self:CalculateRangedPosition(target)
+        end
+    end
+
+    -- DPS positioning
+    if role == "DAMAGER" then
+        if self:IsPlayerMeleeSpec() then
+            runner.Engine.DebugManager:Debug("MultiboxPlayer", "Using melee position for DPS", "COMBAT_POS")
+            return self:CalculateMeleePosition(target)
+        else
+            runner.Engine.DebugManager:Debug("MultiboxPlayer", "Using ranged position for DPS", "COMBAT_POS")
+            return self:CalculateRangedPosition(target)
+        end
+    end
+
+    -- Default to melee position if no role assigned
+    runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+        "No role assigned, defaulting to melee position",
+        "COMBAT_POS"
+    )
+    return self:CalculateMeleePosition(target)
 end
 
 function MultiboxPlayer:GetCombatRange()
@@ -423,37 +511,167 @@ function MultiboxPlayer:IsSafeToAttack(targetObject)
     return UnitAffectingCombat(targetObject.pointer)
 end
 
-function MultiboxPlayer:GetClosestLootable()
+function MultiboxPlayer:GetClosestLootable()   
+    if not self.masterObject then
+        runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+            "No master object - searching all lootable units", 
+            "LOOT"
+        )
+        
+        local closestLootable = nil
+        local closestDistance = 9999
+
+        -- Check all game objects (includes units and chests since they inherit from GameObject)
+        -- for _, obj in pairs(runner.Engine.ObjectManager.gameobjects) do
+        --     if obj.CanLoot then
+        --         local distance = obj:DistanceFromPlayer()
+        --         if distance < closestDistance then
+        --             closestLootable = obj
+        --             closestDistance = distanceShouldFollowMaster
+        --         end
+        --     end
+        -- end
+
+        for _, unit in pairs(runner.Engine.ObjectManager.units) do
+            if unit.Reaction and unit.Reaction < 4 and unit.CanLoot then
+                local distance = unit:DistanceFromPlayer()
+                if distance < closestDistance then
+                    closestLootable = unit
+                    closestDistance = distance
+                    
+                    runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+                        string.format("Found closer lootable: %s at %.2f yards", 
+                            unit.Name, distance),
+                        "LOOT"
+                    )
+                end
+            end
+        end
+        
+        if closestLootable then
+            runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+                string.format("Selected closest lootable: %s at %.2f yards", 
+                    closestLootable.Name, closestDistance),
+                "LOOT"
+            )
+        else
+            runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+                "No lootable units found", 
+                "LOOT"
+            )
+        end
+        
+        return closestLootable
+    end
+    
+    -- Master exists, check within master's range
+    runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+        string.format("Searching for lootable units within %d yards of master", 
+            self.MASTER_LOOT_RANGE),
+        "LOOT"
+    )
+    
     local closestLootable = nil
     local closestDistance = 9999
     
-    -- Check all game objects (includes units and chests since they inherit from GameObject)
-    -- for _, obj in pairs(runner.Engine.ObjectManager.gameobjects) do
-    --     if obj.CanLoot then
-    --         local distance = obj:DistanceFromPlayer()
-    --         if distance < closestDistance then
-    --             closestLootable = obj
-    --             closestDistance = distanceShouldFollowMaster
-    --         end
-    --     end
-    -- end
-    
-    -- Also check units specifically since they're in a separate collection
     for _, unit in pairs(runner.Engine.ObjectManager.units) do
         if unit.Reaction and unit.Reaction < 4 and unit.CanLoot then
-            local distance = unit:DistanceFromPlayer()
-            if distance < closestDistance then
-                closestLootable = unit
-                closestDistance = distance
+            local masterDistance = unit:DistanceFrom(self.masterObject)
+            
+            runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+                string.format("Lootable unit %s: Master distance = %.2f, Max range = %d",
+                    unit.Name,
+                    masterDistance,
+                    self.MASTER_LOOT_RANGE),
+                "LOOT"
+            )
+            
+            if masterDistance <= self.MASTER_LOOT_RANGE then
+                local playerDistance = unit:DistanceFromPlayer()
+                if playerDistance < closestDistance then
+                    closestLootable = unit
+                    closestDistance = playerDistance
+                    
+                    runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+                        string.format("Found closer lootable within master range: %s at %.2f yards",
+                            unit.Name,
+                            playerDistance),
+                        "LOOT"
+                    )
+                end
             end
         end
+    end
+    
+    if closestLootable then
+        runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+            string.format("Selected closest lootable: %s at %.2f yards from player, %.2f yards from master",
+                closestLootable.Name,
+                closestDistance,
+                closestLootable:DistanceFrom(self.masterObject)),
+            "LOOT"
+        )
+    else
+        runner.Engine.DebugManager:Debug("MultiboxPlayer", 
+            string.format("No lootable units found within %d yards of master",
+                self.MASTER_LOOT_RANGE),
+            "LOOT"
+        )
     end
     
     return closestLootable
 end
 
+function MultiboxPlayer:GetMasterInteractTarget()
+    if not self.masterObject then return nil end
+    
+    -- Get master's target
+    local masterTarget = runner.Engine.ObjectManager:GetByPointer(UnitTarget(self.masterObject.pointer))
+    if not masterTarget then return nil end
+    
+    -- Skip if target is a player, dead, or hostile
+    if UnitIsPlayer(masterTarget.pointer) or 
+       UnitIsDead(masterTarget.pointer) or 
+       (masterTarget.Reaction and masterTarget.Reaction < 4) then
+        return nil
+    end
+    
+    return masterTarget
+end
+
 function MultiboxPlayer:ShouldLoot()
     return not UnitAffectingCombat(self.pointer)
+end
+
+function MultiboxPlayer:UpdateTargetFromGUID(targetGUID)
+    -- If we already have this target, no need to change
+    if self.currentTargetGUID == targetGUID and UnitExists("target") then
+        return false
+    end
+    
+    -- Update our tracked target GUID
+    self.currentTargetGUID = targetGUID
+    
+    -- Find and target the unit
+    for _, unit in pairs(runner.Engine.ObjectManager.units) do
+        if UnitGUID(unit.pointer) == targetGUID then
+            Unlock(TargetUnit, unit.pointer)
+            
+            -- Command pets to attack if we have them
+            if HasPetUI() then
+                runner.Engine.DebugManager:Debug("MultiboxPlayer", string.format(
+                    "Commanding pet to attack %s",
+                    unit.Name
+                ), "COMBAT")
+                PetAssistMode()
+                PetAttack()
+            end
+            
+            return true
+        end
+    end
+    
+    return false
 end
 
 function MultiboxPlayer:ToViewerRow()

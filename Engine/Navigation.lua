@@ -15,7 +15,7 @@ local function Distance3D(x1, y1, z1, x2, y2, z2)
 end
 
 local function GenerateStraightLinePath(startX, startY, startZ, endX, endY, endZ)
-    runner.Engine.DebugManager:Debug("Navigation", "Generating straight line path")
+    runner.Engine.DebugManager:Debug("Navigation", "Generating straight line path", "NAVIGATION")
     local path = {}
     local totalDistance = Distance3D(startX, startY, startZ, endX, endY, endZ)
     local maxGap = 2 -- Never allow points to be more than 2 yards apart
@@ -34,7 +34,7 @@ local function GenerateStraightLinePath(startX, startY, startZ, endX, endY, endZ
         maxGap,
         steps,
         totalDistance / steps
-    ))
+    ), "NAVIGATION")
     
     for i = 0, steps do
         local t = i / steps
@@ -49,7 +49,7 @@ local function GenerateStraightLinePath(startX, startY, startZ, endX, endY, endZ
             runner.Engine.DebugManager:Debug("Navigation", string.format(
                 "Point %d/%d - Distance from previous: %.2f yards",
                 i, steps, pointDistance
-            ))
+            ), "NAVIGATION")
         end
     end
     
@@ -65,16 +65,16 @@ local function GeneratePath(startX, startY, startZ, endX, endY, endZ)
     runner.Engine.DebugManager:Debug("Navigation", string.format(
         "Attempting path generation from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f)",
         startX, startY, startZ, endX, endY, endZ
-    ))
+    ), "NAVIGATION")
     
     -- Check if path is invalid (nil, empty, or contains 0,0,0)
     if not path or #path <= 1 then
-        runner.Engine.DebugManager:Warning("Navigation", "Map-based path generation failed")
+        runner.Engine.DebugManager:Warning("Navigation", "Map-based path generation failed", "NAVIGATION")
         path = GenerateStraightLinePath(startX, startY, startZ, endX, endY, endZ)
     else
         local firstPoint = path[1]
         if firstPoint.x == 0 and firstPoint.y == 0 and firstPoint.z == 0 then
-            runner.Engine.DebugManager:Warning("Navigation", "Map returned invalid coordinates (0,0,0)")
+            runner.Engine.DebugManager:Warning("Navigation", "Map returned invalid coordinates (0,0,0)", "NAVIGATION")
             path = GenerateStraightLinePath(startX, startY, startZ, endX, endY, endZ)
         end
     end
@@ -121,7 +121,7 @@ function Navigation:MoveTo(unit)
                 local playerX, playerY, playerZ = ObjectPosition("player")
                 local stuckdist = Distance3D(playerX, playerY, playerZ, lastPOSX, lastPOSY, lastPOSZ)
                 if stuckdist < 2 then
-                    runner.Engine.DebugManager:Warning("Navigation", "Detected stuck state, attempting jump")
+                    runner.Engine.DebugManager:Warning("Navigation", "Detected stuck state, attempting jump", "NAVIGATION")
                     Unlock(JumpOrAscendStart)
                 end
                 lastPOSCheck = GetTime()
@@ -207,7 +207,7 @@ function Navigation:PathDistance(unit)
         runner.Engine.DebugManager:Debug("Navigation", string.format(
             "Path distance to %s: %.2f yards",
             UnitName(unit), distance
-        ))
+        ), "NAVIGATION")
         return distance
     end
     return 0

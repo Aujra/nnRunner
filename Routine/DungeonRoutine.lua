@@ -163,7 +163,7 @@ function DungeonRoutine:Run()
             if step then
                 if self:NeedStep(step) then
                     if step.Task == "move_to" then
-                        runner.Engine.DebugManager:Debug("DungeonRoutine", "Processing move_to step: " .. step.Name)
+                        runner.Engine.DebugManager:Debug("DungeonRoutine", "Processing move_to step: " .. step.Name, "DUNGEON")
                         
                         local location = step.Locations[1]
                         local x = location.X
@@ -174,7 +174,7 @@ function DungeonRoutine:Run()
                         runner.Engine.DebugManager:Debug("DungeonRoutine", string.format(
                             "Target location: X=%.2f, Y=%.2f, Z=%.2f, Radius=%.2f",
                             x, y, z, radius
-                        ))
+                        ), "DUNGEON")
 
                         runner.Draw:Circle(x, y, z, radius)
                         runner.Draw:Text(step.Name, "GAMEFONTNORMAL", x, y, z)
@@ -188,13 +188,13 @@ function DungeonRoutine:Run()
                         runner.Engine.DebugManager:Debug("DungeonRoutine", string.format(
                             "Player position: X=%.2f, Y=%.2f, Z=%.2f",
                             playerX, playerY, playerZ
-                        ))
+                        ), "DUNGEON")
 
                         local distance = player:DistanceFromPoint(x, y, z)
                         runner.Engine.DebugManager:Debug("DungeonRoutine", string.format(
                             "Distance to target: %.2f (Radius: %.2f)",
                             distance, radius
-                        ))
+                        ), "DUNGEON")
 
                         if distance > radius then
                             runner.Engine.DebugManager:Debug("DungeonRoutine", "Moving to target position")
@@ -205,12 +205,12 @@ function DungeonRoutine:Run()
                                 runner.Engine.DebugManager:Debug("DungeonRoutine", string.format(
                                     "Navigation path created with %d points",
                                     #navPath
-                                ))
+                                ), "DUNGEON")
                             else
-                                runner.Engine.DebugManager:Warning("DungeonRoutine", "No navigation path created")
+                                runner.Engine.DebugManager:Warning("DungeonRoutine", "No navigation path created", "DUNGEON")
                             end
                         else
-                            runner.Engine.DebugManager:Debug("DungeonRoutine", "Within radius - marking step complete")
+                            runner.Engine.DebugManager:Debug("DungeonRoutine", "Within radius - marking step complete", "DUNGEON")
                             Unlock(MoveForwardStop)
                             DungeonRoutine:MarkStepComplete(step, self.Steps)
                         end
@@ -279,16 +279,46 @@ function DungeonRoutine:NeedStep(step)
     return true
 end
 
+function DungeonRoutine:IsBossFromProfile(unitName)
+    local dungeon_profile = self:FindProfile()
+    if not dungeon_profile or not dungeon_profile.Steps then
+        return false
+    end
+
+    for _, step in pairs(dungeon_profile.Steps) do
+        if step.Task == "kill" and step.Mobs then
+            for _, mobName in pairs(step.Mobs) do
+                if unitName == mobName then
+                    return true
+                end
+            end
+        end
+    end
+    
+    return false
+end
+
 function DungeonRoutine:GetClosestLootableEnemy()
     local closestEnemy = nil
     local closestDistance = 9999
+    local dungeon_profile = self:FindProfile()
 
     for k, enemy in pairs(runner.Engine.ObjectManager.units) do
         if enemy.Reaction and enemy.Reaction < 4 and enemy.CanLoot then
-            local distance = enemy:DistanceFromPlayer()
-            if distance < closestDistance then
-                closestEnemy = enemy
-                closestDistance = distance
+            local shouldCheck = true
+            
+            if dungeon_profile and dungeon_profile.LootBossOnly == true then
+                if not self:IsBossFromProfile(enemy.Name) then
+                    shouldCheck = false
+                end
+            end
+
+            if shouldCheck then
+                local distance = enemy:DistanceFromPlayer()
+                if distance < closestDistance then
+                    closestEnemy = enemy
+                    closestDistance = distance
+                end
             end
         end
     end
