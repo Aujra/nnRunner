@@ -19,19 +19,19 @@ function FormationManager:AddFollower(player)
     -- Only add if not already in formation
     for _, follower in ipairs(self.followers) do
         if follower.guid == guid then 
-            runner.Engine.DebugManager:Debug("FormationManager", string.format(
-                "Follower already exists: %s", UnitName(player.pointer)
-            ))
+            runner.Engine.DebugManager:Debug("FormationManager", 
+                string.format("Follower already exists: %s", UnitName(player.pointer)),
+                "FORMATION"
+            )
             return 
         end
     end
     
     -- Add new follower
-    runner.Engine.DebugManager:Debug("FormationManager", string.format(
-        "Adding follower: GUID=%s, Name=%s",
-        guid,
-        UnitName(player.pointer)
-    ))
+    runner.Engine.DebugManager:Debug("FormationManager", 
+        string.format("Adding follower: GUID=%s, Name=%s", guid, UnitName(player.pointer)),
+        "FORMATION"
+    )
     
     table.insert(self.followers, {
         guid = guid,
@@ -43,9 +43,10 @@ end
 function FormationManager:RemoveFollower(guid)
     for i, follower in ipairs(self.followers) do
         if follower.guid == guid then
-            runner.Engine.DebugManager:Debug("FormationManager", string.format(
-                "Removing follower: %s", follower.name
-            ))
+            runner.Engine.DebugManager:Debug("FormationManager", 
+                string.format("Removing follower: %s", follower.name),
+                "FORMATION"
+            )
             table.remove(self.followers, i)
             self.positions[guid] = nil
             break
@@ -57,10 +58,11 @@ function FormationManager:CheckPosition(x, y, masterX, masterY)
     -- Check distance from master
     local masterDist = math.sqrt((x - masterX)^2 + (y - masterY)^2)
     if masterDist < self.MIN_DISTANCE or masterDist > self.MAX_DISTANCE then
-        runner.Engine.DebugManager:Debug("FormationManager", string.format(
-            "Position invalid - Master distance: %.2f (min: %d, max: %d)",
-            masterDist, self.MIN_DISTANCE, self.MAX_DISTANCE
-        ))
+        runner.Engine.DebugManager:Debug("FormationManager", 
+            string.format("Position invalid - Master distance: %.2f (min: %d, max: %d)",
+                masterDist, self.MIN_DISTANCE, self.MAX_DISTANCE),
+            "FORMATION"
+        )
         return false
     end
     
@@ -70,8 +72,9 @@ function FormationManager:CheckPosition(x, y, masterX, masterY)
         if dist < self.MIN_SPACING then
             runner.Engine.DebugManager:Debug("FormationManager", string.format(
                 "Position invalid - Too close to %s (%.2f < %d)",
-                self:GetFollowerName(guid), dist, self.MIN_SPACING
-            ))
+                self:GetFollowerName(guid), dist, self.MIN_SPACING),
+                "FORMATION"
+            )
             return false
         end
     end
@@ -100,9 +103,10 @@ function FormationManager:AssignPositions(masterX, masterY, masterZ, masterFacin
     local arcStep = self.ARC_WIDTH / (numFollowers + 1)
     local baseDistance = (self.MIN_DISTANCE + self.MAX_DISTANCE) / 2
     
-    runner.Engine.DebugManager:Debug("FormationManager", string.format(
-        "Assigning positions for %d followers", numFollowers
-    ))
+    runner.Engine.DebugManager:Debug("FormationManager", 
+        string.format("Assigning positions for %d followers", numFollowers),
+        "FORMATION"
+    )
     
     -- Assign positions systematically
     for i, follower in ipairs(self.followers) do
@@ -123,10 +127,11 @@ function FormationManager:AssignPositions(masterX, masterY, masterZ, masterFacin
             distance = distance
         }
         
-        runner.Engine.DebugManager:Debug("FormationManager", string.format(
-            "Assigned position for %s: angle=%.2f, distance=%.2f",
-            follower.name, angle - masterFacing - math.pi, distance
-        ))
+        runner.Engine.DebugManager:Debug("FormationManager", 
+            string.format("Assigned position for %s: angle=%.2f, distance=%.2f",
+                follower.name, angle - masterFacing - math.pi, distance),
+            "FORMATION"
+        )
     end
 end
 
@@ -154,25 +159,29 @@ function FormationManager:ShouldUpdatePositions(masterX, masterY, masterFacing)
 end
 
 function FormationManager:DumpDebugState()
-    runner.Engine.DebugManager:Debug("FormationManager", "=== Formation State Dump ===")
+    runner.Engine.DebugManager:Debug("FormationManager", "=== Formation State Dump ===", "FORMATION")
     runner.Engine.DebugManager:Debug("FormationManager", string.format("Followers: %d", #self.followers))
     for i, follower in ipairs(self.followers) do
-        runner.Engine.DebugManager:Debug("FormationManager", string.format(
-            "Follower %d: GUID=%s, Name=%s",
-            i, follower.guid, follower.name
-        ))
+        runner.Engine.DebugManager:Debug("FormationManager", 
+            string.format("Follower %d: GUID=%s, Name=%s", i, follower.guid, follower.name),
+            "FORMATION"
+        )
     end
     
     local posCount = 0
     for guid, pos in pairs(self.positions) do
         posCount = posCount + 1
-        runner.Engine.DebugManager:Debug("FormationManager", string.format(
-            "Position for %s: x=%.2f, y=%.2f, z=%.2f",
-            self:GetFollowerName(guid), pos.x, pos.y, pos.z
-        ))
+        runner.Engine.DebugManager:Debug("FormationManager", 
+            string.format("Position for %s: x=%.2f, y=%.2f, z=%.2f",
+                self:GetFollowerName(guid), pos.x, pos.y, pos.z),
+            "FORMATION"
+        )
     end
-    runner.Engine.DebugManager:Debug("FormationManager", string.format("Total Positions: %d", posCount))
-    runner.Engine.DebugManager:Debug("FormationManager", "========================")
+    runner.Engine.DebugManager:Debug("FormationManager", 
+        string.format("Total Positions: %d", posCount),
+        "FORMATION"
+    )
+    runner.Engine.DebugManager:Debug("FormationManager", "========================", "FORMATION")
 end
 
 function FormationManager:BroadcastPositions()
@@ -182,13 +191,19 @@ function FormationManager:BroadcastPositions()
     local positionData = {}
     for guid, pos in pairs(self.positions) do
         table.insert(positionData, string.format("%s:%.2f:%.2f:%.2f", guid, pos.x, pos.y, pos.z))
+        runner.Engine.DebugManager:Debug("FormationManager", 
+            string.format("Position for %s: x=%.2f, y=%.2f, z=%.2f",
+                self:GetFollowerName(guid), pos.x, pos.y, pos.z),
+            "FORMATION"
+        )
     end
     
     -- Broadcast position data
     local message = "FORMATION:" .. table.concat(positionData, "|")
-    runner.Engine.DebugManager:Debug("FormationManager", string.format(
-        "Broadcasting formation data (%d positions)", #positionData
-    ))
+        runner.Engine.DebugManager:Debug("FormationManager", 
+        string.format("Broadcasting formation data (%d positions)", #positionData),
+        "FORMATION"
+    )
     
     if IsInRaid() then
         C_ChatInfo.SendAddonMessage("MBXR", message, "RAID")

@@ -16,6 +16,10 @@ function LocalPlayer:Update()
 end
 
 function LocalPlayer:EquipUpgrades()
+    if not C_AddOns.IsAddOnLoaded("Pawn") then
+        return
+    end
+
     if StaticPopup1Button1 ~= nil and StaticPopup1Button1:IsVisible() then
         print("Accepting upgrade")
         Unlock(RunMacroText, "/click StaticPopup1Button1")
