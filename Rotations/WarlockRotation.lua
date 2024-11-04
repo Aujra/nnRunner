@@ -20,11 +20,16 @@ function WarlockRotation:OutOfCombat()
     end
     local healer = runner.Engine.ObjectManager:GetHealer()
     if healer and not healer:HasAura("Soulstone", "HELPFUL") then
+        if not self:CanCast("Soulstone", healer) then
+            return false
+        end
         if healer:DistanceFromPlayer() > 20 and not healer:LOS() then
             runner.Engine.Navigation:MoveTo(healer.pointer)
             return true
         else
+            print("Casting Soulstone on " .. healer.Name)
             runner.Engine.Navigation:FaceUnit(healer.pointer)
+            Unlock(MoveForwardStop)
             self:Cast("Soulstone", healer.pointer)
             return true
         end
