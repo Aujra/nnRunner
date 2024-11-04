@@ -38,9 +38,9 @@ function AreaTrigger:Update()
     end
 
     if self.x ~= 0 and self.y ~= 0 and self.z ~= 0 then
-        runner.Draw:SetColor(255,255,255,255)
-        runner.Draw:Circle(self.x, self.y, self.z, self.radius)
-        runner.Draw:Text("Distance " .. string.format("%.2f", self:DistanceFromPlayer()) .. "made by " .. self.creatorName, "GAMEFONTNORMAL", self.x, self.y, self.z)
+        --runner.Draw:SetColor(255,255,255,255)
+        --runner.Draw:Circle(self.x, self.y, self.z, self.radius)
+        --runner.Draw:Text("Distance " .. string.format("%.2f", self:DistanceFromPlayer()) .. "made by " .. self.creatorName, "GAMEFONTNORMAL", self.x, self.y, self.z)
     end
 
 end

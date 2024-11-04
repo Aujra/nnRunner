@@ -29,13 +29,13 @@ function BaseBehavior:SelfDefense()
             end
         end
 
-        for k,v in pairs(runner.Engine.ObjectManager.areatrigger) do
-            if v.Reaction then
-                if v:DistanceFromPlayer() < v.radius then
-                    print("We are in an area trigger made by " .. v.creatorName)
-                end
-            end
-        end
+        --for k,v in pairs(runner.Engine.ObjectManager.areatrigger) do
+        --    if v.Reaction then
+        --        if v:DistanceFromPlayer() < v.radius then
+        --            print("We are in an area trigger made by " .. v.creatorName)
+        --        end
+        --    end
+        --end
 
         return true
     end

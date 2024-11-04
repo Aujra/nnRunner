@@ -24,7 +24,8 @@ function WarlockRotation:OutOfCombat()
             runner.Engine.Navigation:MoveTo(healer.pointer)
             return true
         else
-        self:Cast("Soulstone", healer.pointer)
+            runner.Engine.Navigation:FaceUnit(healer.pointer)
+            self:Cast("Soulstone", healer.pointer)
             return true
         end
     end
