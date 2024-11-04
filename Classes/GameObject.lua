@@ -24,9 +24,14 @@ function GameObject:init(pointer)
     self.Lootable = false
     self.ObjectType = runner.nn.GameObjectType(self.pointer)
     self.CanGather = self.ObjectType == 50
+    self.UpdateRate = 0
+    self.NextUpdate = 0
 end
 
 function GameObject:Update()
+    if GetTime() < self.NextUpdate then
+        return
+    end
     self.Name = ObjectName(self.pointer)
     self.Type = runner.nn.GameObjectType(self.pointer)
     self.x, self.y, self.z = ObjectPosition(self.pointer)
@@ -36,6 +41,23 @@ function GameObject:Update()
     self.CanLoot = runner.nn.ObjectLootable(self.pointer)
     self.ObjectType = runner.nn.GameObjectType(self.pointer)
     self.CanGather = self.ObjectType == 50
+    self.UpdateRate = self:GetUpdateRate()
+    self.NextUpdate = GetTime() + self.UpdateRate
+end
+
+function GameObject:GetUpdateRate()
+    if self.Distance < 10 then
+        return .15
+    end
+    if self.Distance < 50 then
+        return .5
+    end
+    if self.Distance < 100 then
+        return 1
+    end
+    if self.Distance < 200 then
+        return 2
+    end
 end
 
 function GameObject:Debug()

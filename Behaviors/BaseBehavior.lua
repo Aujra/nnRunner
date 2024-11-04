@@ -6,11 +6,17 @@ function BaseBehavior:init()
     self.Name = "BaseBehavior"
     self.Type = "Base"
     self.IsComplete = false
+    self.CurrentProfile = {}
 end
 
 function BaseBehavior:Run()
     if runner.LocalPlayer.isDead then
         RepopMe()
+        if self.CurrentProfile then
+            for k,v in pairs(self.CurrentProfile.Steps) do
+                v.step.IsComplete = false
+            end
+        end
         return
     end
 end

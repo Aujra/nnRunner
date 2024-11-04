@@ -1,33 +1,34 @@
-runner.Behaviors.KillBehavior = runner.Behaviors.BaseBehavior:extend()
-local KillBehavior = runner.Behaviors.KillBehavior
-runner.Behaviors.KillBehavior = KillBehavior
+runner.Behaviors.InteractBehavior = runner.Behaviors.BaseBehavior:extend()
+local InteractBehavior = runner.Behaviors.InteractBehavior
+runner.Behaviors.InteractBehavior = InteractBehavior
 
-function KillBehavior:init()
-    self.Name = "KillBehavior"
-    self.Type = "Kill"
+function InteractBehavior:init()
+    self.Name = "InteractBehavior"
+    self.Type = "Interact"
     self.Step = {
         MobName = ""
     }
 end
 
-function KillBehavior:Run()
+function InteractBehavior:Run()
     if self.Step.MobName and self.Step.MobName == "" then
         self.IsComplete = true
         return
     else
         local target = runner.Engine.ObjectManager:GetClosestByName(self.Step.MobName)
         if target then
-            if not target.isDead then
-                if target:DistanceFromPlayer() > runner.rotation.CombatRange then
+            if target then
+                if target:DistanceFromPlayer() > 7 then
                     runner.Engine.Navigation:MoveTo(target.pointer)
                 else
-                    Unlock(TargetUnit, target.pointer)
-                    runner.Engine.Navigation:FaceUnit(target.pointer)
+                    print("Interacting with " .. target.Name)
                     Unlock(MoveForwardStop)
-                    runner.rotation:Pulse(target)
+                    runner.Engine.Navigation:FaceUnit(target.pointer)
+                    runner.nn.ObjectInteract(target.pointer)
+                    if not Unlock(UnitIsInteractable, target.pointer) then
+                        self.IsComplete = true
+                    end
                 end
-                self.IsComplete = false
-                return
             else
                 self.IsComplete = true
                 return
@@ -36,11 +37,11 @@ function KillBehavior:Run()
     end
 end
 
-function KillBehavior:Debug()
+function InteractBehavior:Debug()
 
 end
 
-function KillBehavior:BuildStepGUI(container)
+function InteractBehavior:BuildStepGUI(container)
     local mobNameEditBox = runner.AceGUI:Create("EditBox")
     mobNameEditBox:SetLabel("Mob Name")
     mobNameEditBox:SetWidth(200)
@@ -60,4 +61,4 @@ function KillBehavior:BuildStepGUI(container)
     container:AddChild(getTargetNameButton)
 end
 
-registerBehavior("KillBehavior", KillBehavior)
+registerBehavior("InteractBehavior", InteractBehavior)

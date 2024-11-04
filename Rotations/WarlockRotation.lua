@@ -18,22 +18,22 @@ function WarlockRotation:OutOfCombat()
         self:Cast("Summon Felhunter")
         return true
     end
-    local healer = runner.Engine.ObjectManager:GetHealer()
-    if healer and not healer:HasAura("Soulstone", "HELPFUL") then
-        if not self:CanCast("Soulstone", healer) then
-            return false
-        end
-        if healer:DistanceFromPlayer() > 20 and not healer:LOS() then
-            runner.Engine.Navigation:MoveTo(healer.pointer)
-            return true
-        else
-            print("Casting Soulstone on " .. healer.Name)
-            runner.Engine.Navigation:FaceUnit(healer.pointer)
-            Unlock(MoveForwardStop)
-            self:Cast("Soulstone", healer.pointer)
-            return true
-        end
-    end
+    --local healer = runner.Engine.ObjectManager:GetHealer()
+    --if healer and not healer:HasAura("Soulstone", "HELPFUL") then
+    --    if not self:CanCast("Soulstone", healer) then
+    --        return false
+    --    end
+    --    if healer:DistanceFromPlayer() > 20 and not healer:LOS() then
+    --        runner.Engine.Navigation:MoveTo(healer.pointer)
+    --        return true
+    --    else
+    --        print("Casting Soulstone on " .. healer.Name)
+    --        runner.Engine.Navigation:FaceUnit(healer.pointer)
+    --        Unlock(MoveForwardStop)
+    --        self:Cast("Soulstone", healer.pointer)
+    --        return true
+    --    end
+    --end
     if runner.LocalPlayer.IsCasting then
         return true
     end
@@ -62,6 +62,7 @@ function WarlockRotation:Pulse(target)
             local seedCount = self:EnemyCountWithDebuff("Seed of Corruption")
 
             if not self.Pet then
+                Unlock(MoveForwardStop)
                 self:Cast("Summon Felhunter")
                 return
             end
@@ -73,6 +74,11 @@ function WarlockRotation:Pulse(target)
 
             if self.AoeEnemies > 2 and seedCount < 2 and self:CanCast("Seed of Corruption", self.Target) and not self.Target:HasAura("Seed of Corruption", "HARMFUL") then
                 self:Cast("Seed of Corruption")
+                return
+            end
+
+            if self:CanCast("Haunt", self.Target) then
+                self:Cast("Haunt", self.Target.pointer)
                 return
             end
 

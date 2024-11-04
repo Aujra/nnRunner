@@ -23,6 +23,8 @@ function DungeonRoutine2:Run()
         Unlock(RunMacroText, "/click StaticPopup1Button1")
     end
 
+    runner.LocalPlayer:EquipUpgrades()
+
     if not IsInInstance() then
         if self.CurrentProfile then
             for k,v in pairs(self.CurrentProfile.Steps) do
@@ -50,7 +52,7 @@ function DungeonRoutine2:Run()
         if (select(1,GetLFGQueueStats(LE_LFG_CATEGORY_LFD))) == nil then
             print("Queueing for LFD")
             ClearAllLFGDungeons(1)
-            SetLFGDungeon(1, 2436)
+            SetLFGDungeon(1, tonumber(self.CurrentProfile.DungeonID))
             Unlock(JoinLFG, 1)
         end
         if (select(1, GetLFGProposal()) == true) then

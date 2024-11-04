@@ -70,6 +70,26 @@ function HunterRotation:Pulse(target)
         end
 
         if runner.LocalPlayer.specName == "Marksmanship" then
+            if IsPlayerSpell(193533) and not runner.LocalPlayer:HasAura("Steady Focus", "HELPFUL") then
+                print("Steady Focus")
+                self:Cast("Steady Shot")
+            end
+            self:Cast("Kill Shot")
+            self:Cast("Rapid Fire")
+            Unlock(RunMacroText, "/use 13")
+            Unlock(RunMacroText, "/use 14")
+            self:Cast("Trueshot")
+            self:Cast("Wailing Arrow")
+            self:Cast("Aimed Shot")
+            if runner.LocalPlayer:HasAura("Precise Shots", "HELPFUL") and player.Focus > 55 then
+                    self:Cast("Arcane Shot")
+            end
+            self:Cast("Explosive Shot")
+            self:Cast("Steady Shot")
+            return
+        end
+
+        if runner.LocalPlayer.specName == "Marksmanship" then
             if (self.Focus and self:CanCast("Misdirection", self.Focus) and self.Focus:DistanceFromPlayer() < 40) then
                 self:Cast("Misdirection", "focus")
                 return
