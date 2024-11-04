@@ -30,6 +30,7 @@ function Unit:init(pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = 0
     self.Threat = 0
+    self.Role = UnitGroupRolesAssigned(self.pointer)
 end
 
 function Unit:Update()
@@ -46,6 +47,7 @@ function Unit:Update()
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = self:GetAuraCount("Soul Fragments", "HELPFUL")
     self.Threat = Unlock(UnitThreatSituation, "player", self.pointer)
+    self.Role = UnitGroupRolesAssigned(self.pointer)
 end
 
 function Unit:GetScore()

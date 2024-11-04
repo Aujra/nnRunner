@@ -164,6 +164,15 @@ function OM:GetTank()
     return nil
 end
 
+function OM:GetHealer()
+    for k,v in pairs(self.party) do
+        if v.Role == "HEALER" then
+            return v
+        end
+    end
+    return nil
+end
+
 function OM:GetClosestLootable()
     local closest = nil
     local closestDistance = 9999

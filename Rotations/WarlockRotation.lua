@@ -18,6 +18,19 @@ function WarlockRotation:OutOfCombat()
         self:Cast("Summon Felhunter")
         return true
     end
+    local healer = runner.Engine.ObjectManager:GetHealer()
+    if healer and not healer:HasAura("Soulstone", "HELPFUL") then
+        if healer:DistanceFromPlayer() > 20 and not healer:LOS() then
+            runner.Engine.Navigation:MoveTo(healer.pointer)
+            return true
+        else
+        self:Cast("Soulstone", healer.pointer)
+            return true
+        end
+    end
+    if runner.LocalPlayer.IsCasting then
+        return true
+    end
     return false
 end
 
