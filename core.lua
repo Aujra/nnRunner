@@ -1,4 +1,6 @@
 local nn = ...
+_G.NnEnv = getfenv(1) or nn
+
 nn:Require('/scripts/mainrunner/class.lua', runner)
 
 --Main tables
@@ -33,6 +35,8 @@ runner.lastEnter = 0
 runner.profiles = {}
 
 runner.waypoints = {}
+
+_G.runner = runner
 
 function registerRotation(rotation)
     local rot = rotation()
@@ -203,6 +207,7 @@ end
 
 function tableCount(t)
     local count = 0
+    if not t then return 0 end
     for _ in pairs(t) do count = count + 1 end
     return count
 end

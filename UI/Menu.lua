@@ -132,6 +132,15 @@ function menuFrame:UpdateMenu()
             GameTooltip:Show()
         end)
 
+        local ProfileMakerToggle = CreateFrame("Button", nil, mainFrame, "UIPanelButtonTemplate")
+        ProfileMakerToggle:SetSize(30, 30)
+        ProfileMakerToggle:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 600, 0)
+        ProfileMakerToggle:SetNormalTexture("Interface/ICONS/INV_Misc_Eye_02")
+        ProfileMakerToggle:SetScript("OnClick", function()
+            runner.UI.DungeonProfileMaker:Toggle()
+        end)
+
+
         -- Debug button
         local debugButton = CreateFrame("Button", nil, mainFrame, "UIPanelButtonTemplate")
         debugButton:SetSize(30, 30)

@@ -3,10 +3,22 @@ local WarlockRotation = runner.Rotations.WarlockRotation
 runner.Rotations.WarlockRotation = WarlockRotation
 
 function WarlockRotation:init()
-    runner.Rotations.BaseRotation.init(self)
+    runner.Rotations.BaseRotation:init(self)
     self.Class = "Warlock"
     self.Name = "Warlock"
     self.Description = "Warlock Rotation"
+    self.PullRange = 30
+    self.CombatRange = 30
+end
+
+function WarlockRotation:OutOfCombat()
+    if runner.LocalPlayer.isDead then return end
+    self.Pet = UnitName("pet")
+    if not self.Pet then
+        self:Cast("Summon Felhunter")
+        return true
+    end
+    return false
 end
 
 function WarlockRotation:Pull(target)

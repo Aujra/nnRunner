@@ -10,12 +10,19 @@ local profileSteps = {}
 local treeSteps = {}
 local profileToLoad = nil
 
+local profileName = nil
+local profileDescription = nil
+local profileID = nil
+local profileLootMode = nil
+local profilePullMode = nil
+local profileWanderRange = nil
+
 local mainFrame = runner.AceGUI:Create("Window")
 mainFrame:SetTitle("Dungeon Profile Maker")
 mainFrame:SetLayout("Flow")
 mainFrame:SetWidth(1000)
 mainFrame:SetHeight(800)
-mainFrame:Show()
+mainFrame:Hide()
 
 function DungeonProfileMaker:ShowGUI()
     mainFrame:Show()
@@ -61,15 +68,25 @@ saveProfileButton:SetText("Save Profile")
 saveProfileButton:SetWidth(200)
 saveProfileButton:SetCallback("OnClick", function()
     local saveTable = {}
+    local saveSteps = {}
+    saveTable.Name = profileName
+    saveTable.Description = profileDescription
+    saveTable.DungeonID = profileID
+    saveTable.LootMode = profileLootMode
+    saveTable.PullMode = profilePullMode
+    saveTable.WanderRange = profileWanderRange
+
     for k,v in pairs(profileSteps) do
-        table.insert(saveTable, {
+        table.insert(saveSteps, {
             Name = v.step.Name,
             Step = v.step.Step
         })
     end
+    saveTable.Steps = saveSteps
     local json = runner.nn.Utils.JSON.encode(saveTable)
     local name = saveProfileName:GetText()
     runner.nn.WriteFile("/scripts/mainrunner/Profiles/DungeonsNew/" .. name .. ".json", json)
+    DungeonProfileMaker:RefreshProfiles()
 end)
 mainFrame:AddChild(saveProfileButton)
 
@@ -97,7 +114,14 @@ loadProfileButton:SetCallback("OnClick", function()
     local profile = runner.nn.Utils.JSON.decode(json)
     profileSteps = {}
     treeSteps = {}
-    for k,v in pairs(profile) do
+    profileName = profile.Name
+    profileDescription = profile.Description
+    profileID = profile.DungeonID
+    profileLootMode = profile.LootMode
+    profilePullMode = profile.PullMode
+    profileWanderRange = profile.WanderRange
+
+    for k,v in pairs(profile.Steps) do
         local behavior = runner.behaviors[v.Name:lower()]()
         behavior.Step = v.Step
         table.insert(profileSteps, {index = #profileSteps, step = behavior})
@@ -125,8 +149,75 @@ profileTree:SetCallback("OnGroupSelected", function(container, _, group)
     ScrollFrame:SetFullWidth(true)
     ScrollFrame:SetFullHeight(true)
     inlineGroup:AddChild(ScrollFrame)
-    DungeonProfileMaker:BuildStepGUI(ScrollFrame, group)
+    print(tostring(group == "Profile"))
+    if group == "Profile" then
+        DungeonProfileMaker:MakeBaseGUI(ScrollFrame)
+    else
+        DungeonProfileMaker:BuildStepGUI(ScrollFrame, group)
+    end
 end)
+
+function DungeonProfileMaker:MakeBaseGUI(container)
+    container:ReleaseChildren()
+    local nameEditBox = runner.AceGUI:Create("EditBox")
+    nameEditBox:SetLabel("Name")
+    nameEditBox:SetWidth(200)
+    nameEditBox:SetText(profileName)
+    nameEditBox:SetCallback("OnTextChanged", function(widget, event, value)
+        profileName = value
+    end)
+    container:AddChild(nameEditBox)
+
+    local dungeonIDEditBox = runner.AceGUI:Create("EditBox")
+    dungeonIDEditBox:SetLabel("Dungeon ID")
+    dungeonIDEditBox:SetWidth(200)
+    dungeonIDEditBox:SetText(profileID)
+    dungeonIDEditBox:SetCallback("OnTextChanged", function(widget, event, value)
+        profileID = value
+    end)
+    container:AddChild(dungeonIDEditBox)
+
+    local lootModeDropdown = runner.AceGUI:Create("Dropdown")
+    lootModeDropdown:SetLabel("Loot Mode")
+    lootModeDropdown:SetWidth(200)
+    lootModeDropdown:AddItem("None", "None")
+    lootModeDropdown:AddItem("BossOnly", "BossOnly")
+    lootModeDropdown:AddItem("All", "All")
+    lootModeDropdown:SetValue(profileLootMode)
+    lootModeDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+        profileLootMode = value
+    end)
+    container:AddChild(lootModeDropdown)
+
+    local pullModeDropdown = runner.AceGUI:Create("Dropdown")
+    pullModeDropdown:SetLabel("Pull Mode")
+    pullModeDropdown:SetWidth(200)
+    pullModeDropdown:AddItem("Facepull", "Facepull")
+    pullModeDropdown:AddItem("Active", "Active")
+    pullModeDropdown:SetValue(profilePullMode)
+    pullModeDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+        profilePullMode = value
+    end)
+    container:AddChild(pullModeDropdown)
+
+    local wanderRange = runner.AceGUI:Create("EditBox")
+    wanderRange:SetLabel("Wander Range")
+    wanderRange:SetWidth(200)
+    wanderRange:SetText(profileWanderRange)
+    wanderRange:SetCallback("OnTextChanged", function(widget, event, value)
+        profileWanderRange = value
+    end)
+    container:AddChild(wanderRange)
+
+    local descriptionEditBox = runner.AceGUI:Create("MultiLineEditBox")
+    descriptionEditBox:SetLabel("Description")
+    descriptionEditBox:SetFullWidth(true)
+    descriptionEditBox:SetText(profileDescription)
+    descriptionEditBox:SetCallback("OnTextChanged", function(widget, event, value)
+        profileDescription = value
+    end)
+    container:AddChild(descriptionEditBox)
+end
 
 function DungeonProfileMaker:BuildStepGUI(container, key)
     container:ReleaseChildren()
@@ -153,4 +244,23 @@ function DungeonProfileMaker:BuildProfileTree()
             }
         }
     )
+end
+
+function DungeonProfileMaker:RefreshProfiles()
+    local path = "/scripts/mainrunner/Profiles/DungeonsNew/*.json"
+    local files = runner.nn.ListFiles(path)
+    loadProfileDropdown:SetList({})
+    for k,v in pairs(files) do
+        loadProfileDropdown:AddItem(
+            v,v
+        )
+    end
+end
+
+function DungeonProfileMaker:Toggle()
+    if mainFrame:IsShown() then
+        mainFrame:Hide()
+    else
+        mainFrame:Show()
+    end
 end

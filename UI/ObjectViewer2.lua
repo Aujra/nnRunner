@@ -15,7 +15,7 @@ mainFrame:SetTitle("Object Manager")
 mainFrame:SetLayout("Flow")
 mainFrame:SetWidth(1000)
 mainFrame:SetHeight(800)
-mainFrame:Show()
+mainFrame:Hide()
 
 local sortDropdown = runner.AceGUI:Create("Dropdown")
 sortDropdown:SetList({

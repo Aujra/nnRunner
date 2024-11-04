@@ -128,10 +128,10 @@ function Navigation:MoveTo(unit)
             Unlock(MoveForwardStart)
 
             -- Stuck detection
-            if GetTime() - lastPOSCheck > 5 then
+            if GetTime() - lastPOSCheck > 2 then
                 local playerX, playerY, playerZ = ObjectPosition("player")
                 local stuckdist = Distance3D(playerX, playerY, playerZ, lastPOSX, lastPOSY, lastPOSZ)
-                if stuckdist < 2 then
+                if stuckdist < 5 then
                     runner.Engine.DebugManager:Warning("Navigation", "Detected stuck state, attempting jump")
                     Unlock(JumpOrAscendStart)
                 end

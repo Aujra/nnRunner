@@ -62,13 +62,13 @@ function OM:Update()
             self.players[pointer]:Update()
         end
     end
-    --for index,pointer in pairs(AreaTriggers) do
-    --    if not self.areatrigger[pointer] then
-    --        self.areatrigger[pointer] = runner.Classes.AreaTrigger:new(pointer)
-    --    else
-    --        self.areatrigger[pointer]:Update()
-    --    end
-    --end
+    for index,pointer in pairs(AreaTriggers) do
+        if not self.areatrigger[pointer] then
+            self.areatrigger[pointer] = runner.Classes.AreaTrigger:new(pointer)
+        else
+            self.areatrigger[pointer]:Update()
+        end
+    end
 end
 
 function OM:GetClosestGatherable()
@@ -168,7 +168,22 @@ function OM:GetClosestLootable()
     local closest = nil
     local closestDistance = 9999
     for k,v in pairs(self.units) do
-        if v.CanLoot then
+        if v.Lootable then
+            local distance = v:DistanceFromPlayer()
+            if distance < closestDistance then
+                closest = v
+                closestDistance = distance
+            end
+        end
+    end
+    return closest
+end
+
+function OM:GetClosestEnemy()
+    local closest = nil
+    local closestDistance = 9999
+    for k,v in pairs(self.units) do
+        if v.Reaction and v.Reaction < 4 and not v.isDead and v.CanAttack then
             local distance = v:DistanceFromPlayer()
             if distance < closestDistance then
                 closest = v

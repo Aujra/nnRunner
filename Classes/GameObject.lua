@@ -21,6 +21,7 @@ function GameObject:init(pointer)
     self.Distance = 99999
     self.PathDistance = 0
     self.CanLoot = false
+    self.Lootable = false
     self.ObjectType = runner.nn.GameObjectType(self.pointer)
     self.CanGather = self.ObjectType == 50
 end
@@ -31,6 +32,7 @@ function GameObject:Update()
     self.x, self.y, self.z = ObjectPosition(self.pointer)
     self.Distance = self:DistanceFromPlayer()
     self.Facing = ObjectFacing(self.pointer)
+    self.Lootable = runner.nn.ObjectLootable(self.pointer)
     self.CanLoot = runner.nn.ObjectLootable(self.pointer)
     self.ObjectType = runner.nn.GameObjectType(self.pointer)
     self.CanGather = self.ObjectType == 50

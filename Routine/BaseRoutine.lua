@@ -5,6 +5,8 @@ runner.Routines.BaseRoutine = BaseRoutine
 function BaseRoutine:init()
     self.Name = "BaseRoutine"
     self.Description = "BaseRoutine"
+    self.SettingsGUI = {}
+    self.IsComplete = false
 end
 
 function BaseRoutine:Run()

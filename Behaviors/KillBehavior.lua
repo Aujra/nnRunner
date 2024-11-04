@@ -11,6 +11,33 @@ function KillBehavior:init()
 end
 
 function KillBehavior:Run()
+    if self.Step.MobName and self.Step.MobName == "" then
+        self.IsComplete = true
+        return
+    else
+        local target = runner.Engine.ObjectManager:GetClosestByName(self.Step.MobName)
+        if target then
+            if not target.isDead then
+                if target:DistanceFromPlayer() > runner.rotation.CombatRange then
+                    runner.Engine.Navigation:MoveTo(target.pointer)
+                else
+                    Unlock(TargetUnit, target.pointer)
+                    runner.Engine.Navigation:FaceUnit(target.pointer)
+                    Unlock(MoveForwardStop)
+                    runner.rotation:Pulse(target)
+                end
+                self.IsComplete = false
+                return
+            else
+                self.IsComplete = true
+                return
+            end
+        end
+    end
+end
+
+function KillBehavior:Debug()
+
 end
 
 function KillBehavior:BuildStepGUI(container)

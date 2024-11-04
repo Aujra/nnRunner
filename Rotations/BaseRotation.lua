@@ -17,6 +17,9 @@ function BaseRotation:init()
     self.combatRange = 30
 end
 
+function BaseRotation:OutOfCombat()
+end
+
 function BaseRotation:Pull(target)
     target = target or UnitTarget("player")
     if not target then

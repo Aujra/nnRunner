@@ -12,7 +12,11 @@ end
 function LocalPlayer:Update()
     local lastZ = self.z
     runner.Classes.Player.Update(self)
-    self.ZDelta = self.z - lastZ
+    if self.z and lastZ then
+        self.ZDelta = self.z - lastZ
+    else
+        self.ZDelta = 0
+    end
     self.spec = GetSpecialization()
     self.specName = select(2, GetSpecializationInfo(self.spec))
     self.Yaw = runner.nn.ObjectYaw(self.pointer)
