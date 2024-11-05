@@ -221,8 +221,9 @@ function BaseRotation:GetClosestWithoutDebuff(debuff)
     return closest
 end
 
-function BaseRotation:CanCast(spell, target, forceMelee)
+function BaseRotation:CanCast(spell, target, forceMelee, debug)
     forceMelee = forceMelee or false
+    debug = debug or false
     target = target or "target"
     if not spell then
         return false
@@ -237,15 +238,20 @@ function BaseRotation:CanCast(spell, target, forceMelee)
 
     local spellInfo = C_Spell.GetSpellInfo(spell)
     if not spellInfo then
+        print("Spell not found: " .. spell)
         return false
     end
     local isKnown = IsPlayerSpell(spellInfo.spellID)
     if not isKnown then
+        print("Spell not known: " .. spell)
         return false
     end
 
     local cdInfo = C_Spell.GetSpellCooldown(spell)
     local onCD = cdInfo.duration > 0
+
+    local gcdCD = C_Spell.GetSpellCooldown(61304)
+    local gcdOnCD = gcdCD.duration > 0
 
     local inRange = false
     if not forceMelee then
@@ -255,9 +261,10 @@ function BaseRotation:CanCast(spell, target, forceMelee)
     end
     local canCast = C_Spell.IsSpellUsable(spell)
 
-    --print("Spell: " .. spell .. " Known: " .. tostring(isKnown) .. " CD: " .. tostring(onCD) .. " Range: " .. tostring(inRange) .. " Castable: " .. tostring(canCast))
-
-    return not onCD and inRange and isKnown and canCast
+    if debug then
+        print("Spell: " .. spell .. " Known: " .. tostring(isKnown) .. " CD: " .. tostring(onCD) .. " Range: " .. tostring(inRange) .. " Castable: " .. tostring(canCast))
+    end
+    return (not onCD and not gcdOnCD) and inRange and isKnown and canCast
 end
 
 function BaseRotation:Cast(spell, target)

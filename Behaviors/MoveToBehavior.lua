@@ -41,8 +41,10 @@ function MoveToBehavior:Run()
 
     if self.Step.X ~= 0 and self.Step.Y ~= 0 and self.Step.Z ~= 0 then
         runner.routine:SetStatus("Moving to waypoint")
-        if runner.LocalPlayer:DistanceFromPoint(self.Step.X, self.Step.Y, self.Step.Z) > self.Step.Radius then
-        runner.Engine.Navigation:MoveToPoint(self.Step.X, self.Step.Y, self.Step.Z)
+        local offsetX = runner.randomBetween(-3, 3)
+        local offsetY = runner.randomBetween(-3, 3)
+        if runner.LocalPlayer:DistanceFromPoint(self.Step.X+offsetX, self.Step.Y+offsetY, self.Step.Z) > self.Step.Radius then
+        runner.Engine.Navigation:MoveToPoint(self.Step.X+offsetX, self.Step.Y+offsetY, self.Step.Z)
         self.IsComplete = false
         else
         Unlock(MoveForwardStop)

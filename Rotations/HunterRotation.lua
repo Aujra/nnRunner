@@ -22,6 +22,7 @@ function HunterRotation:Pulse(target)
 
         if not target:HasAura("Hunter's Mark", "HARMFUL") and target.HP > 85 then
             self:Cast("Hunter's Mark")
+            return
         end
 
         if runner.LocalPlayer.specName == "Survival" then
@@ -30,8 +31,8 @@ function HunterRotation:Pulse(target)
                 self:Cast("Kill Command")
                 return
             end
-            if (self:CanCast("Coordinated Assult")) then
-                self:Cast("Coordinated Assult")
+            if (self:CanCast("Coordinated Assault")) then
+                self:Cast("Coordinated Assault")
                 return
             end
             if (self:CanCast("Spearhead", self.Target)) then
@@ -70,26 +71,6 @@ function HunterRotation:Pulse(target)
         end
 
         if runner.LocalPlayer.specName == "Marksmanship" then
-            if IsPlayerSpell(193533) and not runner.LocalPlayer:HasAura("Steady Focus", "HELPFUL") then
-                print("Steady Focus")
-                self:Cast("Steady Shot")
-            end
-            self:Cast("Kill Shot")
-            self:Cast("Rapid Fire")
-            Unlock(RunMacroText, "/use 13")
-            Unlock(RunMacroText, "/use 14")
-            self:Cast("Trueshot")
-            self:Cast("Wailing Arrow")
-            self:Cast("Aimed Shot")
-            if runner.LocalPlayer:HasAura("Precise Shots", "HELPFUL") and player.Focus > 55 then
-                    self:Cast("Arcane Shot")
-            end
-            self:Cast("Explosive Shot")
-            self:Cast("Steady Shot")
-            return
-        end
-
-        if runner.LocalPlayer.specName == "Marksmanship" then
             if (self.Focus and self:CanCast("Misdirection", self.Focus) and self.Focus:DistanceFromPlayer() < 40) then
                 self:Cast("Misdirection", "focus")
                 return
@@ -106,15 +87,12 @@ function HunterRotation:Pulse(target)
 
             if (runner.LocalPlayer.HP < 30) then
                 self:Cast("Fortitude of the Bear", "player")
-                return
             end
             if (runner.LocalPlayer.HP < 50) then
                 self:Cast("Exhilaration", "player")
-                return
             end
             if (runner.LocalPlayer.HP < 60 and not runner.LocalPlayer:HasAura("Survival of the Fittest", "HELPFUL")) then
                 self:Cast("Survival of the Fittest", "player")
-                return
             end
             if self.Pet and not UnitIsDead("pet") and self:CanCast("Mend Pet", self.Pet) and (UnitHealth("pet") / UnitHealthMax("pet") * 100) < 90 then
                 self:Cast("Mend Pet")
@@ -142,10 +120,7 @@ function HunterRotation:Pulse(target)
                 self:Cast("Trueshot")
                 return
             end
-            if self:CanCast("Wailing Arrow", self.Target) then
-                self:Cast("Wailing Arrow")
-                return
-            end
+            self:Cast("Wailing Arrow")
             if self:CanCast("Aimed Shot", self.Target) then
                 self:Cast("Aimed Shot")
                 return
@@ -163,6 +138,7 @@ function HunterRotation:Pulse(target)
                 self:Cast("Explosive Shot")
                 return
             end
+
             if self:CanCast("Steady Shot", self.Target) then
                 self:Cast("Steady Shot")
                 return

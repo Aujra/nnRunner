@@ -58,6 +58,7 @@ function GameObject:GetUpdateRate()
     if self.Distance < 200 then
         return 2
     end
+    return 2
 end
 
 function GameObject:Debug()

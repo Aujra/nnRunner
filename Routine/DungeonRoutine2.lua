@@ -12,6 +12,9 @@ function DungeonRoutine2:init()
     self.SettingsGUI = {}
     self:BuildGUI()
     self.CurrentProfile = {}
+
+    self.ProfileDropDowns = {}
+    self.ProfileList = {}
 end
 
 function DungeonRoutine2:Run()
@@ -136,6 +139,28 @@ function DungeonRoutine2:SetStatus(text)
     end
 end
 
+function DungeonRoutine2:AddProfileGUI()
+    local profileDropDown = runner.AceGUI:Create("Dropdown")
+    profileDropDown:SetLabel("Profile")
+    profileDropDown:SetWidth(175)
+    local path = "/scripts/mainrunner/Profiles/DungeonsNew/*.json"
+    local files = runner.nn.ListFiles(path)
+    for k,v in pairs(files) do
+        profileDropDown:AddItem(
+                v,v
+        )
+    end
+
+    local toLevelEditBox = runner.AceGUI:Create("EditBox")
+    toLevelEditBox:SetLabel("To Level")
+    toLevelEditBox:SetWidth(125)
+
+    self.SettingsGUI:AddChild(profileDropDown)
+    self.SettingsGUI:AddChild(toLevelEditBox)
+
+    table.insert(self.ProfileDropDowns, {dropdown = profileDropDown, tolevel = toLevelEditBox})
+end
+
 function DungeonRoutine2:BuildGUI()
     self.SettingsGUI = runner.AceGUI:Create("Frame")
     self.SettingsGUI:SetTitle(self.Name)
@@ -144,7 +169,7 @@ function DungeonRoutine2:BuildGUI()
     self.SettingsGUI:SetCallback("OnClose", function(widget)
         runner.Routines.DungeonRoutine2:HideGUI()
     end)
-    self.SettingsGUI:SetWidth(500)
+    self.SettingsGUI:SetWidth(300)
     self.SettingsGUI:SetHeight(200)
 
     local loadProfileDropdown = runner.AceGUI:Create("Dropdown")
@@ -156,6 +181,25 @@ function DungeonRoutine2:BuildGUI()
                 v,v
         )
     end
+
+    local addProfileButton = runner.AceGUI:Create("Button")
+    addProfileButton:SetText("Add Profile")
+    addProfileButton:SetWidth(100)
+    addProfileButton:SetCallback("OnClick", function(widget)
+        self:AddProfileGUI()
+    end)
+    self.SettingsGUI:AddChild(addProfileButton)
+
+    local dumpProfileButton = runner.AceGUI:Create("Button")
+    dumpProfileButton:SetText("Dump Profile")
+    dumpProfileButton:SetWidth(100)
+    dumpProfileButton:SetCallback("OnClick", function(widget)
+        for k,v in pairs(self.ProfileDropDowns) do
+            print("Profile " .. v.dropdown:GetValue() .. " To Level " .. v.tolevel:GetText())
+        end
+    end)
+    self.SettingsGUI:AddChild(dumpProfileButton)
+
     loadProfileDropdown:SetWidth(400)
     loadProfileDropdown:SetCallback("OnValueChanged", function(widget, event, value)
         local json = runner.nn.ReadFile("/scripts/mainrunner/Profiles/DungeonsNew/"..value)

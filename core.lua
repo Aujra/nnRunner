@@ -123,7 +123,7 @@ nn:Require('/scripts/mainrunner/UI/DungeonProfileMaker.lua', runner)
 --Main Loop
 runner.frame = CreateFrame("Frame")
 runner.frame:SetScript("OnUpdate", function(self, elapsed)
-    if GetTime() - runner.lastTick > .15 then
+    if GetTime() - runner.lastTick > .25 then
         if GetTime() - runner.lastAFK > 60 then
             LastHardwareAction(GetTime()*1000)
             runner.lastAFK = GetTime()
@@ -221,4 +221,8 @@ function mysplit(inputstr, sep)
         table.insert(t, str)
     end
     return t
+end
+
+function runner:randomBetween(min, max)
+    return math.random() * (max - min) + min
 end
