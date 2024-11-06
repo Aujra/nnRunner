@@ -36,6 +36,18 @@ function KillBehavior:Run()
     end
 end
 
+function KillBehavior:Save()
+    return {
+        Name = self.Name,
+        Type = self.Type,
+        MobName = self.Step.MobName
+    }
+end
+
+function KillBehavior:Load(data)
+    self.Step.MobName = data.MobName
+end
+
 function KillBehavior:Debug()
 
 end

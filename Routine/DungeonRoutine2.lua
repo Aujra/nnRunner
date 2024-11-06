@@ -34,33 +34,8 @@ function DungeonRoutine2:Run()
                 v.step.IsComplete = false
             end
         end
-        if not IsIndoors() and not IsMounted() then
-            C_MountJournal.SummonByID(284)
-        end
-        local repair = runner.Engine.ObjectManager:GetClosestByName("Drix Blackwrench")
-        if repair then
-            if repair:DistanceFromPlayer() < 10 then
-                runner.nn.ObjectInteract(repair.pointer)
-            else
-                runner.Engine.Navigation:MoveTo(repair.pointer)
-            end
-            if MerchantRepairAllButton:IsVisible() then
-                MerchantRepairAllButton:Click()
-            end
-            if MerchantSellAllJunkButton:IsVisible() then
-                MerchantSellAllJunkButton:Click()
-            end
-        end
-
-        if (select(1,GetLFGQueueStats(LE_LFG_CATEGORY_LFD))) == nil then
-            print("Queueing for LFD")
-            ClearAllLFGDungeons(1)
-            SetLFGDungeon(1, tonumber(self.CurrentProfile.DungeonID))
-            Unlock(JoinLFG, 1)
-        end
-        if (select(1, GetLFGProposal()) == true) then
-            Unlock(AcceptProposal)
-        end
+        self:MountAndRepair()
+        self:QueueAndEnterDungeon()
     else
         if self.CurrentProfile then
             local current = nil
@@ -109,6 +84,38 @@ function DungeonRoutine2:Run()
     end
 end
 
+function DungeonRoutine2:MountAndRepair()
+    if not IsIndoors() and not IsMounted() then
+        C_MountJournal.SummonByID(284)
+    end
+    local repair = runner.Engine.ObjectManager:GetClosestByName("Drix Blackwrench")
+    if repair then
+        if repair:DistanceFromPlayer() < 10 then
+            runner.nn.ObjectInteract(repair.pointer)
+        else
+            runner.Engine.Navigation:MoveTo(repair.pointer)
+        end
+        if MerchantRepairAllButton:IsVisible() then
+            MerchantRepairAllButton:Click()
+        end
+        if MerchantSellAllJunkButton:IsVisible() then
+            MerchantSellAllJunkButton:Click()
+        end
+    end
+end
+
+function DungeonRoutine2:QueueAndEnterDungeon()
+    if (select(1,GetLFGQueueStats(LE_LFG_CATEGORY_LFD))) == nil then
+        print("Queueing for LFD")
+        ClearAllLFGDungeons(1)
+        SetLFGDungeon(1, tonumber(self.CurrentProfile.DungeonID))
+        Unlock(JoinLFG, 1)
+    end
+    if (select(1, GetLFGProposal()) == true) then
+        Unlock(AcceptProposal)
+    end
+end
+
 function DungeonRoutine2:getBestTarget()
     local bestTarget = nil
     local bestScore = -999999
@@ -140,25 +147,28 @@ function DungeonRoutine2:SetStatus(text)
 end
 
 function DungeonRoutine2:AddProfileGUI()
-    local profileDropDown = runner.AceGUI:Create("Dropdown")
-    profileDropDown:SetLabel("Profile")
-    profileDropDown:SetWidth(175)
-    local path = "/scripts/mainrunner/Profiles/DungeonsNew/*.json"
-    local files = runner.nn.ListFiles(path)
-    for k,v in pairs(files) do
-        profileDropDown:AddItem(
-                v,v
-        )
+
+end
+
+function DungeonRoutine2:LoadProfileByName(name)
+    local json = runner.nn.ReadFile("/scripts/mainrunner/Profiles/DungeonsNew/"..name)
+    local profile = runner.nn.Utils.JSON.decode(json)
+    profileSteps = {}
+    for k,v in pairs(profile.Steps) do
+        local behavior = runner.behaviors[v.Name:lower()]()
+        behavior.Name = v.Name
+        behavior.Type = v.Type
+        behavior.Step = v.Step
+        table.insert(profileSteps, {index = #profileSteps, step = behavior})
     end
+    self.CurrentProfile.Name = profile.Name
+    self.CurrentProfile.Description = profile.Description
+    self.CurrentProfile.DungeonID = profile.DungeonID
+    self.CurrentProfile.LootMode = profile.LootMode
+    self.CurrentProfile.PullMode = profile.PullMode
+    self.CurrentProfile.WanderRange = profile.WanderRange
 
-    local toLevelEditBox = runner.AceGUI:Create("EditBox")
-    toLevelEditBox:SetLabel("To Level")
-    toLevelEditBox:SetWidth(125)
-
-    self.SettingsGUI:AddChild(profileDropDown)
-    self.SettingsGUI:AddChild(toLevelEditBox)
-
-    table.insert(self.ProfileDropDowns, {dropdown = profileDropDown, tolevel = toLevelEditBox})
+    self.CurrentProfile.Steps = profileSteps
 end
 
 function DungeonRoutine2:BuildGUI()

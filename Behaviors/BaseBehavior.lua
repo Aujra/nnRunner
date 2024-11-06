@@ -5,8 +5,10 @@ runner.Behaviors.BaseBehavior = BaseBehavior
 function BaseBehavior:init()
     self.Name = "BaseBehavior"
     self.Type = "Base"
+    self.CanHaveChildren = false
     self.IsComplete = false
     self.CurrentProfile = {}
+    self.Index = 0
 end
 
 function BaseBehavior:Run()
@@ -46,6 +48,15 @@ function BaseBehavior:SelfDefense()
         return true
     end
     return false
+end
+
+function BaseBehavior:BuildStepGUI(container)
+end
+
+function BaseBehavior:Save()
+end
+
+function BaseBehavior:Load(data)
 end
 
 function BaseBehavior:GetBestTarget()

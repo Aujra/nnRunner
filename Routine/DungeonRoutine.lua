@@ -488,7 +488,7 @@ function DungeonRoutine:BuildGUI()
         self.StatusFrame.title:SetHeight(20)
         self.StatusFrame.title:SetJustifyH("LEFT")
         self.StatusFrame.title:SetJustifyV("TOP")
-        self.StatusFrame:Show()
+        self.StatusFrame:Hide()
 
         local statusText = self.StatusFrame:CreateFontString("StatusText", "OVERLAY", "GameFontNormal")
         statusText:SetPoint("TOPLEFT", self.StatusFrame, "TOPLEFT", 5, -30)

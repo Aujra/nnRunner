@@ -62,6 +62,26 @@ function MoveToBehavior:InRange(unit)
     return false
 end
 
+function MoveToBehavior:Save()
+    return {
+        Name = self.Name,
+        Type = self.Type,
+        X = self.Step.X,
+        Y = self.Step.Y,
+        Z = self.Step.Z,
+        Radius = self.Step.Radius,
+        DontFight = self.Step.DontFight
+    }
+end
+
+function MoveToBehavior:Load(data)
+    self.Step.X = data.X
+    self.Step.Y = data.Y
+    self.Step.Z = data.Z
+    self.Step.Radius = data.Radius
+    self.Step.DontFight = data.DontFight
+end
+
 function MoveToBehavior:Debug()
     if not self.IsComplete then
         runner.Draw:SetColor(0, 255, 0, 255)

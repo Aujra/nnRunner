@@ -37,11 +37,24 @@ function InteractBehavior:Run()
     end
 end
 
+function InteractBehavior:Save()
+    return {
+        Name = self.Name,
+        Type = self.Type,
+        MobName = self.Step.MobName
+    }
+end
+
+function InteractBehavior:Load(data)
+    self.Step.MobName = data.MobName
+end
+
 function InteractBehavior:Debug()
 
 end
 
 function InteractBehavior:BuildStepGUI(container)
+    container:ReleaseChildren()
     local mobNameEditBox = runner.AceGUI:Create("EditBox")
     mobNameEditBox:SetLabel("Mob Name")
     mobNameEditBox:SetWidth(200)

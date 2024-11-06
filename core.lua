@@ -1,7 +1,7 @@
 local nn = ...
 _G.NnEnv = getfenv(1) or nn
 
-nn:Require('/scripts/mainrunner/class.lua', runner)
+nn:Require('/scripts/mainrunner/Libs/class.lua', runner)
 
 --Main tables
 runner = {}
@@ -77,7 +77,7 @@ function deep_copy( original, copies )
 end
 
 --Require Files
-nn:Require('/scripts/mainrunner/ScrollingTable.lua', runner)
+nn:Require('/scripts/mainrunner/Libs/ScrollingTable.lua', runner)
 nn:Require('/scripts/mainrunner/Engine/ObjectManager.lua', runner)
 nn:Require('/scripts/mainrunner/Engine/Navigation.lua', runner)
 nn:Require('/scripts/mainrunner/Engine/FormationManager.lua', runner)
@@ -225,4 +225,9 @@ end
 
 function runner:randomBetween(min, max)
     return math.random() * (max - min) + min
+end
+
+function runner:randomTable(table)
+    local randomIndex = math.random(1, #table)
+    return table[randomIndex]
 end
