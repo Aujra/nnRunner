@@ -168,4 +168,13 @@ function MoveToBehavior:BuildMiniUI(profile)
     return button
 end
 
+function MoveToBehavior:Setup()
+    local x, y, z = ObjectPosition("player")
+    self.Step.X = x
+    self.Step.Y = y
+    self.Step.Z = z
+    self.Step.Radius = 5
+    self.Step.DontFight = false
+end
+
 registerBehavior("MoveToBehavior", MoveToBehavior)

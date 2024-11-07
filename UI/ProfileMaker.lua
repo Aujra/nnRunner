@@ -25,6 +25,8 @@ PM.profile = {}
 PM.treeStruct = {}
 PM.selectedProfile = nil
 
+_G.theprofile = PM.profile
+
 PM.profileType = "Dungeon"
 
 function PM:GetProfiles()
@@ -35,6 +37,36 @@ function PM:GetProfiles()
         table.insert(foundProfiles, v)
     end
     return foundProfiles
+end
+
+function PM:BuildTreeFromProfile()
+    local tree = {}
+    for k,v in pairs(PM.profile) do
+        local node = {
+            value = tableCount(tree)+1,
+            text = v.Name
+        }
+        table.insert(tree, node)
+    end
+    PM.treeView:SetTree(
+        {
+            {
+                value = "root",
+                text = "Root",
+                children = tree
+            }
+        }
+    )
+end
+
+function PM:GetBehaviorByIndex(index)
+    index = tonumber(index)
+    for k,v in pairs(PM.profile) do
+        if k == index then
+            return v
+        end
+    end
+    return nil
 end
 
 if not PM.mainFrame then
@@ -108,6 +140,33 @@ if not PM.mainFrame then
     PM.mainFrame:AddChild(PM.deleteFileButton)
     PM.mainFrame:AddChild(PM.saveProfileName)
     PM.mainFrame:AddChild(PM.saveProfileButton)
+
+    PM.treeView = runner.AceGUI:Create("TreeGroup")
+    PM.treeView:SetLayout("Fill")
+    PM.treeView:SetFullWidth(true)
+    PM.treeView:SetFullHeight(true)
+
+    PM.inlineFrame = runner.AceGUI:Create("InlineGroup")
+    PM.inlineFrame:SetLayout("Flow")
+    PM.inlineFrame:SetFullWidth(true)
+    PM.inlineFrame:SetFullHeight(true)
+    PM.treeView:AddChild(PM.inlineFrame)
+
+    PM.scrollFrame = runner.AceGUI:Create("ScrollFrame")
+    PM.scrollFrame:SetLayout("Flow")
+    PM.scrollFrame:SetFullWidth(true)
+    PM.scrollFrame:SetFullHeight(true)
+    PM.inlineFrame:AddChild(PM.scrollFrame)
+
+    PM.treeView:SetCallback("OnGroupSelected", function(widget, event, group)
+        local split =  {strsplit("\001", group)}
+        local selected = PM:GetBehaviorByIndex(split[2])
+        if selected then
+            PM.scrollFrame:ReleaseChildren()
+            selected:BuildStepGUI(PM.scrollFrame)
+        end
+    end)
+    PM.mainFrame:AddChild(PM.treeView)
 end
 
 if not PM.BuilderFrame then
@@ -146,11 +205,7 @@ if not PM.BuilderFrame then
 end
 
 function PM:RebuildMiniProfileMaker(type)
-
-    for k,v in pairs(PM.profile) do
-        v:Debug()
-    end
-
+    PM:BuildTreeFromProfile()
     PM.BuilderFrame:ReleaseChildren()
     PM.profileTypeDropdown = runner.AceGUI:Create("Dropdown")
     PM.profileTypeDropdown:SetLabel("Profile Type")
@@ -166,14 +221,20 @@ function PM:RebuildMiniProfileMaker(type)
     PM.BuilderFrame:AddChild(PM.profileTypeDropdown)
 
     for k,v in pairs(runner.behaviors) do
-        local beh = v()
-        if beh.MiniTypes then
-            for k2,v2 in pairs(beh.MiniTypes) do
+        b = v()
+        if b.MiniTypes then
+            for k2,v2 in pairs(b.MiniTypes) do
                 if v2 == PM.profileType then
-                    local but = beh:BuildMiniUI(PM.profile)
-                    if but then
-                        PM.BuilderFrame:AddChild(but)
-                    end
+                    local but = runner.AceGUI:Create("Button")
+                    but:SetText(b.Name)
+                    but:SetWidth(150)
+                    but:SetCallback("OnClick", function()
+                        local newbehavior = v()
+                        newbehavior:Setup()
+                        table.insert(PM.profile, newbehavior)
+                        PM:BuildTreeFromProfile()
+                    end)
+                    PM.BuilderFrame:AddChild(but)
                 end
             end
         end
