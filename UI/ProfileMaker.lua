@@ -153,6 +153,7 @@ if not PM.BuilderFrame then
     end)
 
     PM.BuilderFrame:AddChild(PM.profileTypeDropdown)
+    PM.BuilderFrame:AddChild(PM.openProfileViewerButton)
 end
 
 function PM:RebuildMiniProfileMaker(type)
@@ -183,4 +184,16 @@ function PM:RebuildMiniProfileMaker(type)
             end
         end
     end
+
+    PM.openProfileViewerButton = runner.AceGUI:Create("Button")
+    PM.openProfileViewerButton:SetText("Profile Viewer")
+    PM.openProfileViewerButton:SetWidth(150)
+    PM.openProfileViewerButton:SetCallback("OnClick", function(widget)
+        if not PM.mainFrame:IsShown() then
+            PM.mainFrame:Show()
+        else
+            PM.mainFrame:Hide()
+        end
+    end)
+    PM.BuilderFrame:AddChild(PM.openProfileViewerButton)
 end
