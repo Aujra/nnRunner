@@ -5,6 +5,10 @@ runner.Behaviors.KillBehavior = KillBehavior
 function KillBehavior:init()
     self.Name = "KillBehavior"
     self.Type = "Kill"
+    self.MiniTypes = {
+        "Dungeon",
+        "Quest"
+    }
     self.Step = {
         MobName = ""
     }
@@ -70,6 +74,16 @@ function KillBehavior:BuildStepGUI(container)
     end)
     container:AddChild(mobNameEditBox)
     container:AddChild(getTargetNameButton)
+end
+
+function KillBehavior:BuildMiniUI()
+    local button = runner.AceGUI:Create("Button")
+    button:SetText("Add kill")
+    button:SetWidth(150)
+    button:SetCallback("OnClick", function()
+        print("Added kill")
+    end)
+    return button
 end
 
 registerBehavior("KillBehavior", KillBehavior)

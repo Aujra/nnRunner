@@ -37,6 +37,7 @@ function DungeonRoutine2:Run()
         self:MountAndRepair()
         self:QueueAndEnterDungeon()
     else
+        print("In Dungeon")
         if self.CurrentProfile then
             local current = nil
             for i = tableCount(self.CurrentProfile.Steps), 1, -1 do
@@ -156,9 +157,7 @@ function DungeonRoutine2:LoadProfileByName(name)
     profileSteps = {}
     for k,v in pairs(profile.Steps) do
         local behavior = runner.behaviors[v.Name:lower()]()
-        behavior.Name = v.Name
-        behavior.Type = v.Type
-        behavior.Step = v.Step
+        behavior:Load(v)
         table.insert(profileSteps, {index = #profileSteps, step = behavior})
     end
     self.CurrentProfile.Name = profile.Name

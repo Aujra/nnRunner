@@ -17,24 +17,21 @@ function DungeonRunner:Run()
     if self.DungeonRunner == nil then
         self.DungeonRunner = runner.routines["dungeonroutine2"]
     end
-    if runner.LocalPlayer.Level >= tonumber(self.Step.ToLevel) then
-        self.IsComplete = true
-        return
-    end
-
     local profile = nil
-    if self.Step.RunStyle == "Random" then
-        profile = runner:randomTable(self.Step.DungeonList)
-    else
-        for k,v in pairs(self.Step.DungeonList) do
-            if not v.ran then
-                profile = v
-                break
+    if not IsInInstance() then
+        if self.Step.RunStyle == "Random" then
+            profile = runner:randomTable(self.Step.DungeonList)
+        else
+            for k,v in pairs(self.Step.DungeonList) do
+                if not v.ran then
+                    profile = v
+                    break
+                end
             end
         end
+        local loadedProfile = self.DungeonRunner:LoadProfileByName(profile.dropdown)
     end
-    self.DungeonRunner:LoadProfileByName(profile.dropdown:GetValue())
-    profile.ran = true
+
     self.DungeonRunner:Run()
 end
 
@@ -49,7 +46,7 @@ function DungeonRunner:Save()
     }
 
     for k,v in pairs(self.Step.DungeonList) do
-        table.insert(data.Step.DungeonList, {dropdown = v.dropdown:GetValue(), ran = v.ran})
+        table.insert(data.Step.DungeonList, {dropdown = v.dropdown, profile = v.valueSelected, ran = v.ran})
     end
 
     return data
@@ -57,6 +54,7 @@ end
 
 function DungeonRunner:Load(data)
     self.Step.RunStyle = data.Step.RunStyle
+    local sf = runner.UI.DungeonProfileMaker:GetScrollFrame()
     for k,v in pairs(data.Step.DungeonList) do
         table.insert(self.Step.DungeonList, {dropdown = v.dropdown, ran = v.ran})
     end
@@ -74,6 +72,7 @@ function DungeonRunner:BuildStepGUI(container)
     runStyleDropdown:SetWidth(125)
     runStyleDropdown:AddItem("Random", "Random")
     runStyleDropdown:AddItem("Sequential", "Sequential")
+    runStyleDropdown:SetValue(self.Step.RunStyle)
     runStyleDropdown:SetCallback("OnValueChanged", function(widget, event, value)
         self.Step.RunStyle = value
     end)
@@ -85,20 +84,16 @@ function DungeonRunner:BuildStepGUI(container)
     addDungeonButton:SetCallback("OnClick", function(widget)
         self:AddDungeonGUI(container)
     end)
-    container:AddChild(addDungeonButton)
 
-    local dumpProfileButton = runner.AceGUI:Create("Button")
-    dumpProfileButton:SetText("Dump Profile")
-    dumpProfileButton:SetWidth(150)
-    dumpProfileButton:SetCallback("OnClick", function(widget)
-        local profile = runner:randomTable(self.Step.DungeonList)
-        print("Running " .. profile.dropdown:GetValue())
-        self:Run()
-    end)
-    container:AddChild(dumpProfileButton)
+    for k,v in pairs(self.Step.DungeonList) do
+        self:AddDungeonGUI(container, v.dropdown)
+    end
+
+    container:AddChild(addDungeonButton)
 end
 
-function DungeonRunner:AddDungeonGUI(container)
+function DungeonRunner:AddDungeonGUI(container, val)
+    val = val or nil
     local labelBreak = runner.AceGUI:Create("Label")
     labelBreak:SetText(" ")
     labelBreak:SetFullWidth(true)
@@ -116,8 +111,20 @@ function DungeonRunner:AddDungeonGUI(container)
         )
     end
 
+    local valueSelected = nil
+
+    if val then
+        profileDropDown:SetValue(val)
+    end
+
+    profileDropDown:SetCallback("OnValueChanged", function(widget, event, value)
+        valueSelected = value
+    end)
+
     container:AddChild(profileDropDown)
-    table.insert(self.Step.DungeonList, {dropdown = profileDropDown, ran = false})
+    if not val then
+        table.insert(self.Step.DungeonList, {dropdown = profileDropDown, profile = valueSelected, ran = false})
+    end
 end
 
 registerBehavior("DungeonRunner", DungeonRunner)

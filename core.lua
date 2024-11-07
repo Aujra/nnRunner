@@ -105,6 +105,7 @@ nn:Require('/scripts/mainrunner/Routine/DungeonRoutine.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/MultiboxRoutine.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/DungeonRoutine2.lua', runner)
 nn:Require('/scripts/mainrunner/Routine/MoveToRoutine.lua', runner)
+nn:Require('/scripts/mainrunner/Routine/ProfileRoutine.lua', runner)
 --Profiles
 local path = "/scripts/mainrunner/Profiles/Dungeons/*.lua"
 local files = nn.ListFiles(path)
@@ -118,7 +119,8 @@ for k,v in pairs(files) do
     nn:Require("/scripts/mainrunner/Behaviors/" .. v, runner)
 end
 
-nn:Require('/scripts/mainrunner/UI/DungeonProfileMaker.lua', runner)
+nn:Require('/scripts/mainrunner/UI/ProfileMaker.lua', runner)
+--nn:Require('/scripts/mainrunner/UI/DungeonProfileMaker.lua', runner)
 
 --Main Loop
 runner.frame = CreateFrame("Frame")

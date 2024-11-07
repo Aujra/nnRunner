@@ -1,4 +1,4 @@
-runner.Routines.ProfileRoutine = class({}, "ProfileRoutine")
+runner.Routines.ProfileRoutine = runner.Routines.BaseRoutine:extend()
 local ProfileRoutine = runner.Routines.ProfileRoutine
 runner.Routines.ProfileRoutine = ProfileRoutine
 
@@ -8,18 +8,35 @@ function ProfileRoutine:init()
     self.SettingsGUI = {}
     self.IsComplete = false
     self.Profile = {}
+    self:BuildGUI()
 end
 
 function ProfileRoutine:Run()
-
+    if self.Profile then
+        for k,v in pairs(self.Profile) do
+            print("Running step " .. v.step.Name)
+            v.step:Run()
+            if v.step.IsComplete then
+                self.IsComplete = true
+                return
+            end
+        end
+    end
 end
 
-function ProfileRoutine:ShowGUI()
+function ProfileRoutine:BuildGUI()
+    self.SettingsGUI = runner.AceGUI:Create("Frame")
+    self.SettingsGUI:SetTitle(self.Name)
+    self.SettingsGUI:SetStatusText(self.Description)
+    self.SettingsGUI:SetLayout("Flow")
+    self.SettingsGUI:SetCallback("OnClose", function(widget)
+        runner.Routines.ProfileRoutine:HideGUI()
+    end)
+    self.SettingsGUI:SetWidth(300)
+    self.SettingsGUI:SetHeight(200)
     local loadProfileDropdown = runner.AceGUI:Create("Dropdown")
     loadProfileDropdown:SetLabel("Load Profile")
-    loadProfileDropdown:SetWidth(300)
-    local loadProfileDropdown = runner.AceGUI:Create("Dropdown")
-    loadProfileDropdown:SetLabel("Load Profile")
+    loadProfileDropdown:SetWidth(200)
     local path = "/scripts/mainrunner/Profiles/ProfileRunner/*.json"
     local files = runner.nn.ListFiles(path)
     for k,v in pairs(files) do
@@ -33,16 +50,22 @@ function ProfileRoutine:ShowGUI()
     self.SettingsGUI:AddChild(loadProfileDropdown)
 end
 
+function ProfileRoutine:ShowGUI()
+    self.SettingsGUI:Show()
+end
+
+function ProfileRoutine:HideGUI()
+    self.SettingsGUI:Hide()
+end
+
 function ProfileRoutine:LoadProfileByName(name)
     local json = runner.nn.ReadFile("/scripts/mainrunner/Profiles/ProfileRunner/"..name)
     local profile = runner.nn.Utils.JSON.decode(json)
     profileSteps = {}
-    for k,v in pairs(profile.Steps) do
+    for k,v in pairs(profile) do
         local behavior = runner.behaviors[v.Name:lower()]()
-        behavior.Name = v.Name
-        behavior.Type = v.Type
-        behavior.Step = v.Step
-        table.insert(profileSteps, {index = #profileSteps, step = behavior})
+        behavior:Load(v)
+        table.insert(self.Profile, {index = #self.Profile, step = behavior})
     end
 end
 

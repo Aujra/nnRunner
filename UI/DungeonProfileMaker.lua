@@ -24,7 +24,7 @@ mainFrame:SetTitle("Dungeon Profile Maker")
 mainFrame:SetLayout("Flow")
 mainFrame:SetWidth(1000)
 mainFrame:SetHeight(800)
-mainFrame:Hide()
+mainFrame:Show()
 
 function DungeonProfileMaker:ShowGUI()
     mainFrame:Show()
@@ -109,30 +109,12 @@ saveProfileButton:SetCallback("OnClick", function()
     saveTable.PullMode = profilePullMode
     saveTable.WanderRange = profileWanderRange
 
-    for k,v in pairs(profileSteps) do
-        local childrenSteps = {}
-        if v.step.CanHaveChildren then
-            for k2,v2 in pairs(v.step.Step.children) do
-                table.insert(childrenSteps, {
-                    Name = v2.Name,
-                    Step = v2.Step,
-                    Index = #childrenSteps
-                })
-            end
-        end
-        local thestep = v.step.Step
-        if tableCount(childrenSteps) > 0 then
-            thestep.children = childrenSteps
-        else
-            thestep.children = nil
-        end
+    _G.profiles = profileSteps
 
-        table.insert(saveSteps, {
-            Name = v.step.Name,
-            Step = thestep
-        })
+    for k,v in pairs(profileSteps) do
+        table.insert(saveTable, v.step:Save())
     end
-    saveTable.Steps = saveSteps
+
     local json = runner.nn.Utils.JSON.encode(saveTable)
     local name = saveProfileName:GetText()
     runner.nn.WriteFile("/scripts/mainrunner/Profiles/DungeonsNew/" .. name .. ".json", json)
@@ -171,27 +153,19 @@ loadProfileButton:SetCallback("OnClick", function()
     profilePullMode = profile.PullMode
     profileWanderRange = profile.WanderRange
 
-    for k,v in pairs(profile.Steps) do
-        local treeChildren = {}
-        local childSteps = {}
+    for k,v in pairs(profile) do
         local behavior = runner.behaviors[v.Name:lower()]()
-        _G.behave = behavior
-        if v.Step.children then
-            for k2,v2 in pairs(v.Step.children) do
-                local childBehavior = runner.behaviors[v2.Name:lower()]()
-                _G.be = childBehavior
-                childBehavior.Step = v2.Step
-                table.insert(childSteps, childBehavior)
-                table.insert(treeChildren, {value = #treeChildren, text = v2.Name})
+        behavior:Load(v)
+        if behavior.CanHaveChildren then
+            local treeChildren = {}
+            for q,w in pairs(v.children) do
+                table.insert(treeChildren, {index = #treeChildren, value = #treeChildren, text = w.Name})
             end
-        end
-        behavior.Step = v.Step
-        behavior.Step.children = childSteps
-        table.insert(profileSteps, {index = #profileSteps, step = behavior})
-        if tableCount(childSteps) > 0 then
-            table.insert(treeSteps, {value = #treeSteps, text = v.Name, children = treeChildren})
+            table.insert(treeSteps, {value = #treeSteps, text = behavior.Name, children = treeChildren})
+            table.insert(profileSteps, {index = #profileSteps, step = behavior})
         else
-            table.insert(treeSteps, {value = #treeSteps, text = v.Name})
+            table.insert(treeSteps, {value = #treeSteps, text = behavior.Name})
+            table.insert(profileSteps, {index = #profileSteps, step = behavior})
         end
     end
     DungeonProfileMaker:BuildProfileTree()
@@ -203,19 +177,20 @@ profileTree:SetLayout("Fill")
 profileTree:SetFullWidth(true)
 profileTree:SetFullHeight(true)
 mainFrame:AddChild(profileTree)
+inlineGroup = runner.AceGUI:Create("InlineGroup")
+inlineGroup:SetFullWidth(true)
+inlineGroup:SetFullHeight(true)
+inlineGroup:SetLayout("Fill")
+profileTree:AddChild(inlineGroup)
+ScrollFrame = runner.AceGUI:Create("ScrollFrame")
+ScrollFrame:SetLayout("Flow")
+ScrollFrame:SetFullWidth(true)
+ScrollFrame:SetFullHeight(true)
+inlineGroup:AddChild(ScrollFrame)
 
 profileTree:SetCallback("OnGroupSelected", function(container, _, group)
-    profileTree:ReleaseChildren()
-    inlineGroup = runner.AceGUI:Create("InlineGroup")
-    inlineGroup:SetFullWidth(true)
-    inlineGroup:SetFullHeight(true)
-    inlineGroup:SetLayout("Fill")
-    profileTree:AddChild(inlineGroup)
-    ScrollFrame = runner.AceGUI:Create("ScrollFrame")
-    ScrollFrame:SetLayout("Flow")
-    ScrollFrame:SetFullWidth(true)
-    ScrollFrame:SetFullHeight(true)
-    inlineGroup:AddChild(ScrollFrame)
+    ScrollFrame:ReleaseChildren()
+
     if group == "Profile" then
         DungeonProfileMaker:MakeBaseGUI(ScrollFrame)
     else
@@ -316,7 +291,11 @@ end
 
 function DungeonProfileMaker:GetStepChildByIndex(pindex, cindex)
     local parent = DungeonProfileMaker:GetStepByIndex(pindex)
-    return parent.Step.children[cindex+1]
+    local child = parent.Step.children[cindex+1]
+    if child == nil then
+        child = parent.Step.children[cindex]
+    end
+    return child
 end
 
 function DungeonProfileMaker:BuildProfileTree()
@@ -348,4 +327,8 @@ function DungeonProfileMaker:Toggle()
     else
         mainFrame:Show()
     end
+end
+
+function DungeonProfileMaker:GetScrollFrame()
+    return ScrollFrame
 end

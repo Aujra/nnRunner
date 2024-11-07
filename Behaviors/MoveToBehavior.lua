@@ -5,6 +5,10 @@ runner.Behaviors.MoveToBehavior = MoveToBehavior
 function MoveToBehavior:init()
     self.Name = "MoveToBehavior"
     self.Type = "MoveTo"
+    self.MiniTypes = {
+        "Dungeon",
+        "Grind"
+    }
     self.Step = {
         X = 0,
         Y = 0,
@@ -22,9 +26,9 @@ function MoveToBehavior:Run()
     end
 
     local closestEnemy = runner.Engine.ObjectManager:GetClosestEnemy()
-    local inRangeOfWaypoint = self:InRange(closestEnemy)
+    local inRangeOfWaypoint = true
 
-    if runner.routine.CurrentProfile.PullMode == "Active" and closestEnemy and inRangeOfWaypoint then
+    if closestEnemy and inRangeOfWaypoint then
         if closestEnemy:DistanceFromPlayer() > runner.rotation.PullRange or not closestEnemy:LOS() then
             runner.routine:SetStatus("Moving to kill " .. closestEnemy.Name)
             runner.Engine.Navigation:MoveTo(closestEnemy.pointer)
@@ -41,8 +45,8 @@ function MoveToBehavior:Run()
 
     if self.Step.X ~= 0 and self.Step.Y ~= 0 and self.Step.Z ~= 0 then
         runner.routine:SetStatus("Moving to waypoint")
-        local offsetX = runner.randomBetween(-3, 3)
-        local offsetY = runner.randomBetween(-3, 3)
+        local offsetX = runner.randomBetween(self, -3, 3)
+        local offsetY = runner.randomBetween(self, -3, 3)
         if runner.LocalPlayer:DistanceFromPoint(self.Step.X+offsetX, self.Step.Y+offsetY, self.Step.Z) > self.Step.Radius then
         runner.Engine.Navigation:MoveToPoint(self.Step.X+offsetX, self.Step.Y+offsetY, self.Step.Z)
         self.IsComplete = false
@@ -53,14 +57,14 @@ function MoveToBehavior:Run()
     end
 end
 
-function MoveToBehavior:InRange(unit)
-    if self.Step.X ~= 0 and self.Step.Y ~= 0 and self.Step.Z ~= 0 then
-        if unit then
-            return unit:DistanceFromPoint(self.Step.X, self.Step.Y, self.Step.Z) < tonumber(runner.routine.CurrentProfile.WanderRange)
-        end
-    end
-    return false
-end
+--function MoveToBehavior:InRange(unit)
+--    if self.Step.X ~= 0 and self.Step.Y ~= 0 and self.Step.Z ~= 0 then
+--        if unit then
+--            return unit:DistanceFromPoint(self.Step.X, self.Step.Y, self.Step.Z) < tonumber(runner.routine.CurrentProfile.WanderRange)
+--        end
+--    end
+--    return false
+--end
 
 function MoveToBehavior:Save()
     return {
@@ -147,6 +151,16 @@ function MoveToBehavior:BuildStepGUI(container)
         self.Step.DontFight = value
     end)
     container:AddChild(dontfight)
+end
+
+function MoveToBehavior:BuildMiniUI()
+    local button = runner.AceGUI:Create("Button")
+    button:SetText("Move To")
+    button:SetWidth(150)
+    button:SetCallback("OnClick", function()
+        print("We added a waypoint")
+    end)
+    return button
 end
 
 registerBehavior("MoveToBehavior", MoveToBehavior)

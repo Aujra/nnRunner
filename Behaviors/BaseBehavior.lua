@@ -74,4 +74,9 @@ function BaseBehavior:GetBestTarget()
     return bestTarget
 end
 
+function BaseBehavior:BuildStepGUI(container)
+end
+function BaseBehavior:BuildMiniUI(container)
+end
+
 registerBehavior("Base",BaseBehavior)

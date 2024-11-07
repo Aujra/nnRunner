@@ -100,6 +100,9 @@ end
 
 function GameObject:DistanceFromPoint(x, y, z)
     z = z or self.z
+    if not x then
+        return 99999
+    end
     local x1, y1, z1 = self.x, self.y, self.z
     if not x1 then
         return 99999

@@ -14,7 +14,25 @@ function IfBehavior:init()
 end
 
 function IfBehavior:Run()
-
+    if self.Step.condition == "" then
+        self.IsComplete = true
+        return
+    else
+        local cond = self.Step.condition
+        local result = loadstring("return " .. cond)()
+        if result then
+            for k,v in pairs(self.Step.children) do
+                v:Run()
+                if v.IsComplete then
+                    self.IsComplete = true
+                    return
+                end
+            end
+        else
+            self.IsComplete = true
+            return
+        end
+    end
 end
 
 function IfBehavior:Debug()
@@ -46,7 +64,8 @@ end
 function IfBehavior:LoadChildren(data)
     local children = {}
     for k,v in pairs(data) do
-        local behavior = runner.Behaviors[v.Type]:new()
+        print(v.Name:lower())
+        local behavior = runner.behaviors[v.Name:lower()]:new()
         behavior:Load(v)
         table.insert(children, behavior)
     end
