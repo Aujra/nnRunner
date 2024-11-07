@@ -153,12 +153,17 @@ function MoveToBehavior:BuildStepGUI(container)
     container:AddChild(dontfight)
 end
 
-function MoveToBehavior:BuildMiniUI()
+function MoveToBehavior:BuildMiniUI(profile)
     local button = runner.AceGUI:Create("Button")
     button:SetText("Move To")
     button:SetWidth(150)
     button:SetCallback("OnClick", function()
-        print("We added a waypoint")
+        local x, y, z = ObjectPosition("player")
+        self.Step.X = x
+        self.Step.Y = y
+        self.Step.Z = z
+        self.Step.Radius = 5
+        table.insert(profile, self)
     end)
     return button
 end

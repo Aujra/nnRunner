@@ -14,17 +14,28 @@ PM.scrollFrame = nil
 PM.addProfileButton = nil
 PM.addBehaviorButton = nil
 PM.addBehaviorDropdown = nil
-PM.loadProfileDropdown = nil
+PM.ProfileDrop = nil
 PM.saveProfileButton = nil
 PM.saveProfileName = nil
 PM.deleteFileButton = nil
 PM.loadProfileButton = nil
 
 --Data
-PM.profile = nil
-PM.treeStruct = nil
+PM.profile = {}
+PM.treeStruct = {}
+PM.selectedProfile = nil
 
 PM.profileType = "Dungeon"
+
+function PM:GetProfiles()
+    local path = "/scripts/mainrunner/Profiles/ProfileRunner/*.json"
+    local files = runner.nn.ListFiles(path)
+    local foundProfiles = {}
+    for k,v in pairs(files) do
+        table.insert(foundProfiles, v)
+    end
+    return foundProfiles
+end
 
 if not PM.mainFrame then
     PM.mainFrame = runner.AceGUI:Create("Window")
@@ -32,93 +43,71 @@ if not PM.mainFrame then
     PM.mainFrame:SetLayout("Flow")
     PM.mainFrame:SetWidth(800)
     PM.mainFrame:SetHeight(600)
-    PM.mainFrame:EnableResize(false)
+    PM.mainFrame:EnableResize(true)
     PM.mainFrame:SetCallback("OnClose", function(widget) PM:Close() end)
     PM.mainFrame:Hide()
 
-    PM.addBehaviorDropdown = runner.AceGUI:Create("Dropdown")
-    PM.addBehaviorDropdown:SetLabel("Add Behavior")
-    PM.addBehaviorDropdown:SetWidth(0)
-    PM.addBehaviorDropdown:SetHeight(0)
-    for k,v in pairs(runner.behaviors) do
-        PM.addBehaviorDropdown:AddItem(
-                k,k
-        )
+    PM.ProfileDrop = runner.AceGUI:Create("Dropdown")
+    PM.ProfileDrop:SetLabel("Profile")
+    PM.ProfileDrop:SetWidth(200)
+    PM.ProfileDrop:SetCallback("OnValueChanged", function(widget, event, value)
+        PM.selectedProfile = value
+    end)
+    local profiles = PM:GetProfiles()
+    for k,v in pairs(profiles) do
+        PM.ProfileDrop:AddItem(v, v)
     end
-    PM.addBehaviorDropdown.frame:Hide()
-    PM.addBehaviorDropdown:SetCallback("OnValueChanged", function(widget, event, value)
-        PM.addBehaviorDropdown.frame:Hide()
-        PM.addBehaviorDropdown:SetWidth(0)
-    end)
-
-    PM.addBehaviorButton = runner.AceGUI:Create("Button")
-    PM.addBehaviorButton:SetText("+")
-    PM.addBehaviorButton:SetWidth(20)
-    PM.addBehaviorButton:SetCallback("OnClick", function(widget)
-        if PM.addBehaviorDropdown.frame:GetWidth() < 1 then
-            PM.addBehaviorDropdown:SetWidth(200)
-            PM.addBehaviorDropdown:SetHeight(30)
-            PM.addBehaviorDropdown.frame:Show()
-        else
-            PM.addBehaviorDropdown:SetWidth(0)
-            PM.addBehaviorDropdown:SetHeight(0)
-            PM.addBehaviorDropdown.frame:Hide()
-        end
-    end)
-
-    PM.saveProfileButton = runner.AceGUI:Create("Button")
-    PM.saveProfileButton:SetText("Save")
-    PM.saveProfileButton:SetWidth(80)
-    PM.saveProfileButton:SetCallback("OnClick", function(widget)
-
-    end)
 
     PM.loadProfileButton = runner.AceGUI:Create("Button")
-    PM.loadProfileButton:SetText("Load")
-    PM.loadProfileButton:SetWidth(80)
+    PM.loadProfileButton:SetText("Load Profile")
+    PM.loadProfileButton:SetWidth(125)
     PM.loadProfileButton:SetCallback("OnClick", function(widget)
-        if PM.loadProfileDropdown.frame:GetWidth() < 1 then
-            PM.loadProfileDropdown:SetWidth(200)
-            PM.loadProfileDropdown:SetHeight(30)
-            PM.loadProfileDropdown.frame:Show()
-        else
-            PM.loadProfileDropdown:SetWidth(0)
-            PM.loadProfileDropdown:SetHeight(0)
-            PM.loadProfileDropdown.frame:Hide()
+        if not PM.selectedProfile then
+            print("No Profile Selected")
+            return
         end
+        print("Load Profile " .. PM.selectedProfile)
+        local path = "/scripts/mainrunner/Profiles/ProfileRunner/" .. PM.selectedProfile
+        local data = runner.nn.ReadFile(path)
+        print("Data " .. data)
     end)
 
     PM.deleteFileButton = runner.AceGUI:Create("Button")
-    PM.deleteFileButton:SetText("Delete")
-    PM.deleteFileButton:SetWidth(80)
+    PM.deleteFileButton:SetText("Delete File")
+    PM.deleteFileButton:SetWidth(125)
     PM.deleteFileButton:SetCallback("OnClick", function(widget)
-
-    end)
-
-    PM.loadProfileDropdown = runner.AceGUI:Create("Dropdown")
-    PM.loadProfileDropdown:SetLabel("Load Profile")
-    PM.loadProfileDropdown:SetWidth(0)
-    PM.loadProfileDropdown:SetHeight(0)
-    local path = "/scripts/mainrunner/Profiles/ProfileRunner/*.json"
-    local files = runner.nn.ListFiles(path)
-    if files then
-        for k,v in pairs(files) do
-            PM.loadProfileDropdown:AddItem(
-                    v,v
-            )
+        if not PM.selectedProfile then
+            print("No Profile Selected")
+            return
         end
-    end
-    PM.loadProfileDropdown.frame:Hide()
-    PM.loadProfileDropdown:SetCallback("OnValueChanged", function(widget, event, value)
-
+        print("Delete File " .. PM.selectedProfile)
+        local path = "/scripts/mainrunner/Profiles/ProfileRunner/" .. PM.selectedProfile
+        runner.nn.DeleteFile(path)
     end)
 
-    PM.mainFrame:AddChild(PM.addBehaviorDropdown)
-    PM.mainFrame:AddChild(PM.loadProfileDropdown)
-    PM.mainFrame:AddChild(PM.addBehaviorButton)
-    PM.mainFrame:AddChild(PM.saveProfileButton)
+    PM.saveProfileName = runner.AceGUI:Create("EditBox")
+    PM.saveProfileName:SetLabel("Profile Name")
+    PM.saveProfileName:SetWidth(125)
+
+    PM.saveProfileButton = runner.AceGUI:Create("Button")
+    PM.saveProfileButton:SetText("Save Profile")
+    PM.saveProfileButton:SetWidth(125)
+    PM.saveProfileButton:SetCallback("OnClick", function(widget)
+        if PM.saveProfileName:GetText() == "" then
+            print("No Profile Name Provided")
+            return
+        end
+        print("Save Profile " .. PM.saveProfileName:GetText())
+        local path = "/scripts/mainrunner/Profiles/ProfileRunner/" .. PM.saveProfileName:GetText() .. ".json"
+        local data = "test saving data"
+        runner.nn.WriteFile(path, data)
+    end)
+
+    PM.mainFrame:AddChild(PM.ProfileDrop)
     PM.mainFrame:AddChild(PM.loadProfileButton)
     PM.mainFrame:AddChild(PM.deleteFileButton)
+    PM.mainFrame:AddChild(PM.saveProfileName)
+    PM.mainFrame:AddChild(PM.saveProfileButton)
 end
 
 if not PM.BuilderFrame then
@@ -157,6 +146,11 @@ if not PM.BuilderFrame then
 end
 
 function PM:RebuildMiniProfileMaker(type)
+
+    for k,v in pairs(PM.profile) do
+        v:Debug()
+    end
+
     PM.BuilderFrame:ReleaseChildren()
     PM.profileTypeDropdown = runner.AceGUI:Create("Dropdown")
     PM.profileTypeDropdown:SetLabel("Profile Type")
@@ -176,7 +170,7 @@ function PM:RebuildMiniProfileMaker(type)
         if beh.MiniTypes then
             for k2,v2 in pairs(beh.MiniTypes) do
                 if v2 == PM.profileType then
-                    local but = beh:BuildMiniUI()
+                    local but = beh:BuildMiniUI(PM.profile)
                     if but then
                         PM.BuilderFrame:AddChild(but)
                     end
