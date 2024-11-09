@@ -78,5 +78,7 @@ function BaseBehavior:BuildStepGUI(container)
 end
 function BaseBehavior:BuildMiniUI(container)
 end
+function BaseBehavior:Setup()
+end
 
 registerBehavior("Base",BaseBehavior)

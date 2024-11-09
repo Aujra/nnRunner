@@ -23,7 +23,9 @@ PM.loadProfileButton = nil
 --Data
 PM.profile = {}
 PM.treeStruct = {}
+PM.selectedBehavior = nil
 PM.selectedProfile = nil
+PM.selectedGroup = nil
 
 _G.theprofile = PM.profile
 
@@ -39,15 +41,52 @@ function PM:GetProfiles()
     return foundProfiles
 end
 
+function PM:RecursiveProfileBuilder(data)
+    local profile = {}
+    for k,v in pairs(data) do
+        local behavior = runner.behaviors[v.Name:lower()]:new()
+        if not behavior.CanHaveChildren then
+            table.insert(profile, {
+                value = tableCount(profile)+1,
+                text = v.Name,
+            })
+        else
+            table.insert(profile, {
+                value = tableCount(profile)+1,
+                text = v.Name,
+                children = PM:RecursiveProfileBuilder(v.Step.children or {})
+            })
+        end
+    end
+    return profile
+end
+
 function PM:BuildTreeFromProfile()
     local tree = {}
-    for k,v in pairs(PM.profile) do
-        local node = {
-            value = tableCount(tree)+1,
-            text = v.Name
-        }
-        table.insert(tree, node)
-    end
+    --for k,v in pairs(PM.profile) do
+    --    if not v.CanHaveChildren then
+    --        local node = {
+    --            value = tableCount(tree)+1,
+    --            text = v.Name
+    --        }
+    --        table.insert(tree, node)
+    --    else
+    --        local node = {
+    --            value = tableCount(tree)+1,
+    --            text = v.Name,
+    --            children = {}
+    --        }
+    --        for k2,v2 in pairs(v.Step.children) do
+    --            local child = {
+    --                value = tableCount(node.children)+1,
+    --                text = v2.Name
+    --            }
+    --            table.insert(node.children, child)
+    --        end
+    --        table.insert(tree, node)
+    --    end
+    --end
+    tree = PM:RecursiveProfileBuilder(PM.profile)
     PM.treeView:SetTree(
         {
             {
@@ -76,9 +115,7 @@ if not PM.mainFrame then
     PM.mainFrame:SetWidth(800)
     PM.mainFrame:SetHeight(600)
     PM.mainFrame:EnableResize(true)
-    PM.mainFrame:SetCallback("OnClose", function(widget) PM:Close() end)
-    PM.mainFrame:Hide()
-
+    PM.mainFrame:SetCallback("OnClose", function(widget) PM:Hide() end)
     PM.ProfileDrop = runner.AceGUI:Create("Dropdown")
     PM.ProfileDrop:SetLabel("Profile")
     PM.ProfileDrop:SetWidth(200)
@@ -160,14 +197,20 @@ if not PM.mainFrame then
 
     PM.treeView:SetCallback("OnGroupSelected", function(widget, event, group)
         local split =  {strsplit("\001", group)}
+        PM.selectedGroup = split
+
         local selected = PM:GetBehaviorByIndex(split[2])
-        if selected then
+        PM.selectedBehavior = PM:GetBehaviorBySplit()
+        if PM.selectedBehavior then
             PM.scrollFrame:ReleaseChildren()
-            selected:BuildStepGUI(PM.scrollFrame)
+            PM.selectedBehavior:BuildStepGUI(PM.scrollFrame)
         end
     end)
+
     PM.mainFrame:AddChild(PM.treeView)
 end
+
+
 
 if not PM.BuilderFrame then
     PM.BuilderFrame = runner.AceGUI:Create("Frame")
@@ -184,6 +227,7 @@ if not PM.BuilderFrame then
     PM.profileTypeDropdown:AddItem("Dungeon", "Dungeon")
     PM.profileTypeDropdown:AddItem("Quest", "Quest")
     PM.profileTypeDropdown:AddItem("Grind", "Grind")
+    PM.profileTypeDropdown:AddItem("Control", "Control")
     PM.profileTypeDropdown:SetCallback("OnValueChanged", function(widget, event, value)
         PM.profileType = value
         PM:RebuildMiniProfileMaker(value)
@@ -204,7 +248,28 @@ if not PM.BuilderFrame then
     PM.BuilderFrame:AddChild(PM.openProfileViewerButton)
 end
 
+
+function PM:GetBehaviorBySplit()
+    if PM.selectedGroup and type(PM.selectedGroup) ~= "table" then
+        split = {strsplit("\001", PM.selectedGroup)}
+    end
+    if not PM.selectedGroup then
+        return nil
+    end
+    local behavior = nil
+    for k,v in pairs(PM.selectedGroup) do
+        if k == 2 then
+            behavior = PM:GetBehaviorByIndex(v)
+        end
+        if k > 2 then
+            behavior = behavior.Step.children[tonumber(v)]
+        end
+    end
+    return behavior
+end
+
 function PM:RebuildMiniProfileMaker(type)
+    PM:GetBehaviorBySplit()
     PM:BuildTreeFromProfile()
     PM.BuilderFrame:ReleaseChildren()
     PM.profileTypeDropdown = runner.AceGUI:Create("Dropdown")
@@ -213,6 +278,7 @@ function PM:RebuildMiniProfileMaker(type)
     PM.profileTypeDropdown:AddItem("Dungeon", "Dungeon")
     PM.profileTypeDropdown:AddItem("Quest", "Quest")
     PM.profileTypeDropdown:AddItem("Grind", "Grind")
+    PM.profileTypeDropdown:AddItem("Control", "Control")
     PM.profileTypeDropdown:SetValue(type)
     PM.profileTypeDropdown:SetCallback("OnValueChanged", function(widget, event, value)
         PM.profileType = value
@@ -231,7 +297,11 @@ function PM:RebuildMiniProfileMaker(type)
                     but:SetCallback("OnClick", function()
                         local newbehavior = v()
                         newbehavior:Setup()
-                        table.insert(PM.profile, newbehavior)
+                        if PM.selectedBehavior then
+                            table.insert(PM.selectedBehavior.Step.children, newbehavior)
+                        else
+                            table.insert(PM.profile, newbehavior)
+                        end
                         PM:BuildTreeFromProfile()
                     end)
                     PM.BuilderFrame:AddChild(but)

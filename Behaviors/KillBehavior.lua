@@ -76,14 +76,21 @@ function KillBehavior:BuildStepGUI(container)
     container:AddChild(getTargetNameButton)
 end
 
-function KillBehavior:BuildMiniUI()
+function KillBehavior:BuildMiniUI(profile)
     local button = runner.AceGUI:Create("Button")
     button:SetText("Add kill")
     button:SetWidth(150)
     button:SetCallback("OnClick", function()
-        print("Added kill")
     end)
+    table.insert(profile, self)
     return button
+end
+
+function KillBehavior:Setup()
+    local target = UnitName("target")
+    if target then
+        self.Step.MobName = target
+    end
 end
 
 registerBehavior("KillBehavior", KillBehavior)

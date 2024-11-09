@@ -5,8 +5,12 @@ runner.Behaviors.InteractBehavior = InteractBehavior
 function InteractBehavior:init()
     self.Name = "InteractBehavior"
     self.Type = "Interact"
+    self.MiniTypes = {
+        "Dungeon",
+    }
     self.Step = {
-        MobName = ""
+        MobName = "",
+        Range = 99999
     }
 end
 
@@ -51,6 +55,28 @@ end
 
 function InteractBehavior:Debug()
 
+end
+
+function InteractBehavior:BuildMiniUI(profile)
+    local interactButton = runner.AceGUI:Create("Button")
+    interactButton:SetText("Interact")
+    interactButton:SetWidth(150)
+    interactButton:SetCallback("OnClick", function()
+        local step = {
+            Name = "Interact",
+            Type = "Interact",
+            MobName = ""
+        }
+        table.insert(profile, step)
+        profile:RefreshUI()
+    end)
+    return interactButton
+end
+
+function InteractBehavior:Setup()
+    local targetName = UnitName("target")
+    self.Step.MobName = targetName or ""
+    self.Step.Range = 4
 end
 
 function InteractBehavior:BuildStepGUI(container)

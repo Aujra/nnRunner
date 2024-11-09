@@ -5,6 +5,9 @@ runner.Behaviors.IfBehavior = IfBehavior
 function IfBehavior:init()
     self.Name = "IfBehavior"
     self.Type = "If"
+    self.MiniTypes = {
+        "Control",
+    }
     self.Step = {
         condition = "",
         children = {},
@@ -70,6 +73,24 @@ function IfBehavior:LoadChildren(data)
         table.insert(children, behavior)
     end
     return children
+end
+
+function IfBehavior:BuildMiniUI(profile)
+    local ifbutton = runner.AceGUI:Create("Button")
+    ifbutton:SetText("If")
+    ifbutton:SetWidth(150)
+    ifbutton:SetCallback("OnClick", function()
+        local step = {
+            Name = "If",
+            Type = "If",
+            condition = "",
+            children = {},
+            CanHaveChildren = true
+        }
+        table.insert(profile, step)
+        profile:RefreshUI()
+    end)
+    return ifbutton
 end
 
 function IfBehavior:BuildStepGUI(container)
