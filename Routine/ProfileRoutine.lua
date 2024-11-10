@@ -14,11 +14,21 @@ end
 function ProfileRoutine:Run()
     if self.Profile then
         for k,v in pairs(self.Profile) do
-            print("Running step " .. v.step.Name)
-            v.step:Run()
-            if v.step.IsComplete then
-                self.IsComplete = true
-                return
+            local current = nil
+            for k,v in pairs(self.Profile) do
+                v.step:Debug()
+                if not v.step.IsComplete then
+                    current = v
+                end
+                if current then
+                    current.CurrentStep = true
+                end
+            end
+            if current then
+                current.step:Run()
+                current.step:Debug()
+            else
+                print("Profile Complete")
             end
         end
     end
@@ -64,7 +74,7 @@ function ProfileRoutine:LoadProfileByName(name)
     local json = runner.nn.ReadFile("/scripts/mainrunner/Profiles/ProfileRunner/"..name)
     local profile = runner.nn.Utils.JSON.decode(json)
     profileSteps = {}
-    for k,v in pairs(profile) do
+    for k,v in pairs(profile.Steps) do
         local behavior = runner.behaviors[v.Name:lower()]()
         behavior:Load(v)
         table.insert(self.Profile, {index = #self.Profile, step = behavior})
@@ -72,6 +82,12 @@ function ProfileRoutine:LoadProfileByName(name)
 end
 
 function ProfileRoutine:HideGUI()
+end
+
+function ProfileRoutine:SetStatus(status)
+    if self.SettingsGUI then
+        self.SettingsGUI:SetStatusText(status)
+    end
 end
 
 registerRoutine(ProfileRoutine)

@@ -9,6 +9,7 @@
         self.Description = "Demon Hunter Rotation"
         self.PullRange = 30
         self.combatRange = 7
+        self.CombatRange = 7
     end
 
     function DemonHunterRotation:Pull(target)

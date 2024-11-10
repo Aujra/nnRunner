@@ -53,12 +53,12 @@ function MoveToBehavior:Run()
             self.Step.Y = self.Step.Y + offsetY
             self.Adjusted = true
         end
-        if runner.LocalPlayer:DistanceFromPoint(self.Step.X, self.Step.Y, self.Step.Z) > self.Step.Radius then
-        runner.Engine.Navigation:MoveToPoint(self.Step.X, self.Step.Y, self.Step.Z)
-        self.IsComplete = false
+        if runner.LocalPlayer:DistanceFromPoint(self.Step.X, self.Step.Y, self.Step.Z) > (self.Step.Radius-1) then
+            runner.Engine.Navigation:MoveToPoint(self.Step.X, self.Step.Y, self.Step.Z)
+            self.IsComplete = false
         else
-        Unlock(MoveForwardStop)
-        self.IsComplete = true
+            Unlock(MoveForwardStop)
+            self.IsComplete = true
         end
     end
 end

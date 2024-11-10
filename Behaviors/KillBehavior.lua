@@ -15,6 +15,7 @@ function KillBehavior:init()
 end
 
 function KillBehavior:Run()
+    runner.behaviors["BaseBehavior"]:SelfDefense()
     if self.Step.MobName and self.Step.MobName == "" then
         self.IsComplete = true
         return

@@ -2,6 +2,8 @@ runner.Classes.LocalPlayer = runner.Classes.Player:extend()
 local LocalPlayer = runner.Classes.LocalPlayer
 runner.Classes.LocalPlayer = LocalPlayer
 
+local fields = nil
+
 function LocalPlayer:init(pointer)
     runner.Classes.Player.init(self, pointer)
     self.spec = GetSpecialization()
@@ -23,6 +25,16 @@ function LocalPlayer:Update()
     self.Rotation = runner.nn.ObjectRotation(self.pointer)
     self.ForwardSpeed = select(3, C_PlayerInfo.GetGlidingInfo())
     self.Gliding = select(1, C_PlayerInfo.GetGlidingInfo())
+
+    local fields = {}
+
+    for i=0, 2000, 4 do
+        local t = runner.nn.ObjectField(self.pointer, i*4, 4)
+        table.insert(fields, i .. " with " .. t)
+    end
+
+    self.Fields = fields
+
 end
 
 function LocalPlayer:EquipUpgrades()

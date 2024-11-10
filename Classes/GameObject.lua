@@ -25,7 +25,8 @@ function GameObject:init(pointer)
     self.ObjectType = runner.nn.GameObjectType(self.pointer)
     self.CanGather = self.ObjectType == 50
     self.UpdateRate = 0
-    self.NextUpdate = GetTime() + runner:randomBetween(10, 100) / 100
+    self.objectCount = tableCount(runner.Engine.ObjectManager.gameobjects) + tableCount(runner.Engine.ObjectManager.units) + tableCount(runner.Engine.ObjectManager.players)
+    self.NextUpdate = GetTime() + runner:randomBetween(self.objectCount, (self.objectCount*3.5)) / 1000
 end
 
 function GameObject:Update()
@@ -41,24 +42,26 @@ function GameObject:Update()
     self.CanLoot = runner.nn.ObjectLootable(self.pointer)
     self.ObjectType = runner.nn.GameObjectType(self.pointer)
     self.CanGather = self.ObjectType == 50
+    self.objectCount = tableCount(runner.Engine.ObjectManager.gameobjects) + tableCount(runner.Engine.ObjectManager.units) + tableCount(runner.Engine.ObjectManager.players)
     self.UpdateRate = self:GetUpdateRate()
     self.NextUpdate = GetTime() + self.UpdateRate
 end
 
 function GameObject:GetUpdateRate()
+    local multiplier = self.objectCount / 1350 or 1
     if self.Distance < 10 then
-        return .15
+        return .15 * multiplier
     end
     if self.Distance < 50 then
-        return .75
+        return .75 * multiplier
     end
     if self.Distance < 100 then
-        return 1.5
+        return 1.5 * multiplier
     end
     if self.Distance < 200 then
-        return 3
+        return 3 * multiplier
     end
-    return 3
+    return 3 * multiplier
 end
 
 function GameObject:Debug()

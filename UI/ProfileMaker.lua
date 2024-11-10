@@ -27,12 +27,19 @@ PM.selectedBehavior = nil
 PM.selectedProfile = nil
 PM.selectedGroup = nil
 
+PM.profileName = nil
+PM.profileDescription = nil
+PM.profileID = nil
+PM.profileLootMode = nil
+PM.profilePullMode = nil
+PM.profileWanderRange = nil
+
 _G.theprofile = PM.profile
 
 PM.profileType = "Dungeon"
 
-function PM:GetProfiles()
-    local path = "/scripts/mainrunner/Profiles/ProfileRunner/*.json"
+function PM:GetProfiles(folder)
+    local path = "/scripts/mainrunner/Profiles/"..folder.."/*.json"
     local files = runner.nn.ListFiles(path)
     local foundProfiles = {}
     if files then
@@ -101,7 +108,13 @@ if not PM.mainFrame then
     PM.ProfileDrop:SetCallback("OnValueChanged", function(widget, event, value)
         PM.selectedProfile = value
     end)
-    local profiles = PM:GetProfiles()
+    local profiles = PM:GetProfiles("Dungeons")
+    PM.ProfileDrop:AddItem("DUNGEONS", "DUNGEONS")
+    for k,v in pairs(profiles) do
+        PM.ProfileDrop:AddItem("Dungeons/"..v, "Dungeons/"..v)
+    end
+    local profiles = PM:GetProfiles("ProfileRunner")
+    PM.ProfileDrop:AddItem("PROFILES", "PROFILES")
     for k,v in pairs(profiles) do
         PM.ProfileDrop:AddItem(v, v)
     end
@@ -114,10 +127,17 @@ if not PM.mainFrame then
             print("No Profile Selected")
             return
         end
-        local path = "/scripts/mainrunner/Profiles/ProfileRunner/" .. PM.selectedProfile
+        local path = "/scripts/mainrunner/Profiles/" .. PM.selectedProfile
         local data = runner.nn.ReadFile(path)
         local decoded = runner.nn.Utils.JSON.decode(data)
         PM.profile = {}
+        PM.profileName = decoded.Name
+        PM.profileDescription = decoded.Description
+        PM.profileID = decoded.ID
+        PM.profileLootMode = decoded.LootMode
+        PM.profilePullMode = decoded.PullMode
+        PM.profileWanderRange = decoded.WanderRange
+
         for k,v in pairs(decoded.Steps) do
             local behavior = runner.behaviors[v.Name:lower()]:new()
             behavior:Load(v)
@@ -154,6 +174,13 @@ if not PM.mainFrame then
         print("Save Profile " .. PM.saveProfileName:GetText())
         local path = "/scripts/mainrunner/Profiles/" .. PM.saveProfileName:GetText() .. ".json"
         local data = {}
+        data.Name = PM.profileName
+        data.Description = PM.profileDescription
+        data.ID = PM.profileID
+        data.LootMode = PM.profileLootMode
+        data.PullMode = PM.profilePullMode
+        data.WanderRange = PM.profileWanderRange
+
         data.Steps = {}
         for k,v in pairs(PM.profile) do
             table.insert(data.Steps, v:Save())
@@ -189,18 +216,19 @@ if not PM.mainFrame then
         local split =  {strsplit("\001", group)}
         PM.selectedGroup = split
 
-        local selected = PM:GetBehaviorByIndex(split[2])
         PM.selectedBehavior = PM:GetBehaviorBySplit()
+
         if PM.selectedBehavior then
             PM.scrollFrame:ReleaseChildren()
             PM.selectedBehavior:BuildStepGUI(PM.scrollFrame)
+        elseif group:lower() == "root" then
+            PM.scrollFrame:ReleaseChildren()
+            PM:MakeBaseGUI(PM.scrollFrame)
         end
     end)
 
     PM.mainFrame:AddChild(PM.treeView)
 end
-
-
 
 if not PM.BuilderFrame then
     PM.BuilderFrame = runner.AceGUI:Create("Frame")
@@ -260,6 +288,68 @@ end
 
 function PM:BuildRootNode()
 
+end
+
+function PM:MakeBaseGUI(container)
+    container:ReleaseChildren()
+    local nameEditBox = runner.AceGUI:Create("EditBox")
+    nameEditBox:SetLabel("Name")
+    nameEditBox:SetWidth(200)
+    nameEditBox:SetText(PM.profileName)
+    nameEditBox:SetCallback("OnTextChanged", function(widget, event, value)
+        PM.profileName = value
+    end)
+    container:AddChild(nameEditBox)
+
+    local dungeonIDEditBox = runner.AceGUI:Create("EditBox")
+    dungeonIDEditBox:SetLabel("Dungeon ID")
+    dungeonIDEditBox:SetWidth(200)
+    dungeonIDEditBox:SetText(PM.profileID)
+    dungeonIDEditBox:SetCallback("OnTextChanged", function(widget, event, value)
+        PM.profileID = value
+    end)
+    container:AddChild(dungeonIDEditBox)
+
+    local lootModeDropdown = runner.AceGUI:Create("Dropdown")
+    lootModeDropdown:SetLabel("Loot Mode")
+    lootModeDropdown:SetWidth(200)
+    lootModeDropdown:AddItem("None", "None")
+    lootModeDropdown:AddItem("BossOnly", "BossOnly")
+    lootModeDropdown:AddItem("All", "All")
+    lootModeDropdown:SetValue(PM.profileLootMode)
+    lootModeDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+        PM.profileLootMode = value
+    end)
+    container:AddChild(lootModeDropdown)
+
+    local pullModeDropdown = runner.AceGUI:Create("Dropdown")
+    pullModeDropdown:SetLabel("Pull Mode")
+    pullModeDropdown:SetWidth(200)
+    pullModeDropdown:AddItem("Facepull", "Facepull")
+    pullModeDropdown:AddItem("Active", "Active")
+    pullModeDropdown:SetValue(PM.profilePullMode)
+    pullModeDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+        PM.profilePullMode = value
+    end)
+    container:AddChild(pullModeDropdown)
+
+    local wanderRange = runner.AceGUI:Create("EditBox")
+    wanderRange:SetLabel("Wander Range")
+    wanderRange:SetWidth(200)
+    wanderRange:SetText(PM.profileWanderRange)
+    wanderRange:SetCallback("OnTextChanged", function(widget, event, value)
+        PM.profileWanderRange = value
+    end)
+    container:AddChild(wanderRange)
+
+    local descriptionEditBox = runner.AceGUI:Create("MultiLineEditBox")
+    descriptionEditBox:SetLabel("Description")
+    descriptionEditBox:SetFullWidth(true)
+    descriptionEditBox:SetText(PM.profileDescription or "")
+    descriptionEditBox:SetCallback("OnTextChanged", function(widget, event, value)
+        PM.profileDescription = value
+    end)
+    container:AddChild(descriptionEditBox)
 end
 
 function PM:RebuildMiniProfileMaker(type)

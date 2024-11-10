@@ -15,6 +15,7 @@ function BaseRotation:init()
     self.AoeEnemies = 0
     self.PullRange = 30
     self.combatRange = 30
+    self.CombatRange = 30
 end
 
 function BaseRotation:OutOfCombat()

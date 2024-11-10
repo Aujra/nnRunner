@@ -19,6 +19,12 @@ end
 function BaseRoutine:HideGUI()
 end
 
+function BaseRoutine:SetStatus(status)
+    if self.SettingsGUI then
+        self.SettingsGUI:SetStatusText(status)
+    end
+end
+
 registerRoutine(BaseRoutine)
 
 function tableCount(t)

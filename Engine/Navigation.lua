@@ -157,7 +157,7 @@ function Navigation:FlyToPoint(x,y,z)
     runner.Draw:Text("Distance left " .. self:Distance2D(runner.LocalPlayer.x, runner.LocalPlayer.y, x, y) , "GAMEFONTNORMAL", runner.LocalPlayer.x, runner.LocalPlayer.y, runner.LocalPlayer.z + 3)
 
     if self:Distance2D(runner.LocalPlayer.x, runner.LocalPlayer.y, x, y) > 20 then
-        if runner.LocalPlayer.z - groundZ < 30 then
+        if runner.LocalPlayer.z - groundZ < 90 then
             Unlock(CastSpellByName, "Skyward Ascent")
         end
 
@@ -171,10 +171,18 @@ function Navigation:FlyToPoint(x,y,z)
             lastSurge = GetTime()
         end
     else
+        print("We need to land")
         if runner.LocalPlayer.z - groundZ > 5 then
             SetCVar("cameraPitchMoveSpeed", 90)
             Unlock(PitchUpStop)
             Unlock(PitchDownStart)
+            if runner.LocalPlayer.z - groundZ < 10 then
+                Unlock(PitchDownStop)
+                Unlock(PitchUpStart)
+                C_Timer.After(1.5, function()
+                    Unlock(PitchUpStop)
+                end)
+            end
         end
     end
 end
@@ -184,6 +192,15 @@ function Navigation:Distance2D(x1, y1, x2, y2)
 end
 
 function Navigation:MoveToPoint(x, y, z)
+    if IsFlyableArea() then
+        local px, py, pz = ObjectPosition("player")
+        local distance = Navigation:Distance2D(px, py, pz, x, y, z)
+        if distance > 200 then
+            Navigation:FlyToPoint(x, y, z)
+            return
+        end
+    end
+
     local px, py, pz = ObjectPosition("player")
     local path = GeneratePath(px, py, pz, x, y, z)
     

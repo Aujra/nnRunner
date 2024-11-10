@@ -16,32 +16,32 @@ function AreaTrigger:Update()
     self.radius = runner.nn.ObjectField(self.pointer, 280*4, 4)
     self.creatorID = runner.nn.ObjectField(self.pointer,356*4, 5)
     self.creatorName = runner.nn.ObjectName(self.creatorID)
-    if self.CreatorID then
+    if self.creatorID then
         self.Reaction = Unlock(UnitReaction, self.creatorID, "player")
     else
         self.Reaction = 8
     end
-    self.z = runner.nn.ObjectField(self.pointer, 112*4, 4)
-    self.y = runner.nn.ObjectField(self.pointer, 504*4, 4)
-    self.x = runner.nn.ObjectField(self.pointer, 896*4, 4)
 
-    local q,w,e = ObjectPosition(self.pointer)
-
-    local x, y, z = ObjectPosition("player")
+    self.x, self.y, self.z = ObjectPosition(self.pointer)
+    self.sx, self.sy, self.sz = self.x, self.y, self.z
 
     self.Distance = self:DistanceFromPlayer()
+    self.PlayerInside = self.Distance < self.radius
 
-    for i=0, 2000, 4 do
-        local t = runner.nn.ObjectField(self.pointer, i*4, 4)
-        if t > 1500 and t < 3000 or i == 896 then
+    if self.x ~= 0 and self.y ~= 0 and self.z ~= 0 then
+        if self.Reaction < 4 then
+            runner.Draw:SetColor(255, 0, 0, 255)
+            runner.Draw:Circle(self.x, self.y, self.z, self.radius)
+            runner.Draw:Text("Distance " .. string.format("%.2f", self:DistanceFromPlayer()) .. "made by " .. self.creatorName, "GAMEFONTNORMAL", self.x, self.y, self.z)
         end
     end
 
-    if self.x ~= 0 and self.y ~= 0 and self.z ~= 0 then
-        --runner.Draw:SetColor(255,255,255,255)
-        --runner.Draw:Circle(self.x, self.y, self.z, self.radius)
-        --runner.Draw:Text("Distance " .. string.format("%.2f", self:DistanceFromPlayer()) .. "made by " .. self.creatorName, "GAMEFONTNORMAL", self.x, self.y, self.z)
-    end
+    --if self:AreWeIn() then
+    --    local qx, qy, qz = self:ScanForSafeSpot(self.sx, self.sy, self.sz)
+    --end
+    --
+    --runner.Draw:SetColor(0, 255, 0, 255)
+    --runner.Draw:Circle(self.sx, self.sy, self.sz, 2)
 
 end
 
@@ -53,3 +53,28 @@ function AreaTrigger:ToViewerRow()
         self.Creator
     }
 end
+--
+--function AreaTrigger:ScanForSafeSpot(x,y,z)
+--    print("We are in a trigger scanning for safe spot")
+--    self.sx = self.sx + runner.randomBetween(self,-self.radius, self.radius)
+--    self.sy = self.sy + runner.randomBetween(self,-self.radius, self.radius)
+--    for k,v in pairs(runner.Engine.ObjectManager.areatrigger) do
+--        if self:PointInTrigger(self.sx, self.sy, self.sz, v) then
+--            self.sy = self.sy + self.radius
+--            self.sx = self.x
+--            self:ScanForSafeSpot(self.sx, self.sy, self.sz)
+--        else
+--            print("Found a safe spot moving to it")
+--            return self.sx, self.sy, self.sz
+--        end
+--    end
+--end
+--
+--function AreaTrigger:PointInTrigger(x, y, z, trigger)
+--    local dx, dy, dz = x - trigger.x, y - trigger.y, z - trigger.z
+--    local distance = math.sqrt(dx*dx + dy*dy + dz*dz)
+--    if distance < trigger.radius then
+--        return true
+--    end
+--    return false
+--end

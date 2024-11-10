@@ -11,6 +11,12 @@ function OM:Update()
     local Units = nn.ObjectManager("Unit" or 5)
     local Players = nn.ObjectManager("Player" or 6)
     local AreaTriggers = nn.ObjectManager("AreaTrigger" or 11)
+    local DynamicObjects = nn.ObjectManager("DynamicObject" or 9)
+    local justOb = nn.ObjectManager("Object" or 0)
+
+    for k,v in pairs(justOb) do
+        print(k .. " " .. v)
+    end
 
     self.party = {}
 

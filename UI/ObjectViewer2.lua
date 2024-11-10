@@ -130,6 +130,15 @@ function OV:Update()
         })
     end
 
+    local fieldsData = {}
+    for i=0, 2000, 4 do
+        local t = runner.nn.ObjectField("player", i*4, 4)
+        table.insert(fieldsData, {
+            value = i,
+            text = i .. " with " .. t
+        })
+    end
+
     local target = UnitTarget("player") or "no"
 
     local treeData = {
@@ -161,6 +170,11 @@ function OV:Update()
             value = "AreaTriggers",
             text = "AreaTriggers",
             children = areaTriggerData
+        },
+        {
+            value="Fields",
+            text="Fields",
+            children = fieldsData
         }
     }
     tree:SetTree(treeData)
