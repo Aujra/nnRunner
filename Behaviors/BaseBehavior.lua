@@ -9,6 +9,7 @@ function BaseBehavior:init()
     self.IsComplete = false
     self.CurrentProfile = {}
     self.Index = 0
+    self.CurrentStep = false
 end
 
 function BaseBehavior:Run()

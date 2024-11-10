@@ -30,20 +30,25 @@ function DungeonRoutine2:Run()
 
     if not IsInInstance() then
         if self.CurrentProfile then
-            for k,v in pairs(self.CurrentProfile.Steps) do
-                v.step.IsComplete = false
+            if tableCount(self.CurrentProfile.Steps) > 0 then
+                for k,v in pairs(self.CurrentProfile.Steps) do
+                    v.step.IsComplete = false
+                end
+                self:MountAndRepair()
+                self:QueueAndEnterDungeon()
             end
         end
-        self:MountAndRepair()
-        self:QueueAndEnterDungeon()
     else
-        print("In Dungeon")
         if self.CurrentProfile then
             local current = nil
             for i = tableCount(self.CurrentProfile.Steps), 1, -1 do
                 v = self.CurrentProfile.Steps[i]
+                v.CurrentStep = false
                 if not v.step.IsComplete then
                     current = v
+                end
+                if current then
+                    current.CurrentStep = true
                 end
                 v.step:Debug()
             end
@@ -79,6 +84,7 @@ function DungeonRoutine2:Run()
                 if current.step.IsComplete then
                 end
             else
+                print("Dungeon complete")
                 C_PartyInfo.LeaveParty()
             end
         end
@@ -152,11 +158,12 @@ function DungeonRoutine2:AddProfileGUI()
 end
 
 function DungeonRoutine2:LoadProfileByName(name)
-    local json = runner.nn.ReadFile("/scripts/mainrunner/Profiles/DungeonsNew/"..name)
+    local json = runner.nn.ReadFile("/scripts/mainrunner/Profiles/Dungeons/"..name)
     local profile = runner.nn.Utils.JSON.decode(json)
     profileSteps = {}
     for k,v in pairs(profile.Steps) do
         local behavior = runner.behaviors[v.Name:lower()]()
+        print("Adding " .. v.Name)
         behavior:Load(v)
         table.insert(profileSteps, {index = #profileSteps, step = behavior})
     end
@@ -183,52 +190,19 @@ function DungeonRoutine2:BuildGUI()
 
     local loadProfileDropdown = runner.AceGUI:Create("Dropdown")
     loadProfileDropdown:SetLabel("Load Profile")
-    local path = "/scripts/mainrunner/Profiles/DungeonsNew/*.json"
+    local path = "/scripts/mainrunner/Profiles/Dungeons/*.json"
     local files = runner.nn.ListFiles(path)
-    for k,v in pairs(files) do
-        loadProfileDropdown:AddItem(
-                v,v
-        )
-    end
-
-    local addProfileButton = runner.AceGUI:Create("Button")
-    addProfileButton:SetText("Add Profile")
-    addProfileButton:SetWidth(100)
-    addProfileButton:SetCallback("OnClick", function(widget)
-        self:AddProfileGUI()
-    end)
-    self.SettingsGUI:AddChild(addProfileButton)
-
-    local dumpProfileButton = runner.AceGUI:Create("Button")
-    dumpProfileButton:SetText("Dump Profile")
-    dumpProfileButton:SetWidth(100)
-    dumpProfileButton:SetCallback("OnClick", function(widget)
-        for k,v in pairs(self.ProfileDropDowns) do
-            print("Profile " .. v.dropdown:GetValue() .. " To Level " .. v.tolevel:GetText())
+    if files then
+        for k,v in pairs(files) do
+            loadProfileDropdown:AddItem(
+                    v,v
+            )
         end
-    end)
-    self.SettingsGUI:AddChild(dumpProfileButton)
+    end
 
     loadProfileDropdown:SetWidth(400)
     loadProfileDropdown:SetCallback("OnValueChanged", function(widget, event, value)
-        local json = runner.nn.ReadFile("/scripts/mainrunner/Profiles/DungeonsNew/"..value)
-        local profile = runner.nn.Utils.JSON.decode(json)
-        profileSteps = {}
-        for k,v in pairs(profile.Steps) do
-            local behavior = runner.behaviors[v.Name:lower()]()
-            behavior.Name = v.Name
-            behavior.Type = v.Type
-            behavior.Step = v.Step
-            table.insert(profileSteps, {index = #profileSteps, step = behavior})
-        end
-        self.CurrentProfile.Name = profile.Name
-        self.CurrentProfile.Description = profile.Description
-        self.CurrentProfile.DungeonID = profile.DungeonID
-        self.CurrentProfile.LootMode = profile.LootMode
-        self.CurrentProfile.PullMode = profile.PullMode
-        self.CurrentProfile.WanderRange = profile.WanderRange
-
-        self.CurrentProfile.Steps = profileSteps
+        self:LoadProfileByName(value)
     end)
     self.SettingsGUI:AddChild(loadProfileDropdown)
 end

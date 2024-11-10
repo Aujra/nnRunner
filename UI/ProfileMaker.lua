@@ -35,8 +35,10 @@ function PM:GetProfiles()
     local path = "/scripts/mainrunner/Profiles/ProfileRunner/*.json"
     local files = runner.nn.ListFiles(path)
     local foundProfiles = {}
-    for k,v in pairs(files) do
-        table.insert(foundProfiles, v)
+    if files then
+        for k,v in pairs(files) do
+            table.insert(foundProfiles, v)
+        end
     end
     return foundProfiles
 end
@@ -63,29 +65,6 @@ end
 
 function PM:BuildTreeFromProfile()
     local tree = {}
-    --for k,v in pairs(PM.profile) do
-    --    if not v.CanHaveChildren then
-    --        local node = {
-    --            value = tableCount(tree)+1,
-    --            text = v.Name
-    --        }
-    --        table.insert(tree, node)
-    --    else
-    --        local node = {
-    --            value = tableCount(tree)+1,
-    --            text = v.Name,
-    --            children = {}
-    --        }
-    --        for k2,v2 in pairs(v.Step.children) do
-    --            local child = {
-    --                value = tableCount(node.children)+1,
-    --                text = v2.Name
-    --            }
-    --            table.insert(node.children, child)
-    --        end
-    --        table.insert(tree, node)
-    --    end
-    --end
     tree = PM:RecursiveProfileBuilder(PM.profile)
     PM.treeView:SetTree(
         {
@@ -115,7 +94,7 @@ if not PM.mainFrame then
     PM.mainFrame:SetWidth(800)
     PM.mainFrame:SetHeight(600)
     PM.mainFrame:EnableResize(true)
-    PM.mainFrame:SetCallback("OnClose", function(widget) PM:Hide() end)
+    PM.mainFrame:SetCallback("OnClose", function(widget) PM.mainFrame:Hide() end)
     PM.ProfileDrop = runner.AceGUI:Create("Dropdown")
     PM.ProfileDrop:SetLabel("Profile")
     PM.ProfileDrop:SetWidth(200)
@@ -135,10 +114,16 @@ if not PM.mainFrame then
             print("No Profile Selected")
             return
         end
-        print("Load Profile " .. PM.selectedProfile)
         local path = "/scripts/mainrunner/Profiles/ProfileRunner/" .. PM.selectedProfile
         local data = runner.nn.ReadFile(path)
-        print("Data " .. data)
+        local decoded = runner.nn.Utils.JSON.decode(data)
+        PM.profile = {}
+        for k,v in pairs(decoded.Steps) do
+            local behavior = runner.behaviors[v.Name:lower()]:new()
+            behavior:Load(v)
+            table.insert(PM.profile, behavior)
+        end
+        PM:BuildTreeFromProfile()
     end)
 
     PM.deleteFileButton = runner.AceGUI:Create("Button")
@@ -167,8 +152,13 @@ if not PM.mainFrame then
             return
         end
         print("Save Profile " .. PM.saveProfileName:GetText())
-        local path = "/scripts/mainrunner/Profiles/ProfileRunner/" .. PM.saveProfileName:GetText() .. ".json"
-        local data = "test saving data"
+        local path = "/scripts/mainrunner/Profiles/" .. PM.saveProfileName:GetText() .. ".json"
+        local data = {}
+        data.Steps = {}
+        for k,v in pairs(PM.profile) do
+            table.insert(data.Steps, v:Save())
+        end
+        data = runner.nn.Utils.JSON.encode(data)
         runner.nn.WriteFile(path, data)
     end)
 
@@ -268,6 +258,10 @@ function PM:GetBehaviorBySplit()
     return behavior
 end
 
+function PM:BuildRootNode()
+
+end
+
 function PM:RebuildMiniProfileMaker(type)
     PM:GetBehaviorBySplit()
     PM:BuildTreeFromProfile()
@@ -320,5 +314,23 @@ function PM:RebuildMiniProfileMaker(type)
             PM.mainFrame:Hide()
         end
     end)
+
+    PM.setDungeonButton = runner.AceGUI:Create("Button")
+    PM.setDungeonButton:SetText("Set Dungeon")
+    PM.setDungeonButton:SetWidth(150)
+    PM.setDungeonButton:SetCallback("OnClick", function(widget)
+        PM.profileType = "Dungeon"
+        PM:BuildRootNode()
+    end)
+
+    PM.BuilderFrame:AddChild(PM.setDungeonButton)
     PM.BuilderFrame:AddChild(PM.openProfileViewerButton)
+end
+
+function PM:Toggle()
+    if not PM.BuilderFrame:IsShown() then
+        PM.BuilderFrame:Show()
+    else
+        PM.BuilderFrame:Hide()
+    end
 end

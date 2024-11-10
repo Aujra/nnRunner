@@ -137,7 +137,7 @@ function menuFrame:UpdateMenu()
         ProfileMakerToggle:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 600, 0)
         ProfileMakerToggle:SetNormalTexture("Interface/ICONS/INV_Misc_Eye_02")
         ProfileMakerToggle:SetScript("OnClick", function()
-            runner.UI.DungeonProfileMaker:Toggle()
+            runner.UI.ProfileMaker:Toggle()
         end)
 
 

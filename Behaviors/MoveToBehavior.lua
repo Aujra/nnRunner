@@ -16,6 +16,7 @@ function MoveToBehavior:init()
         Radius = 0,
         DontFight = false
     }
+    self.Adjusted = false
 end
 
 function MoveToBehavior:Run()
@@ -26,7 +27,7 @@ function MoveToBehavior:Run()
     end
 
     local closestEnemy = runner.Engine.ObjectManager:GetClosestEnemy()
-    local inRangeOfWaypoint = true
+    local inRangeOfWaypoint = false
 
     if closestEnemy and inRangeOfWaypoint then
         if closestEnemy:DistanceFromPlayer() > runner.rotation.PullRange or not closestEnemy:LOS() then
@@ -47,8 +48,13 @@ function MoveToBehavior:Run()
         runner.routine:SetStatus("Moving to waypoint")
         local offsetX = runner.randomBetween(self, -3, 3)
         local offsetY = runner.randomBetween(self, -3, 3)
-        if runner.LocalPlayer:DistanceFromPoint(self.Step.X+offsetX, self.Step.Y+offsetY, self.Step.Z) > self.Step.Radius then
-        runner.Engine.Navigation:MoveToPoint(self.Step.X+offsetX, self.Step.Y+offsetY, self.Step.Z)
+        if not self.Adjusted then
+            self.Step.X = self.Step.X + offsetX
+            self.Step.Y = self.Step.Y + offsetY
+            self.Adjusted = true
+        end
+        if runner.LocalPlayer:DistanceFromPoint(self.Step.X, self.Step.Y, self.Step.Z) > self.Step.Radius then
+        runner.Engine.Navigation:MoveToPoint(self.Step.X, self.Step.Y, self.Step.Z)
         self.IsComplete = false
         else
         Unlock(MoveForwardStop)
@@ -90,8 +96,13 @@ function MoveToBehavior:Debug()
     if not self.IsComplete then
         runner.Draw:SetColor(0, 255, 0, 255)
         runner.Draw:Circle(self.Step.X, self.Step.Y, self.Step.Z, self.Step.Radius)
-    else
+    end
+    if self.IsComplete then
         runner.Draw:SetColor(255, 0, 0, 255)
+        runner.Draw:Circle(self.Step.X, self.Step.Y, self.Step.Z, self.Step.Radius)
+    end
+    if self.CurrentStep then
+        runner.Draw:SetColor(0, 0, 255, 255)
         runner.Draw:Circle(self.Step.X, self.Step.Y, self.Step.Z, self.Step.Radius)
     end
 end

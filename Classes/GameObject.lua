@@ -25,7 +25,7 @@ function GameObject:init(pointer)
     self.ObjectType = runner.nn.GameObjectType(self.pointer)
     self.CanGather = self.ObjectType == 50
     self.UpdateRate = 0
-    self.NextUpdate = 0
+    self.NextUpdate = GetTime() + runner:randomBetween(10, 100) / 100
 end
 
 function GameObject:Update()
@@ -50,15 +50,15 @@ function GameObject:GetUpdateRate()
         return .15
     end
     if self.Distance < 50 then
-        return .5
+        return .75
     end
     if self.Distance < 100 then
-        return 1
+        return 1.5
     end
     if self.Distance < 200 then
-        return 2
+        return 3
     end
-    return 2
+    return 3
 end
 
 function GameObject:Debug()

@@ -109,8 +109,10 @@ nn:Require('/scripts/mainrunner/Routine/ProfileRoutine.lua', runner)
 --Profiles
 local path = "/scripts/mainrunner/Profiles/Dungeons/*.lua"
 local files = nn.ListFiles(path)
-for k,v in pairs(files) do
-    nn:Require("/scripts/mainrunner/Profiles/Dungeons/" .. v, runner)
+if files then
+    for k,v in pairs(files) do
+        nn:Require("/scripts/mainrunner/Profiles/Dungeons/" .. v, runner)
+    end
 end
 --Behaviors
 local path = "/scripts/mainrunner/Behaviors/*.lua"
@@ -184,7 +186,7 @@ runner.frame:SetScript("OnKeyDown", function(self, key)
         print("Hotkey toggling bot " .. (runner.running and "off" or "on"))
         runner.running = not runner.running
     end
-    runner.frame:SetPropagateKeyboardInput(true)
+    Unlock(runner.frame.SetPropagateKeyboardInput, runner.frame, true)
 end)
 
 function runner:DrawNearestDisturbedEarth()

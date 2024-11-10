@@ -39,10 +39,12 @@ function ProfileRoutine:BuildGUI()
     loadProfileDropdown:SetWidth(200)
     local path = "/scripts/mainrunner/Profiles/ProfileRunner/*.json"
     local files = runner.nn.ListFiles(path)
-    for k,v in pairs(files) do
-        loadProfileDropdown:AddItem(
-                v,v
-        )
+    if files then
+        for k,v in pairs(files) do
+            loadProfileDropdown:AddItem(
+                    v,v
+            )
+        end
     end
     loadProfileDropdown:SetCallback("OnValueChanged", function(widget, event, value)
         self:LoadProfileByName(value)
