@@ -2,6 +2,8 @@ local nn = ...
 _G.NnEnv = getfenv(1) or nn
 
 nn:Require('/scripts/mainrunner/Libs/class.lua', runner)
+nn:Require('/scripts/mainrunner/Libs/LibStub.lua', runner)
+nn:Require('/scripts/mainrunner/Libs/ScrollingTable.lua', runner)
 
 --Main tables
 runner = {}
@@ -12,6 +14,7 @@ runner.Classes = {}
 runner.Routines = {}
 runner.Behaviors = {}
 runner.UI = {}
+runner.Mechanics = {}
 runner.UI.menuFrame = {}
 runner.LocalPlayer = nil
 runner.rotations = {}
@@ -21,6 +24,7 @@ runner.routine = nil
 runner.behaviors = {}
 
 runner.AceGUI = LibStub("AceGUI-3.0")
+runner.ScrollingTable = LibStub("ScrollingTable")
 
 --Main Variables
 runner.localPlayer = nil
@@ -33,10 +37,17 @@ runner.lastAFK = 0
 runner.lastEnter = 0
 
 runner.profiles = {}
+runner.mechanics = {}
 
 runner.waypoints = {}
+runner.frame = CreateFrame("Frame")
 
 _G.runner = runner
+
+function registerMechanic(name, mechanic)
+    local mech = mechanic()
+    runner.mechanics[name:lower()] = mech
+end
 
 function registerRotation(rotation)
     local rot = rotation()
@@ -91,6 +102,7 @@ nn:Require('/scripts/mainrunner/Classes/LocalPlayer.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/MultiboxPlayer.lua', runner)
 --UI
 nn:Require('/scripts/mainrunner/UI/ObjectViewer2.lua', runner)
+nn:Require('/scripts/mainrunner/UI/ObjectViewer.lua', runner)
 nn:Require('/scripts/mainrunner/UI/Menu.lua', runner)
 --Rotations
 local path = "/scripts/mainrunner/Rotations/*.lua"
@@ -120,12 +132,18 @@ local files = nn.ListFiles(path)
 for k,v in pairs(files) do
     nn:Require("/scripts/mainrunner/Behaviors/" .. v, runner)
 end
+--Mechanics
+local path = "/scripts/mainrunner/Mechanics/*.lua"
+local files = nn.ListFiles(path)
+for k,v in pairs(files) do
+    nn:Require("/scripts/mainrunner/Mechanics/" .. v, runner)
+end
 
 nn:Require('/scripts/mainrunner/UI/ProfileMaker.lua', runner)
 --nn:Require('/scripts/mainrunner/UI/DungeonProfileMaker.lua', runner)
 
 --Main Loop
-runner.frame = CreateFrame("Frame")
+runner.frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 runner.frame:SetScript("OnUpdate", function(self, elapsed)
     if GetTime() - runner.lastTick > .25 then
         if GetTime() - runner.lastAFK > 60 then
@@ -171,6 +189,9 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
         runner.Engine.ObjectManager:Update()
         if runner.UI.ObjectViewer2 then
             runner.UI.ObjectViewer2:Update()
+        end
+        if runner.UI.ObjectViewer then
+            runner.UI.ObjectViewer:Update()
         end
 
         runner:DrawNearestDisturbedEarth()

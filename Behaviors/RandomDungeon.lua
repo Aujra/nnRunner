@@ -5,6 +5,8 @@ runner.Behaviors.DungeonRunner = DungeonRunner
 function DungeonRunner:init()
     self.Name = "DungeonRunner"
     self.Type = "DungeonRunner"
+    self.Title = "Dungeon Runner"
+    self.Description = "Run a set of dungeons"
     self.CanHaveChildren = false
     self.Step = {
         DungeonList = {},
@@ -65,7 +67,7 @@ function DungeonRunner:Debug()
 end
 
 function DungeonRunner:BuildStepGUI(container)
-    container:ReleaseChildren()
+    runner.Behaviors.BaseBehavior.BuildStepGUI(self, container)
 
     local runStyleDropdown = runner.AceGUI:Create("Dropdown")
     runStyleDropdown:SetLabel("Run Style")

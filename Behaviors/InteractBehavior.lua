@@ -5,6 +5,8 @@ runner.Behaviors.InteractBehavior = InteractBehavior
 function InteractBehavior:init()
     self.Name = "InteractBehavior"
     self.Type = "Interact"
+    self.Title = "Interact"
+    self.Description = "Interact with a specific object or NPC"
     self.MiniTypes = {
         "Dungeon",
     }
@@ -80,7 +82,7 @@ function InteractBehavior:Setup()
 end
 
 function InteractBehavior:BuildStepGUI(container)
-    container:ReleaseChildren()
+    runner.Behaviors.BaseBehavior.BuildStepGUI(self, container)
     local mobNameEditBox = runner.AceGUI:Create("EditBox")
     mobNameEditBox:SetLabel("Mob Name")
     mobNameEditBox:SetWidth(200)

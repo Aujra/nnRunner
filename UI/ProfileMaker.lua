@@ -133,7 +133,7 @@ if not PM.mainFrame then
         PM.profile = {}
         PM.profileName = decoded.Name
         PM.profileDescription = decoded.Description
-        PM.profileID = decoded.ID
+        PM.profileID = decoded.DungeonID
         PM.profileLootMode = decoded.LootMode
         PM.profilePullMode = decoded.PullMode
         PM.profileWanderRange = decoded.WanderRange
@@ -176,7 +176,7 @@ if not PM.mainFrame then
         local data = {}
         data.Name = PM.profileName
         data.Description = PM.profileDescription
-        data.ID = PM.profileID
+        data.DungeonID = PM.profileID
         data.LootMode = PM.profileLootMode
         data.PullMode = PM.profilePullMode
         data.WanderRange = PM.profileWanderRange

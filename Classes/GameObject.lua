@@ -24,6 +24,7 @@ function GameObject:init(pointer)
     self.Lootable = false
     self.ObjectType = runner.nn.GameObjectType(self.pointer)
     self.CanGather = self.ObjectType == 50
+    self.CanAttack = false
     self.UpdateRate = 0
     self.objectCount = tableCount(runner.Engine.ObjectManager.gameobjects) + tableCount(runner.Engine.ObjectManager.units) + tableCount(runner.Engine.ObjectManager.players)
     self.NextUpdate = GetTime() + runner:randomBetween(self.objectCount, (self.objectCount*3.5)) / 1000
@@ -42,6 +43,7 @@ function GameObject:Update()
     self.CanLoot = runner.nn.ObjectLootable(self.pointer)
     self.ObjectType = runner.nn.GameObjectType(self.pointer)
     self.CanGather = self.ObjectType == 50
+    self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.objectCount = tableCount(runner.Engine.ObjectManager.gameobjects) + tableCount(runner.Engine.ObjectManager.units) + tableCount(runner.Engine.ObjectManager.players)
     self.UpdateRate = self:GetUpdateRate()
     self.NextUpdate = GetTime() + self.UpdateRate
@@ -145,7 +147,7 @@ end
 function GameObject:EnemiesInRange(range)
     local units = 0
     for k,v in pairs(runner.Engine.ObjectManager.units) do
-        if self:DistanceFrom(v) <= range and v.Reaction and v.Reaction <= 4 and not v.isDead then
+        if self:DistanceFrom(v) <= range and v.Reaction and v.Reaction <= 4 and not v.isDead and v.CanAttack then
             units = units + 1
         end
     end

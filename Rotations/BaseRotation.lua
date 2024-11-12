@@ -55,6 +55,11 @@ function BaseRotation:Pulse(target)
     if not target then
         return
     end
+
+    if not C_Spell.IsCurrentSpell(6603) then
+        self:Cast("Auto Attack")
+    end
+
     self.Target = target
     self.ClosestCaster = self:GetClosestCastingEnemy()
     self.Tank = self:GetTank()
@@ -239,12 +244,16 @@ function BaseRotation:CanCast(spell, target, forceMelee, debug)
 
     local spellInfo = C_Spell.GetSpellInfo(spell)
     if not spellInfo then
-        print("Spell not found: " .. spell)
+        if debug then
+            print("Spell not found: " .. spell)
+        end
         return false
     end
     local isKnown = IsPlayerSpell(spellInfo.spellID)
     if not isKnown then
-        print("Spell not known: " .. spell)
+        if debug then
+            print("Spell not known: " .. spell)
+        end
         return false
     end
 

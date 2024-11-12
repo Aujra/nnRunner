@@ -5,6 +5,8 @@ runner.Behaviors.IfBehavior = IfBehavior
 function IfBehavior:init()
     self.Name = "IfBehavior"
     self.Type = "If"
+    self.Title = "If"
+    self.Description = "Create a conditional statement"
     self.MiniTypes = {
         "Control",
     }
@@ -94,7 +96,7 @@ function IfBehavior:BuildMiniUI(profile)
 end
 
 function IfBehavior:BuildStepGUI(container)
-    container:ReleaseChildren()
+    runner.Behaviors.BaseBehavior.BuildStepGUI(self, container)
 
     local conditionEditBox = runner.AceGUI:Create("EditBox")
     conditionEditBox:SetLabel("Condition")

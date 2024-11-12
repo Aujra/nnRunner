@@ -5,35 +5,55 @@ runner.Behaviors.KillBehavior = KillBehavior
 function KillBehavior:init()
     self.Name = "KillBehavior"
     self.Type = "Kill"
+    self.Title = "Kill"
+    self.Description = "Kill a specific mob"
     self.MiniTypes = {
         "Dungeon",
         "Quest"
     }
     self.Step = {
-        MobName = ""
+        MobName = "",
+        children = {}
     }
+    self.CanHaveChildren = true
 end
 
 function KillBehavior:Run()
-    runner.behaviors["BaseBehavior"]:SelfDefense()
     if self.Step.MobName and self.Step.MobName == "" then
         self.IsComplete = true
         return
     else
         local target = runner.Engine.ObjectManager:GetClosestByName(self.Step.MobName)
         if target then
+            local mechanic = runner.mechanics[self.Step.MobName:lower()]
+            print("Mechanic: " .. tostring(mechanic))
+            if mechanic then
+                if mechanic:NeedsMechanic() then
+                    print("Performing mechanic: " .. self.Step.MobName)
+                    mechanic:DoMechanic()
+                    self.IsComplete = false
+                    return
+                end
+            end
+
+            runner.Behaviors.BaseBehavior:SelfDefense(target)
             if not target.isDead then
-                if target:DistanceFromPlayer() > runner.rotation.CombatRange then
+                if target:DistanceFromPlayer() > runner.rotation.CombatRange or not target:LOS() then
                     runner.Engine.Navigation:MoveTo(target.pointer)
                 else
                     Unlock(TargetUnit, target.pointer)
                     runner.Engine.Navigation:FaceUnit(target.pointer)
                     Unlock(MoveForwardStop)
-                    runner.rotation:Pulse(target)
+                    if not target.InCombat then
+                        runner.rotation:Pull(target)
+                    else
+                        runner.rotation:Pulse(target)
+                    end
                 end
                 self.IsComplete = false
                 return
             else
+                print("Killed " .. self.Step.MobName)
                 self.IsComplete = true
                 return
             end
@@ -58,6 +78,7 @@ function KillBehavior:Debug()
 end
 
 function KillBehavior:BuildStepGUI(container)
+    runner.Behaviors.BaseBehavior.BuildStepGUI(self, container)
     local mobNameEditBox = runner.AceGUI:Create("EditBox")
     mobNameEditBox:SetLabel("Mob Name")
     mobNameEditBox:SetWidth(200)

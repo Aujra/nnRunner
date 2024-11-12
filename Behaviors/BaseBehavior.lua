@@ -5,6 +5,8 @@ runner.Behaviors.BaseBehavior = BaseBehavior
 function BaseBehavior:init()
     self.Name = "BaseBehavior"
     self.Type = "Base"
+    self.Title = "Base Behavior"
+    self.Description = "Base Behavior"
     self.CanHaveChildren = false
     self.IsComplete = false
     self.CurrentProfile = {}
@@ -16,7 +18,7 @@ function BaseBehavior:init()
     self.FoundSafeSpot = false
 end
 
-function BaseBehavior:Run()
+function BaseBehavior:Run(target)
     if runner.LocalPlayer.isDead then
         RepopMe()
         if self.CurrentProfile then
@@ -28,7 +30,8 @@ function BaseBehavior:Run()
     end
 end
 
-function BaseBehavior:SelfDefense()
+function BaseBehavior:SelfDefense(preftarget)
+    preftarget = preftarget or nil
     if UnitAffectingCombat("player") then
         local target = self:GetBestTarget()
         if target then
@@ -43,13 +46,10 @@ function BaseBehavior:SelfDefense()
         end
 
         for k,v in pairs(runner.Engine.ObjectManager.areatrigger) do
-            print("Checking trigger " .. tostring(v.Reaction) .. " " .. tostring(v.PlayerInside))
             if v.Reaction and v.Reaction < 4 and v.PlayerInside then
-                print("We are in a trigger scanning for safe spot")
-                local x, y, z = self:FindSafeSpot(v)
+                local x, y, z = self:FindSafeSpot(v, preftarget)
                 if x and y and z then
                     self.FoundSafeSpot = true
-                    print("Found a safe spot moving to it")
                     if runner.LocalPlayer:DistanceFromPoint(x, y, z) > 3 then
                         runner.Engine.Navigation:MoveTo(x, y, z)
                     else
@@ -65,7 +65,7 @@ function BaseBehavior:SelfDefense()
     return false
 end
 
-function BaseBehavior:FindSafeSpot(trigger)
+function BaseBehavior:FindSafeSpot(trigger, preftarget)
     if not self.sx then
         self.sx, self.sy, self.sz = trigger.x, trigger.y, trigger.z
     end
@@ -77,6 +77,10 @@ function BaseBehavior:FindSafeSpot(trigger)
         if v.Reaction and v.Reaction < 4 and self:PointInTrigger(self.sx, self.sy, self.sz, v) then
             return self:FindSafeSpot(trigger)
         end
+    end
+    if preftarget and preftarget:DistanceFromPoint(self.sx, self.sy, self.sz) > 30 then
+        print("Found a spot but not close enough to target")
+        return self:FindSafeSpot(trigger)
     end
     return self.sx, self.sy, self.sz
 end
@@ -111,6 +115,15 @@ function BaseBehavior:GetBestTarget()
 end
 
 function BaseBehavior:BuildStepGUI(container)
+    container:ReleaseChildren()
+    local header = runner.AceGUI:Create("Heading")
+    header:SetText(self.Title)
+    header:SetFullWidth(true)
+    container:AddChild(header)
+    local description = runner.AceGUI:Create("Label")
+    description:SetText(self.Description)
+    description:SetFullWidth(true)
+    container:AddChild(description)
 end
 function BaseBehavior:BuildMiniUI(container)
 end

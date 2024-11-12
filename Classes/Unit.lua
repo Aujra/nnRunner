@@ -30,7 +30,10 @@ function Unit:init(pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = 0
     self.Threat = 0
+    self.ThreatPercent = 0
+    self.IsPlayer = false
     self.Role = UnitGroupRolesAssigned(self.pointer)
+    self.Target = nil
 end
 
 function Unit:Update()
@@ -44,10 +47,29 @@ function Unit:Update()
     self.Dispellable = self:ShouldDispell()
     self.DeEnrage = self:ShouldDeEnrage()
     self.isDead = Unlock(UnitIsDeadOrGhost, self.pointer)
+    self.IsPlayer = Unlock(UnitIsPlayer, self.pointer)
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
     self.SoulFragments = self:GetAuraCount("Soul Fragments", "HELPFUL")
-    self.Threat = Unlock(UnitThreatSituation, "player", self.pointer)
+    self.Threat = select(5, Unlock(UnitDetailedThreatSituation, "player", self.pointer))
+    self.ThreatPercent = select(3, Unlock(UnitDetailedThreatSituation, "player", self.pointer))
     self.Role = UnitGroupRolesAssigned(self.pointer)
+    self.Target = Unlock(UnitTarget, self.pointer)
+    --self:ScanAuras()
+end
+
+function Unit:ScanAuras()
+    for i = 1, 40 do
+        local buffInfo = Unlock(C_UnitAuras.GetAuraDataByIndex, self.pointer, i, "HELPFUL")
+        if buffInfo then
+            runner.UI.ObjectViewer:AddAura(buffInfo, self.Name)
+        end
+    end
+    for i = 1, 40 do
+        local buffInfo = Unlock(C_UnitAuras.GetAuraDataByIndex, self.pointer, i, "HARMFUL")
+        if buffInfo then
+            runner.UI.ObjectViewer:AddAura(buffInfo, self.Name)
+        end
+    end
 end
 
 function Unit:GetScore()

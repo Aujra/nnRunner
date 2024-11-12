@@ -159,6 +159,24 @@ function Navigation:FlyToPoint(x,y,z)
     if self:Distance2D(runner.LocalPlayer.x, runner.LocalPlayer.y, x, y) > 20 then
         if runner.LocalPlayer.z - groundZ < 90 then
             Unlock(CastSpellByName, "Skyward Ascent")
+            return
+        end
+
+        if runner.LocalPlayer.Pitch <= .1 then
+            if not IsMouselooking() then
+                Unlock(MouselookStart)
+                Unlock(MoveViewDownStart, 2)
+                Unlock(MouselookStop)
+            end
+            print("Moving pitch down "  .. tostring(IsMouselooking()))
+
+            return
+        end
+        if runner.LocalPlayer.Pitch > .1 and runner.LocalPlayer.Pitch < .3 then
+            print("Pitch is good")
+            Unlock(MoveViewDownStop)
+            Unlock(MouselookStop)
+            return
         end
 
         if runner.LocalPlayer.Vigor < 4 then
@@ -173,16 +191,9 @@ function Navigation:FlyToPoint(x,y,z)
     else
         print("We need to land")
         if runner.LocalPlayer.z - groundZ > 5 then
-            SetCVar("cameraPitchMoveSpeed", 90)
-            Unlock(PitchUpStop)
             Unlock(PitchDownStart)
-            if runner.LocalPlayer.z - groundZ < 10 then
-                Unlock(PitchDownStop)
-                Unlock(PitchUpStart)
-                C_Timer.After(1.5, function()
-                    Unlock(PitchUpStop)
-                end)
-            end
+        else
+            Unlock(PitchDownStop)
         end
     end
 end

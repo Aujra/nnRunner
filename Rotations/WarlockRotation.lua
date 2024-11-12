@@ -86,6 +86,10 @@ function WarlockRotation:Pulse(target)
                 self:Cast("Unstable Affliction", self.Target)
                 return
             end
+            if self:CanCast("Malevolence", self.Target) then
+                self:Cast("Malevolence", self.Target.pointer)
+                return
+            end
             if self:CanCast("Agony", noAgony) then
                 self:Cast("Agony", noAgony.pointer)
                 return
@@ -96,6 +100,10 @@ function WarlockRotation:Pulse(target)
             end
             if self:CanCast("Summon Darkglare", self.Target) then
                 self:Cast("Summon Darkglare")
+                return
+            end
+            if self:CanCast("Oblivion", self.Target) then
+                self:Cast("Oblivion", self.Target.pointer)
                 return
             end
             if self:CanCast("Malefic Rapture", self.Target) and runner.LocalPlayer.SoulShards >= 3 then

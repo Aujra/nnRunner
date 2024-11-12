@@ -115,6 +115,7 @@ function DungeonRoutine2:QueueAndEnterDungeon()
     if (select(1,GetLFGQueueStats(LE_LFG_CATEGORY_LFD))) == nil then
         print("Queueing for LFD")
         ClearAllLFGDungeons(1)
+        print("DunID " .. tostring(self.CurrentProfile.DungeonID))
         SetLFGDungeon(1, tonumber(self.CurrentProfile.DungeonID))
         Unlock(JoinLFG, 1)
     end
@@ -163,7 +164,6 @@ function DungeonRoutine2:LoadProfileByName(name)
     profileSteps = {}
     for k,v in pairs(profile.Steps) do
         local behavior = runner.behaviors[v.Name:lower()]()
-        print("Adding " .. v.Name)
         behavior:Load(v)
         table.insert(profileSteps, {index = #profileSteps, step = behavior})
     end

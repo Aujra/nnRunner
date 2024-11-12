@@ -5,6 +5,8 @@ runner.Behaviors.MoveToBehavior = MoveToBehavior
 function MoveToBehavior:init()
     self.Name = "MoveToBehavior"
     self.Type = "MoveTo"
+    self.Title = "Move To"
+    self.Description = "Move to a specific location in the world"
     self.MiniTypes = {
         "Dungeon",
         "Grind"
@@ -27,7 +29,7 @@ function MoveToBehavior:Run()
     end
 
     local closestEnemy = runner.Engine.ObjectManager:GetClosestEnemy()
-    local inRangeOfWaypoint = false
+    local inRangeOfWaypoint = self:InRange(closestEnemy)
 
     if closestEnemy and inRangeOfWaypoint then
         if closestEnemy:DistanceFromPlayer() > runner.rotation.PullRange or not closestEnemy:LOS() then
@@ -63,14 +65,14 @@ function MoveToBehavior:Run()
     end
 end
 
---function MoveToBehavior:InRange(unit)
---    if self.Step.X ~= 0 and self.Step.Y ~= 0 and self.Step.Z ~= 0 then
---        if unit then
---            return unit:DistanceFromPoint(self.Step.X, self.Step.Y, self.Step.Z) < tonumber(runner.routine.CurrentProfile.WanderRange)
---        end
---    end
---    return false
---end
+function MoveToBehavior:InRange(unit)
+    if self.Step.X ~= 0 and self.Step.Y ~= 0 and self.Step.Z ~= 0 then
+        if unit then
+            return unit:DistanceFromPoint(self.Step.X, self.Step.Y, self.Step.Z) < tonumber(runner.routine.CurrentProfile.WanderRange)
+        end
+    end
+    return false
+end
 
 function MoveToBehavior:Save()
     return {
@@ -93,21 +95,26 @@ function MoveToBehavior:Load(data)
 end
 
 function MoveToBehavior:Debug()
+    if self.CurrentStep then
+        runner.Draw:SetColor(0, 0, 255, 255)
+        runner.Draw:Circle(self.Step.X, self.Step.Y, self.Step.Z, self.Step.Radius)
+        return
+    end
     if not self.IsComplete then
         runner.Draw:SetColor(0, 255, 0, 255)
         runner.Draw:Circle(self.Step.X, self.Step.Y, self.Step.Z, self.Step.Radius)
+        return
     end
     if self.IsComplete then
         runner.Draw:SetColor(255, 0, 0, 255)
         runner.Draw:Circle(self.Step.X, self.Step.Y, self.Step.Z, self.Step.Radius)
-    end
-    if self.CurrentStep then
-        runner.Draw:SetColor(0, 0, 255, 255)
-        runner.Draw:Circle(self.Step.X, self.Step.Y, self.Step.Z, self.Step.Radius)
+        return
     end
 end
 
 function MoveToBehavior:BuildStepGUI(container)
+    runner.Behaviors.BaseBehavior.BuildStepGUI(self, container)
+
     local xEditBox = runner.AceGUI:Create("EditBox")
     xEditBox:SetLabel("X")
     xEditBox:SetWidth(200)

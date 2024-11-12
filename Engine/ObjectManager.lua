@@ -14,10 +14,6 @@ function OM:Update()
     local DynamicObjects = nn.ObjectManager("DynamicObject" or 9)
     local justOb = nn.ObjectManager("Object" or 0)
 
-    for k,v in pairs(justOb) do
-        print(k .. " " .. v)
-    end
-
     self.party = {}
 
     for k,v in pairs(self.gameobjects) do

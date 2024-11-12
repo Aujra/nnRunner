@@ -1,4 +1,4 @@
-local ScrollingTable = runner.nn.Utils.LibStub("ScrollingTable");
+local ScrollingTable = LibStub("ScrollingTable");
 
 runner.UI.ObjectViewer = {}
 local OV = runner.UI.ObjectViewer
@@ -12,6 +12,25 @@ local data = {}
 local searchStr = ""
 local mode = "objects"
 local rebuild = false
+local auras = {}
+
+runner.frame:SetScript("OnEvent", function(self, event, ...)
+    if event == "PLAYER_ENTERING_WORLD" then
+        auras = {}
+    end
+end)
+
+function OV:AddAura(aura, unitName)
+    auras[aura.name] = {
+        name = aura.name,
+        appliedTo = unitName,
+        source = aura.sourceUnit,
+        spellId = aura.spellId,
+        isHarmful = aura.isHarmful,
+        isHelpful = aura.isHelpful,
+        isBoss = aura.isBossAura,
+    }
+end
 
 function OV:AddColumn(name)
     local column = {
@@ -45,6 +64,7 @@ end
 
 function OV:SelectGroup(group)
     cols = {}
+    ScrollTable:SetDisplayCols({})
     if group == "objects" then
         OV.mode = "objects"
         for k,v in pairs(runner.GameObjectViewColumns) do
@@ -73,6 +93,18 @@ function OV:SelectGroup(group)
             print("Adding column: " .. v)
         end
     end
+    if group == "auras" then
+        OV.mode = "auras"
+        self:AddColumn("Name")
+        self:AddColumn("Applied To")
+        self:AddColumn("Source")
+        self:AddColumn("SpellId")
+        self:AddColumn("Harmful")
+        self:AddColumn("Helpful")
+        self:AddColumn("Boss")
+        ScrollTable:SetDisplayCols(cols)
+    end
+    ScrollTable:SetData({}, true)
     local str = string.gsub(" "..OV.mode, "%W%l", string.upper):sub(2)
     viewerFrame:SetTitle("Object Manager - " .. str)
 end
@@ -121,6 +153,12 @@ function OV:Update()
         triggers:SetWidth(100)
         triggers:SetCallback("OnClick", function() self:SelectGroup("areatriggers") end)
         viewerFrame:AddChild(triggers)
+
+        local auras = runner.nn.Utils.AceGUI:Create("Button")
+        auras:SetText("Auras")
+        auras:SetWidth(100)
+        auras:SetCallback("OnClick", function() self:SelectGroup("auras") end)
+        viewerFrame:AddChild(auras)
     end
 
     data = {}
@@ -145,12 +183,32 @@ function OV:Update()
             table.insert(data, v:ToViewerRow())
         end
     end
+    if OV.mode == "auras" then
+        for k,v in pairs (auras) do
+            local color = "FF0000"
+            if v.isHarmful then
+                color = "|cffff0000"
+            else
+                color = "|cff00ff00"
+            end
+            table.insert(data, {
+                color..v.name,
+                v.appliedTo,
+                v.source,
+                v.spellId,
+                tostring(v.isHarmful),
+                tostring(v.isHelpful),
+                tostring(v.isBoss)
+            })
+        end
+    end
 
     if not ScrollTable then
         ScrollTable = ScrollingTable:CreateST(cols, nil, nil, nil, viewerFrame.frame);
         ScrollTable.frame:SetPoint("LEFT", viewerFrame.frame, "LEFT", 50, 100)
         ScrollTable:SetHeight(700)
         ScrollTable:SetWidth(900)
+        ScrollTable:EnableSelection(true)
         ScrollTable:SetFilter(function(self, row)
             if searchStr == "" then
                 return true
@@ -165,6 +223,15 @@ function OV:Update()
         end)
     end
     ScrollTable:SetData(data, true)
+
+    local selected = ScrollTable:GetSelection()
+    if selected then
+        local row = ScrollTable:GetRow(selected)
+        for k,v in pairs(row) do
+            print(k,v)
+        end
+    end
+
 end
 
 function OV:Toggle()
