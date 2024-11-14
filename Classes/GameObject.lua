@@ -12,9 +12,11 @@ runner.GameObjectViewColumns = {
 
 function GameObject:init(pointer)
     self.pointer = pointer
+    self.Pointer = pointer
     self.Name = ObjectName(self.pointer)
     self.Type = runner.nn.GameObjectType(self.pointer)
     self.x, self.y, self.z = ObjectPosition(self.pointer)
+    self.X, self.Y, self.Z = self.x, self.y, self.z
     self.Facing = ObjectFacing(self.pointer)
     self.BoundingRadius = ObjectBoundingRadius(self.pointer)
     self.Height = ObjectHeight(self.pointer)

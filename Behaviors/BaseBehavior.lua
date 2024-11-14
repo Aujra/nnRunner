@@ -33,6 +33,17 @@ end
 function BaseBehavior:SelfDefense(preftarget)
     preftarget = preftarget or nil
     if UnitAffectingCombat("player") then
+
+        local mechanic = runner.mechanics["stonevault"]
+        if mechanic then
+            if mechanic:NeedsMechanic() then
+                mechanic:DoMechanic()
+                self.IsComplete = false
+                return
+            end
+        end
+
+        self:CheckAreaTriggers(preftarget)
         local target = self:GetBestTarget()
         if target then
             if target:DistanceFromPlayer() > runner.rotation.CombatRange then
@@ -44,23 +55,26 @@ function BaseBehavior:SelfDefense(preftarget)
                 runner.rotation:Pulse(target)
             end
         end
+        return true
+    end
+    return false
+end
 
-        for k,v in pairs(runner.Engine.ObjectManager.areatrigger) do
-            if v.Reaction and v.Reaction < 4 and v.PlayerInside then
-                local x, y, z = self:FindSafeSpot(v, preftarget)
-                if x and y and z then
-                    self.FoundSafeSpot = true
-                    if runner.LocalPlayer:DistanceFromPoint(x, y, z) > 3 then
-                        runner.Engine.Navigation:MoveTo(x, y, z)
-                    else
-                        self.FoundSafeSpot = false
-                        self.safeTries = 0
-                        Unlock(MoveForwardStop)
-                    end
+function BaseBehavior:CheckAreaTriggers(preftarget)
+    for k,v in pairs(runner.Engine.ObjectManager.areatrigger) do
+        if v.Reaction and v.Reaction < 4 and v.PlayerInside then
+            local x, y, z = self:FindSafeSpot(v, preftarget)
+            if x and y and z then
+                self.FoundSafeSpot = true
+                if runner.LocalPlayer:DistanceFromPoint(x, y, z) > 3 then
+                    runner.Engine.Navigation:MoveTo(x, y, z)
+                else
+                    self.FoundSafeSpot = false
+                    self.safeTries = 0
+                    Unlock(MoveForwardStop)
                 end
             end
         end
-        return true
     end
     return false
 end

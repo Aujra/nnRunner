@@ -50,7 +50,7 @@ function DungeonRoutine2:Run()
                 if current then
                     current.CurrentStep = true
                 end
-                v.step:Debug()
+                --v.step:Debug()
             end
             local lootable = runner.Engine.ObjectManager:GetClosestLootable()
             if self.CurrentProfile.LootMode ~= "None" and lootable and not UnitAffectingCombat("player") then
@@ -59,7 +59,7 @@ function DungeonRoutine2:Run()
                         self:SetStatus("Looting " .. lootable.Name)
                         runner.Engine.Navigation:FaceUnit(lootable.pointer)
                         Unlock(MoveForwardStop)
-                        Unlock(RunBinding, "INTERACTTARGET")
+                        runner.nn.ObjectInteract(lootable.pointer)
                     else
                         self:SetStatus("Moving to loot " .. lootable.Name)
                         runner.Engine.Navigation:MoveTo(lootable.pointer)
@@ -71,7 +71,7 @@ function DungeonRoutine2:Run()
                         self:SetStatus("Looting " .. lootable.Name)
                         runner.Engine.Navigation:FaceUnit(lootable.pointer)
                         Unlock(MoveForwardStop)
-                        Unlock(RunBinding, "INTERACTTARGET")
+                        runner.nn.ObjectInteract(lootable.pointer)
                     else
                         self:SetStatus("Moving to loot " .. lootable.Name)
                         runner.Engine.Navigation:MoveTo(lootable.pointer)

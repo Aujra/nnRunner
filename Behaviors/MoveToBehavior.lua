@@ -31,18 +31,22 @@ function MoveToBehavior:Run()
     local closestEnemy = runner.Engine.ObjectManager:GetClosestEnemy()
     local inRangeOfWaypoint = self:InRange(closestEnemy)
 
-    if closestEnemy and inRangeOfWaypoint then
-        if closestEnemy:DistanceFromPlayer() > runner.rotation.PullRange or not closestEnemy:LOS() then
-            runner.routine:SetStatus("Moving to kill " .. closestEnemy.Name)
-            runner.Engine.Navigation:MoveTo(closestEnemy.pointer)
-            return
-        else
-            runner.routine:SetStatus("Killing " .. closestEnemy.Name)
-            Unlock(MoveForwardStop)
-            runner.Engine.Navigation:FaceUnit(closestEnemy.pointer)
-            Unlock(TargetUnit, closestEnemy.pointer)
-            runner.rotation:Pull(closestEnemy)
-            return
+    if runner.Routines.DungeonRoutine2.CurrentProfile == "Active" then
+        if not UnitAffectingCombat("player") then
+            if closestEnemy and inRangeOfWaypoint then
+                if closestEnemy:DistanceFromPlayer() > runner.rotation.PullRange or not closestEnemy:LOS() then
+                    runner.routine:SetStatus("Moving to kill " .. closestEnemy.Name)
+                    runner.Engine.Navigation:MoveTo(closestEnemy.pointer)
+                    return
+                else
+                    runner.routine:SetStatus("Killing " .. closestEnemy.Name)
+                    Unlock(MoveForwardStop)
+                    runner.Engine.Navigation:FaceUnit(closestEnemy.pointer)
+                    Unlock(TargetUnit, closestEnemy.pointer)
+                    runner.rotation:Pull(closestEnemy)
+                    return
+                end
+            end
         end
     end
 

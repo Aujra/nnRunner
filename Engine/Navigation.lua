@@ -10,6 +10,10 @@ local currentPathIndex = nil
 local lastSurge = 0
 
 local function Distance3D(x1, y1, z1, x2, y2, z2)
+    if not x1 or not y1 or not z1 or not x2 or not y2 or not z2 then
+        return 999999
+    end
+
     local dx = x2 - x1
     local dy = y2 - y1
     local dz = z2 - z1
@@ -59,7 +63,10 @@ local function GenerateStraightLinePath(startX, startY, startZ, endX, endY, endZ
 end
 
 function Navigation:FacePoint(x, y, z)
-    local px, py, pz = ObjectPosition("player")
+    local px, py, pz = runner.LocalPlayer.x, runner.LocalPlayer.y, runner.LocalPlayer.z
+    if not px or not py or not pz then
+        return
+    end
     z = z or pz
     local dx, dy, dz = px-x, py-y, pz-z
     local radians = math.atan2(-dy, -dx)
@@ -93,11 +100,35 @@ local function GeneratePath(startX, startY, startZ, endX, endY, endZ)
     return path
 end
 
+function Navigation:waypointAwayFrom(x, y, z, distance)
+    local randomx = runner.randomBetween(self, 1, 10)
+    local randomy = runner.randomBetween(self, 1, 10)
+    if randomx > 5 then
+        x = x + distance
+    else
+        x = x - distance
+    end
+    if randomy > 5 then
+        y = y + distance
+    else
+        y = y - distance
+    end
+    return runner.Classes.Point:new(x, y, z)
+end
+
 function Navigation:MoveTo(unit)
     if unit then
         local x, y, z = ObjectPosition(unit)
         local px, py, pz = ObjectPosition("player")
-        
+
+        local distance = Distance3D(px, py, pz, x, y, z)
+
+        if distance > 20 and runner.LocalPlayer.Class == "SHAMAN" then
+            if not runner.LocalPlayer:HasAura("Ghost Wolf", "HELPFUL") then
+                Unlock(CastSpellByName, "Ghost Wolf")
+            end
+        end
+
         local path = GeneratePath(px, py, pz, x, y, z)
         currentPath = path
         currentPathIndex = 2
@@ -131,7 +162,7 @@ function Navigation:MoveTo(unit)
             if GetTime() - lastPOSCheck > 2 then
                 local playerX, playerY, playerZ = ObjectPosition("player")
                 local stuckdist = Distance3D(playerX, playerY, playerZ, lastPOSX, lastPOSY, lastPOSZ)
-                if stuckdist < 5 then
+                if stuckdist < 1 then
                     runner.Engine.DebugManager:Warning("Navigation", "Detected stuck state, attempting jump")
                     Unlock(JumpOrAscendStart)
                 end
@@ -199,12 +230,15 @@ function Navigation:FlyToPoint(x,y,z)
 end
 
 function Navigation:Distance2D(x1, y1, x2, y2)
+    if not x1 or not y1 or not x2 or not y2 then
+        return 999999
+    end
     return sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
 end
 
 function Navigation:MoveToPoint(x, y, z)
+    local px, py, pz = ObjectPosition("player")
     if IsFlyableArea() then
-        local px, py, pz = ObjectPosition("player")
         local distance = Navigation:Distance2D(px, py, pz, x, y, z)
         if distance > 200 then
             Navigation:FlyToPoint(x, y, z)
@@ -212,9 +246,15 @@ function Navigation:MoveToPoint(x, y, z)
         end
     end
 
-    local px, py, pz = ObjectPosition("player")
+    local distance = Distance3D(px, py, pz, x, y, z)
+
+    if distance > 20 and runner.LocalPlayer.Class == "SHAMAN" then
+        if not runner.LocalPlayer:HasAura("Ghost Wolf", "HELPFUL") then
+            Unlock(CastSpellByName, "Ghost Wolf")
+        end
+    end
+
     local path = GeneratePath(px, py, pz, x, y, z)
-    
     currentPath = path
     currentPathIndex = 2
 

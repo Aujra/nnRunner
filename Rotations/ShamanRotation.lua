@@ -25,8 +25,6 @@ function ShamanRotation:Pulse(target)
         end
 
         if runner.LocalPlayer.specName == "Elemental" then
-            local enemiesAround = self.target:EnemiesInRange(8)
-
             if self:CanCast("Stone Bulwark Totem", runner.LocalPlayer) and runner.LocalPlayer.HP < 50 then
                 self:Cast("Stone Bulwark Totem")
                 return
@@ -88,11 +86,11 @@ function ShamanRotation:Pulse(target)
                 self:Cast("Flame Shock", self.Target.pointer)
                 return
             end
-            if self:CanCast("Earthquake", self.Target) and enemiesAround > 2 then
+            if self:CanCast("Earthquake", self.Target) and self.AoeEnemies > 2 then
                 self:Cast("Earthquake", self.Target.pointer)
                 return
             end
-            if self:CanCast("Earth Shock", self.Target) and enemiesAround <= 2 then
+            if self:CanCast("Earth Shock", self.Target) and self.AoeEnemies <= 2 then
                 self:Cast("Earth Shock", self.Target.pointer)
                 return
             end
@@ -104,14 +102,17 @@ function ShamanRotation:Pulse(target)
                 self:Cast("Tempest", self.Target.pointer)
                 return
             end
-            if self:CanCast("Chain Lightning", self.Target) and enemiesAround > 2 then
+            if self:CanCast("Chain Lightning", self.Target) and self.AoeEnemies > 2 then
                 self:Cast("Chain Lightning", self.Target.pointer)
                 return
             end
-            self:Cast("Lightning Bolt", self.Target.pointer)
+            if self:CanCast("Lightning Bolt", self.Target) and self.AoeEnemies <= 2 then
+                self:Cast("Lightning Bolt", self.Target.pointer)
+            end
         end
 
         if runner.LocalPlayer.specName == "Restoration" then
+            local under75 = self:NumberPlayersUnderHP(40, 75)
             if self.LowestPlayer then
                 if self:CanCast("Healing Surge", self.LowestPlayer) and self.LowestPlayer.HP < 50 then
                     self:Cast("Healing Surge", self.LowestPlayer.pointer)
@@ -121,7 +122,15 @@ function ShamanRotation:Pulse(target)
                     self:Cast("Healing Wave", self.LowestPlayer.pointer)
                     return
                 end
-                if self:CanCast("Riptide", self.LowestPlayer) and self.LowestPlayer.HP < 90 then
+                if self:CanCast("Healing Stream Totem", self.LowestPlayer) and self.LowestPlayer.HP < 80 then
+                    self:Cast("Healing Stream Totem", self.LowestPlayer.pointer)
+                    return
+                end
+                if self:CanCast("Chain Heal", self.LowestPlayer) and under75 >= 2 then
+                    self:Cast("Chain Heal", self.LowestPlayer.pointer)
+                    return
+                end
+                if self:CanCast("Riptide", self.LowestPlayer) and not self.LowestPlayer:HasAura("Riptide", "HELPFUL") and self.LowestPlayer.HP < 90 then
                     self:Cast("Riptide", self.LowestPlayer.pointer)
                     return
                 end
@@ -153,4 +162,4 @@ function ShamanRotation:Pulse(target)
     end
 end
 
-registerRotation(ShamanRotation)
+    registerRotation(ShamanRotation)

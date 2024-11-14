@@ -97,6 +97,21 @@ function BaseRotation:GetLowestPlayer(range)
     return lowestPlayer
 end
 
+function BaseRotation:NumberPlayersUnderHP(range, hp)
+    range = range or 40
+    hp = hp or 50
+    local count = 0
+    for k,v in pairs(runner.Engine.ObjectManager.players) do
+        if v.HP < hp and v:DistanceFromPlayer() < range then
+            count = count + 1
+        end
+    end
+    if runner.LocalPlayer.HP < hp then
+        count = count + 1
+    end
+    return count
+end
+
 function BaseRotation:ClosestSpellSteal()
     local closestSteal = nil
     local closestDistance = 9999
@@ -142,6 +157,10 @@ function BaseRotation:GetDeEnrage()
         end
     end
     return nil
+end
+
+function BaseRotation:ClosestShamanCleanse(range)
+
 end
 
 function BaseRotation:GetFocus()

@@ -124,6 +124,26 @@ function OM:GetByName(name)
     return nil
 end
 
+function OM:GetObjectsByName(name)
+    local objects = {}
+    for k,v in pairs(self.gameobjects) do
+        if v.Name == name then
+            table.insert(objects, v)
+        end
+    end
+    for k,v in pairs(self.units) do
+        if v.Name == name then
+            table.insert(objects, v)
+        end
+    end
+    for k,v in pairs(self.players) do
+        if v.Name == name then
+            table.insert(objects, v)
+        end
+    end
+    return objects
+end
+
 function OM:GetClosestByName(name)
     local closest = nil
     local closestDistance = 9999
@@ -179,7 +199,7 @@ function OM:GetClosestLootable()
     local closest = nil
     local closestDistance = 9999
     for k,v in pairs(self.units) do
-        if v.Lootable then
+        if v.Lootable and v.isDead then
             local distance = v:DistanceFromPlayer()
             if distance < closestDistance then
                 closest = v
@@ -203,4 +223,15 @@ function OM:GetClosestEnemy()
         end
     end
     return closest
+end
+
+function OM:FindMobWithNameAndAura(name, aura)
+    for k,v in pairs(self.units) do
+        if v.Name == name then
+            if v:HasAura(aura) then
+                return v
+            end
+        end
+    end
+    return nil
 end

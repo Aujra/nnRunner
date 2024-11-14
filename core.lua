@@ -100,6 +100,7 @@ nn:Require('/scripts/mainrunner/Classes/Unit.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/Player.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/LocalPlayer.lua', runner)
 nn:Require('/scripts/mainrunner/Classes/MultiboxPlayer.lua', runner)
+nn:Require('/scripts/mainrunner/Classes/Point.lua', runner)
 --UI
 nn:Require('/scripts/mainrunner/UI/ObjectViewer2.lua', runner)
 nn:Require('/scripts/mainrunner/UI/ObjectViewer.lua', runner)
@@ -152,33 +153,6 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
         end
 
         runner.lastTick = GetTime()
-        if not runner.running then
-            return
-        end
-
-        if not runner.routine then
-            runner.routine = runner.routines["rotationroutine"]
-        end
-        if not runner.rotation then
-            runner.rotation = runner.rotations[select(1, UnitClass("player")):lower()]
-        end
-
-        runner.UI.menuFrame:UpdateMenu()
-
-        if not runner.Draw then
-            runner.Draw = nn.Utils.Draw:New()
-        end
-
-        if runner.Draw then
-            runner.Draw:ClearCanvas()
-        end
-
-        --local looking = IsMouselooking()
-        --if not looking then
-        --    MouselookStart()
-        --end
-        --MoveViewUpStart(25/tonumber(GetCVar("cameraPitchMoveSpeed")))
-        --Unlock(CameraOrSelectOrMoveStart)
 
         if not runner.LocalPlayer then
             runner.LocalPlayer = runner.Classes.MultiboxPlayer:new("player")
@@ -193,6 +167,27 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
         if runner.UI.ObjectViewer then
             runner.UI.ObjectViewer:Update()
         end
+
+        if not runner.Draw then
+            runner.Draw = nn.Utils.Draw:New()
+        end
+
+        if runner.Draw then
+            runner.Draw:ClearCanvas()
+        end
+
+        if not runner.running then
+            return
+        end
+
+        if not runner.routine then
+            runner.routine = runner.routines["rotationroutine"]
+        end
+        if not runner.rotation then
+            runner.rotation = runner.rotations[select(1, UnitClass("player")):lower()]
+        end
+
+        runner.UI.menuFrame:UpdateMenu()
 
         runner:DrawNearestDisturbedEarth()
 

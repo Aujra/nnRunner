@@ -120,6 +120,7 @@ function Unit:CastingSpellByName(name)
     if not spellName then
         spellName, _, _, _, _, _, _, _, _, spellId = Unlock(UnitChannelInfo, self.pointer)
     end
+
     return spellName == name
 end
 
@@ -200,6 +201,7 @@ end
 
 function Unit:HasAura(name, filter)
     local aname = AuraUtil.FindAuraByName(name, self.pointer, filter)
+
     return aname ~= nil
 end
 

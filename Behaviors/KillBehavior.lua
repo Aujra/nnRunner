@@ -25,19 +25,21 @@ function KillBehavior:Run()
     else
         local target = runner.Engine.ObjectManager:GetClosestByName(self.Step.MobName)
         if target then
-            local mechanic = runner.mechanics[self.Step.MobName:lower()]
-            print("Mechanic: " .. tostring(mechanic))
+            local mechanic = runner.mechanics["stonevault"]
             if mechanic then
                 if mechanic:NeedsMechanic() then
-                    print("Performing mechanic: " .. self.Step.MobName)
                     mechanic:DoMechanic()
                     self.IsComplete = false
                     return
                 end
             end
 
-            runner.Behaviors.BaseBehavior:SelfDefense(target)
             if not target.isDead then
+                --if self:CheckAreaTriggers(target) then
+                --    print("Area trigger issue?")
+                --    return
+                --end
+
                 if target:DistanceFromPlayer() > runner.rotation.CombatRange or not target:LOS() then
                     runner.Engine.Navigation:MoveTo(target.pointer)
                 else
@@ -57,6 +59,10 @@ function KillBehavior:Run()
                 self.IsComplete = true
                 return
             end
+        else
+            print("Could not find " .. self.Step.MobName)
+            self.IsComplete = true
+            return
         end
     end
 end
