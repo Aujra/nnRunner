@@ -177,6 +177,78 @@ function OM:GetClosestByName(name)
     return closest
 end
 
+function OM:GetClosestQuestGiver()
+    local closest = nil
+    local closestDistance = 9999
+    for k,v in pairs(self.gameobjects) do
+        if v.IsQuestGiver then
+            local distance = v:DistanceFromPlayer()
+            if distance < closestDistance then
+                closest = v
+                closestDistance = distance
+            end
+        end
+    end
+    for k,v in pairs(self.units) do
+        if v.IsQuestGiver then
+            local distance = v:DistanceFromPlayer()
+            if distance < closestDistance then
+                closest = v
+                closestDistance = distance
+            end
+        end
+    end
+    return closest
+end
+
+function OM:GetClosestQuestTurnin()
+    local closest = nil
+    local closestDistance = 9999
+    for k,v in pairs(self.gameobjects) do
+        if v.IsQuestTurnin then
+            local distance = v:DistanceFromPlayer()
+            if distance < closestDistance then
+                closest = v
+                closestDistance = distance
+            end
+        end
+    end
+    for k,v in pairs(self.units) do
+        if v.IsQuestTurnin then
+            local distance = v:DistanceFromPlayer()
+            if distance < closestDistance then
+                closest = v
+                closestDistance = distance
+            end
+        end
+    end
+    return closest
+end
+
+function OM:GetClosestQuestObjective()
+    local closest = nil
+    local closestDistance = 9999
+    for k,v in pairs(self.gameobjects) do
+        if v.IsQuestObjective then
+            local distance = v:DistanceFromPlayer()
+            if distance < closestDistance then
+                closest = v
+                closestDistance = distance
+            end
+        end
+    end
+    for k,v in pairs(self.units) do
+        if v.IsQuestObjective and not v.isDead then
+            local distance = v:DistanceFromPlayer()
+            if distance < closestDistance then
+                closest = v
+                closestDistance = distance
+            end
+        end
+    end
+    return closest
+end
+
 function OM:GetTank()
     for k,v in pairs(self.units) do
         if v.Role == "TANK" then

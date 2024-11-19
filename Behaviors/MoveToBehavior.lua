@@ -64,6 +64,7 @@ function MoveToBehavior:Run()
             self.IsComplete = false
         else
             Unlock(MoveForwardStop)
+            print("Reached waypoint")
             self.IsComplete = true
         end
     end

@@ -38,10 +38,6 @@ function BaseRotation:Pull(target)
         local x,y,z = runner.nn.ObjectPosition('target')
         runner.nn.ClickPosition(x,y,z)
     end
-
-    if not C_Spell.IsCurrentSpell(6603) then
-        self:Cast("Auto Attack")
-    end
 end
 
 function BaseRotation:Pulse(target)
@@ -54,10 +50,6 @@ function BaseRotation:Pulse(target)
     end
     if not target then
         return
-    end
-
-    if not C_Spell.IsCurrentSpell(6603) then
-        self:Cast("Auto Attack")
     end
 
     self.Target = target

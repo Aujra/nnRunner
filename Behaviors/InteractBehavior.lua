@@ -31,9 +31,7 @@ function InteractBehavior:Run()
                     Unlock(MoveForwardStop)
                     runner.Engine.Navigation:FaceUnit(target.pointer)
                     runner.nn.ObjectInteract(target.pointer)
-                    if not Unlock(UnitIsInteractable, target.pointer) then
-                        self.IsComplete = true
-                    end
+                    self.IsComplete = true
                 end
             else
                 self.IsComplete = true

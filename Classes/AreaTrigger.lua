@@ -28,14 +28,6 @@ function AreaTrigger:Update()
     self.Distance = self:DistanceFromPlayer()
     self.PlayerInside = self.Distance < self.radius
 
-    if self.x ~= 0 and self.y ~= 0 and self.z ~= 0 then
-        if self.Reaction < 4 then
-            runner.Draw:SetColor(255, 0, 0, 255)
-            runner.Draw:Circle(self.x, self.y, self.z, self.radius)
-            runner.Draw:Text("Distance " .. string.format("%.2f", self:DistanceFromPlayer()) .. "made by " .. self.creatorName, "GAMEFONTNORMAL", self.x, self.y, self.z)
-        end
-    end
-
     --if self:AreWeIn() then
     --    local qx, qy, qz = self:ScanForSafeSpot(self.sx, self.sy, self.sz)
     --end

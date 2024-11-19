@@ -7,6 +7,19 @@ function HunterRotation:init()
     self.Class = "Hunter"
     self.Name = "Hunter"
     self.Description = "Hunter Rotation"
+    self.PullRange = 30
+    self.CombatRange = 30
+end
+
+function HunterRotation:Pull()
+    if self:CanCast("Arcane Shot", self.Target) then
+        self:Cast("Arcane Shot")
+        return
+    end
+    if self:CanCast("Steady Shot", self.Target) then
+        self:Cast("Steady Shot")
+        return
+    end
 end
 
 function HunterRotation:Pulse(target)
@@ -20,7 +33,7 @@ function HunterRotation:Pulse(target)
             return
         end
 
-        if not target:HasAura("Hunter's Mark", "HARMFUL") and target.HP > 85 then
+        if self:CanCast("Hunter's Mark", self.Target) and not target:HasAura("Hunter's Mark", "HARMFUL") and target.HP > 85 then
             self:Cast("Hunter's Mark")
             return
         end
@@ -139,6 +152,17 @@ function HunterRotation:Pulse(target)
                 return
             end
 
+            if self:CanCast("Steady Shot", self.Target) then
+                self:Cast("Steady Shot")
+                return
+            end
+        end
+
+        if runner.LocalPlayer.specName == "" then
+            if self:CanCast("Arcane Shot", self.Target) then
+                self:Cast("Arcane Shot")
+                return
+            end
             if self:CanCast("Steady Shot", self.Target) then
                 self:Cast("Steady Shot")
                 return

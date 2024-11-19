@@ -54,7 +54,22 @@ function Unit:Update()
     self.ThreatPercent = select(3, Unlock(UnitDetailedThreatSituation, "player", self.pointer))
     self.Role = UnitGroupRolesAssigned(self.pointer)
     self.Target = Unlock(UnitTarget, self.pointer)
+    self.Trivial = Unlock(UnitIsTrivial, self.pointer)
+    self.score = self:GetScore()
+    local fields = {}
+
+    for i=0, 250, 4 do
+        local t = runner.nn.ObjectField(self.pointer, i*4, 1)
+        table.insert(fields, i .. " with " .. t)
+    end
+
+    self.Fields = fields
+    self:Debug()
     --self:ScanAuras()
+end
+
+function Unit:Debug()
+    runner.Draw:Text(self.score, "GAMEFONTNORMAL", self.X, self.Y, self.Z+2, 1, 1, 1, 1)
 end
 
 function Unit:ScanAuras()
@@ -74,6 +89,9 @@ end
 
 function Unit:GetScore()
     local score = 0
+    if self.Trivial then
+        return -10000
+    end
     local distance = self:DistanceFromPlayer()
     local HP = self.HP
     score = score + (800 - (distance * 5))
@@ -88,31 +106,9 @@ function Unit:GetScore()
         score = score - 400
     end
     if self.isDead then
-        score = score - 10000
+        score = score - 100000
     end
     return score
-end
-
-function Unit:LOS()
-    local x1, y1, z1 = runner.nn.ObjectPosition('player')
-    local x2, y2, z2 = runner.nn.ObjectPosition(self.pointer)
-    
-    local playerHeight = runner.nn.ObjectHeight('player')
-    local unitHeight = self.Height
-    
-    local checkHeights = {
-        {playerHeight, unitHeight},      
-        {playerHeight / 2, unitHeight / 2}  
-    }    
-    
-    for _, heights in ipairs(checkHeights) do
-        local hitX, hitY, hitZ = TraceLine(x1, y1, z1 + heights[1], x2, y2, z2 + heights[2], 0x100111)        
-        if not hitX then
-            return true
-        end
-    end    
-    
-    return false
 end
 
 function Unit:CastingSpellByName(name)

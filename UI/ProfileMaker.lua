@@ -237,7 +237,7 @@ if not PM.BuilderFrame then
     PM.BuilderFrame:SetWidth(150)
     PM.BuilderFrame:SetHeight(500)
     PM.BuilderFrame:EnableResize(false)
-    PM.BuilderFrame:Show()
+    PM.BuilderFrame:Hide()
 
     PM.profileTypeDropdown = runner.AceGUI:Create("Dropdown")
     PM.profileTypeDropdown:SetLabel("Profile Type")

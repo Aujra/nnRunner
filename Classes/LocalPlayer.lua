@@ -25,16 +25,6 @@ function LocalPlayer:Update()
     self.ForwardSpeed = select(3, C_PlayerInfo.GetGlidingInfo())
     self.Gliding = select(1, C_PlayerInfo.GetGlidingInfo())
     self.Pitch = runner.nn.ObjectField(self.pointer, 280*4, 4)
-
-    local fields = {}
-
-    for i=0, 2000, 4 do
-        local t = runner.nn.ObjectField(self.pointer, i*4, 4)
-        table.insert(fields, i .. " with " .. t)
-    end
-
-    self.Fields = fields
-
 end
 
 function LocalPlayer:EquipUpgrades()

@@ -1,9 +1,4 @@
 local nn = ...
-_G.NnEnv = getfenv(1) or nn
-
-nn:Require('/scripts/mainrunner/Libs/class.lua', runner)
-nn:Require('/scripts/mainrunner/Libs/LibStub.lua', runner)
-nn:Require('/scripts/mainrunner/Libs/ScrollingTable.lua', runner)
 
 --Main tables
 runner = {}
@@ -40,6 +35,9 @@ runner.profiles = {}
 runner.mechanics = {}
 
 runner.waypoints = {}
+
+runner.mountedWhore = false
+
 runner.frame = CreateFrame("Frame")
 
 _G.runner = runner
@@ -87,66 +85,10 @@ function deep_copy( original, copies )
     return copy
 end
 
---Require Files
-nn:Require('/scripts/mainrunner/Libs/ScrollingTable.lua', runner)
-nn:Require('/scripts/mainrunner/Engine/ObjectManager.lua', runner)
-nn:Require('/scripts/mainrunner/Engine/Navigation.lua', runner)
-nn:Require('/scripts/mainrunner/Engine/FormationManager.lua', runner)
-nn:Require('/scripts/mainrunner/Engine/DebugManager.lua', runner)
---Classes
-nn:Require('/scripts/mainrunner/Classes/GameObject.lua', runner)
-nn:Require('/scripts/mainrunner/Classes/AreaTrigger.lua', runner)
-nn:Require('/scripts/mainrunner/Classes/Unit.lua', runner)
-nn:Require('/scripts/mainrunner/Classes/Player.lua', runner)
-nn:Require('/scripts/mainrunner/Classes/LocalPlayer.lua', runner)
-nn:Require('/scripts/mainrunner/Classes/MultiboxPlayer.lua', runner)
-nn:Require('/scripts/mainrunner/Classes/Point.lua', runner)
---UI
-nn:Require('/scripts/mainrunner/UI/ObjectViewer2.lua', runner)
-nn:Require('/scripts/mainrunner/UI/ObjectViewer.lua', runner)
-nn:Require('/scripts/mainrunner/UI/Menu.lua', runner)
---Rotations
-local path = "/scripts/mainrunner/Rotations/*.lua"
-local files = nn.ListFiles(path)
-for k,v in pairs(files) do
-    nn:Require("/scripts/mainrunner/Rotations/" .. v, runner)
-end
---Routines
-nn:Require('/scripts/mainrunner/Routine/BaseRoutine.lua', runner)
-nn:Require('/scripts/mainrunner/Routine/RotationRoutine.lua', runner)
-nn:Require('/scripts/mainrunner/Routine/DungeonRoutine.lua', runner)
-nn:Require('/scripts/mainrunner/Routine/MultiboxRoutine.lua', runner)
-nn:Require('/scripts/mainrunner/Routine/DungeonRoutine2.lua', runner)
-nn:Require('/scripts/mainrunner/Routine/MoveToRoutine.lua', runner)
-nn:Require('/scripts/mainrunner/Routine/ProfileRoutine.lua', runner)
---Profiles
-local path = "/scripts/mainrunner/Profiles/Dungeons/*.lua"
-local files = nn.ListFiles(path)
-if files then
-    for k,v in pairs(files) do
-        nn:Require("/scripts/mainrunner/Profiles/Dungeons/" .. v, runner)
-    end
-end
---Behaviors
-local path = "/scripts/mainrunner/Behaviors/*.lua"
-local files = nn.ListFiles(path)
-for k,v in pairs(files) do
-    nn:Require("/scripts/mainrunner/Behaviors/" .. v, runner)
-end
---Mechanics
-local path = "/scripts/mainrunner/Mechanics/*.lua"
-local files = nn.ListFiles(path)
-for k,v in pairs(files) do
-    nn:Require("/scripts/mainrunner/Mechanics/" .. v, runner)
-end
-
-nn:Require('/scripts/mainrunner/UI/ProfileMaker.lua', runner)
---nn:Require('/scripts/mainrunner/UI/DungeonProfileMaker.lua', runner)
-
 --Main Loop
 runner.frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 runner.frame:SetScript("OnUpdate", function(self, elapsed)
-    if GetTime() - runner.lastTick > .25 then
+    if GetTime() - runner.lastTick > .15 then
         if GetTime() - runner.lastAFK > 60 then
             LastHardwareAction(GetTime()*1000)
             runner.lastAFK = GetTime()
@@ -180,6 +122,8 @@ runner.frame:SetScript("OnUpdate", function(self, elapsed)
             return
         end
 
+        runner.InteractionManager:HandleAll()
+
         if not runner.routine then
             runner.routine = runner.routines["rotationroutine"]
         end
@@ -202,6 +146,19 @@ runner.frame:SetScript("OnKeyDown", function(self, key)
         print("Hotkey toggling bot " .. (runner.running and "off" or "on"))
         runner.running = not runner.running
     end
+
+    if key == "2" then
+        local target = UnitTarget("player")
+        print("Target: " .. (target or "none"))
+        if target then
+            for i = 0, 300, 4 do
+                local f = runner.nn.ObjectField(target, i*4, 1)
+                print("Field " .. i .. ": " .. (f or "nil"))
+            end
+            print("============================")
+        end
+    end
+
     Unlock(runner.frame.SetPropagateKeyboardInput, runner.frame, true)
 end)
 

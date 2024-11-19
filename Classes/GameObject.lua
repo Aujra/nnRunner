@@ -10,11 +10,14 @@ runner.GameObjectViewColumns = {
     "Lootable"
 }
 
+print("hi")
+
 function GameObject:init(pointer)
     self.pointer = pointer
     self.Pointer = pointer
     self.Name = ObjectName(self.pointer)
-    self.Type = runner.nn.GameObjectType(self.pointer)
+    self.Type = runner.nn.ObjectType(self.pointer)
+    self.GameObjectType = runner.nn.GameObjectType(self.pointer)
     self.x, self.y, self.z = ObjectPosition(self.pointer)
     self.X, self.Y, self.Z = self.x, self.y, self.z
     self.Facing = ObjectFacing(self.pointer)
@@ -28,6 +31,10 @@ function GameObject:init(pointer)
     self.CanGather = self.ObjectType == 50
     self.CanAttack = false
     self.UpdateRate = 0
+    self.IsQuestGiver = runner.nn.ObjectField(self.pointer, 16*4, 1) == 67 or runner.nn.ObjectField(v, 16*4, 1) == 1
+    self.IsQuestTurnin = runner.nn.ObjectField(self.pointer, 16*4, 1) == 68 or runner.nn.ObjectField(v, 16*4, 1) == 6
+    self.IsQuestObjective = self:isQuestObjective()
+    self.ObjectiveFor = {}
     self.objectCount = tableCount(runner.Engine.ObjectManager.gameobjects) + tableCount(runner.Engine.ObjectManager.units) + tableCount(runner.Engine.ObjectManager.players)
     self.NextUpdate = GetTime() + runner:randomBetween(self.objectCount, (self.objectCount*3.5)) / 1000
 end
@@ -46,6 +53,11 @@ function GameObject:Update()
     self.ObjectType = runner.nn.GameObjectType(self.pointer)
     self.CanGather = self.ObjectType == 50
     self.CanAttack = Unlock(UnitCanAttack, "player", self.pointer)
+    self.IsQuestGiver = runner.nn.ObjectField(self.pointer, 16*4, 1) == 67 or runner.nn.ObjectField(self.pointer, 16*4, 1) == 1
+    self.IsQuestTurnin = runner.nn.ObjectField(self.pointer, 16*4, 1) == 68 or runner.nn.ObjectField(self.pointer, 16*4, 1) == 6
+    self.IsQuestObjective = self:isQuestObjective()
+    self.ObjectiveFor = self:GetObjectiveFor()
+    self.DynamicFlags = runner.nn.DynamicFlags(self.pointer)
     self.objectCount = tableCount(runner.Engine.ObjectManager.gameobjects) + tableCount(runner.Engine.ObjectManager.units) + tableCount(runner.Engine.ObjectManager.players)
     self.UpdateRate = self:GetUpdateRate()
     self.NextUpdate = GetTime() + self.UpdateRate
@@ -66,6 +78,65 @@ function GameObject:GetUpdateRate()
         return 3 * multiplier
     end
     return 3 * multiplier
+end
+
+function GameObject:LOS()
+    local x1, y1, z1 = runner.nn.ObjectPosition('player')
+    local x2, y2, z2 = runner.nn.ObjectPosition(self.pointer)
+
+    local playerHeight = runner.nn.ObjectHeight('player')
+    local unitHeight = self.Height
+
+    local checkHeights = {
+        {playerHeight, unitHeight},
+        {playerHeight / 2, unitHeight / 2}
+    }
+
+    for _, heights in ipairs(checkHeights) do
+        local hitX, hitY, hitZ = TraceLine(x1, y1, z1 + heights[1], x2, y2, z2 + heights[2], 0x100111)
+        if not hitX then
+            return true
+        end
+    end
+
+    return false
+end
+
+function GameObject:isQuestObjective()
+    runner.nn.SetMouseover(self.pointer)
+    local tooltip = Unlock(C_TooltipInfo.GetUnit, "mouseover")
+    if tooltip then
+        for k,v in pairs(tooltip.lines) do
+            if v.type == 8 or v.type == 17 then
+                local texthex = v.leftColor:GenerateHexColor()
+                if texthex == "ffffffff" then
+                    return true
+                end
+            end
+        end
+    else
+        local dynamicFlags = runner.nn.DynamicFlags(self.pointer)
+        if dynamicFlags then
+            if string.find(dynamicFlags, "49") then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function GameObject:GetObjectiveFor()
+    local objectives = {}
+    runner.nn.SetMouseover(self.pointer)
+    local tooltip = Unlock(C_TooltipInfo.GetUnit, "mouseover")
+    if tooltip then
+        for k,v in pairs(tooltip.lines) do
+            if v.type == 17 then
+                table.insert(objectives, v.id)
+            end
+        end
+    end
+    return objectives
 end
 
 function GameObject:Debug()

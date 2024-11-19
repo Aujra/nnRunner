@@ -117,7 +117,7 @@ function OV:Update()
         viewerFrame:SetLayout("Flow")
         viewerFrame:SetWidth(1024)
         viewerFrame:SetHeight(600)
-        viewerFrame:Hide()
+        viewerFrame:Show()
         if not SearchInput then
             SearchInput = runner.nn.Utils.AceGUI:Create("EditBox")
             SearchInput:SetLabel("Search")

@@ -15,7 +15,7 @@ mainFrame:SetTitle("Object Manager")
 mainFrame:SetLayout("Flow")
 mainFrame:SetWidth(1000)
 mainFrame:SetHeight(800)
-mainFrame:Hide()
+mainFrame:Show()
 
 local sortDropdown = runner.AceGUI:Create("Dropdown")
 sortDropdown:SetList({
@@ -211,6 +211,31 @@ function OV:BuildObjectList(container, selected, SelectedPointer)
                 label:SetText(k .. ": " .. tostring(v))
             end
             container:AddChild(label)
+        end
+        if type(v) == "table" then
+            local splitlabel = runner.AceGUI:Create("Label")
+            splitlabel:SetText(" ")
+            splitlabel:SetFullWidth(true)
+            container:AddChild(splitlabel)
+
+            local label = runner.AceGUI:Create("Label")
+            label:SetText(k .. ":")
+            container:AddChild(label)
+            for k2,v2 in pairs(v) do
+                if type(v2) == "string" or type(v2) == "number" or type(v2) == "boolean" then
+                    local label = runner.AceGUI:Create("Label")
+                    if searchText and searchText ~= '' and (string.find(tostring(v2):lower(), searchText:lower()) or string.find(k2:lower(), searchText:lower())) then
+                        label:SetText(green..k2 .. ": " .. tostring(v2))
+                    else
+                        label:SetText(k2 .. ": " .. tostring(v2))
+                    end
+                    container:AddChild(label)
+                end
+            end
+            local splitlabel2 = runner.AceGUI:Create("Label")
+            splitlabel2:SetText(" ")
+            splitlabel2:SetFullWidth(true)
+            container:AddChild(splitlabel2)
         end
     end
 end

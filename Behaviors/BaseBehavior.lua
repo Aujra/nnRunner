@@ -33,20 +33,18 @@ end
 function BaseBehavior:SelfDefense(preftarget)
     preftarget = preftarget or nil
     if UnitAffectingCombat("player") then
-
+        self:CheckAreaTriggers(preftarget)
         local mechanic = runner.mechanics["stonevault"]
         if mechanic then
             if mechanic:NeedsMechanic() then
                 mechanic:DoMechanic()
-                self.IsComplete = false
-                return
+                return true
             end
         end
 
-        self:CheckAreaTriggers(preftarget)
         local target = self:GetBestTarget()
         if target then
-            if target:DistanceFromPlayer() > runner.rotation.CombatRange then
+            if target:DistanceFromPlayer() > runner.rotation.CombatRange or not target:LOS() then
                 runner.Engine.Navigation:MoveTo(target.pointer)
             else
                 Unlock(TargetUnit, target.pointer)

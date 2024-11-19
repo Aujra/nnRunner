@@ -101,19 +101,74 @@ local function GeneratePath(startX, startY, startZ, endX, endY, endZ)
 end
 
 function Navigation:waypointAwayFrom(x, y, z, distance)
-    local randomx = runner.randomBetween(self, 1, 10)
-    local randomy = runner.randomBetween(self, 1, 10)
-    if randomx > 5 then
-        x = x + distance
-    else
-        x = x - distance
+    local possible = {}
+    for i = 1, 20 do
+        table.insert(possible, runner.Classes.Point:new(x + math.random(-distance*1.2, distance*1.2), y + math.random(-distance*1.2, distance*1.2), z))
     end
-    if randomy > 5 then
-        y = y + distance
-    else
-        y = y - distance
+    local best = nil
+    for k,v in pairs(possible) do
+        if Navigation:PointHasPath(v.X, v.Y, v.Z) then
+            if not best then
+                best = v
+            else
+                if best:DistanceFromXYZ(x,y,z) > distance*1 then
+                    if v:DistanceFromPlayer() < best:DistanceFromPlayer() then
+                        best = v
+                    end
+                end
+            end
+        end
     end
-    return runner.Classes.Point:new(x, y, z)
+    return best
+end
+
+function Navigation:IsBehindTarget(target)
+    if not target then return false end
+
+    local px, py, pz = ObjectPosition("player")
+    local tx, ty, tz = ObjectPosition(target.pointer)
+    if not px or not tx then return false end
+
+    -- Check distance
+    local distance = math.sqrt((px - tx)^2 + (py - ty)^2)
+
+    -- Check if we're in the 90-degree arc behind target
+    local targetFacing = ObjectFacing(target.pointer)
+    local angleToPlayer = math.atan2(py - ty, px - tx)
+    local behindAngle = (targetFacing + math.pi) % (2 * math.pi)
+    local angleDiff = math.abs(angleToPlayer - behindAngle)
+    if angleDiff > math.pi then
+        angleDiff = 2 * math.pi - angleDiff
+    end
+
+    return angleDiff <= math.pi/2  -- 90 degrees
+end
+
+function Navigation:MoveBehindUnit(target)
+    local targetFacing = ObjectFacing(target.pointer)
+    local tx, ty, tz = ObjectPosition(target.pointer)
+    if not targetFacing or not tx then return nil end
+
+    -- Calculate angle directly behind target
+    local behindAngle = (targetFacing + math.pi) % (2 * math.pi)
+
+    -- Add random offset within 90-degree arc (45 degrees each side)
+    local randomOffset = (math.random() - 0.5) * math.pi/2  -- -45 to +45 degrees
+    local finalAngle = (behindAngle + randomOffset) % (2 * math.pi)
+
+    -- Calculate position at melee range plus target's bounding radius
+    local radius = 5 + target.BoundingRadius
+    return {
+        x = tx + math.cos(finalAngle) * radius,
+        y = ty + math.sin(finalAngle) * radius,
+        z = tz
+    }
+end
+
+function Navigation:PointHasPath(x,y,z)
+    local _, _, _, _, _, _, _, mapId = GetInstanceInfo()
+    local path = runner.nn.GenerateLocalPath(mapId,runner.LocalPlayer.x,runner.LocalPlayer.y,runner.LocalPlayer.z,x,y,z)
+    return path and #path > 1
 end
 
 function Navigation:MoveTo(unit)
